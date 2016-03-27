@@ -1,12 +1,35 @@
 # STATE
 
-def state
-  {
-    staff: [
-      { beats: [1, 0, 1], sample: :drum_bass_hard, pitch: 12, amp: 1.2 },
-      { beats: [0, 1, 1, 1], sample: :drum_cymbal_closed, rpitch: 12 },
-      { beats: [0, 0, 1, 0, 0, 0, 0, 1], sample: :drum_snare_soft, amp: 1.4, rate: 3 },
-      { beats: [0, 0, 0, 0, 0, 0, 0, 1], play: 27, amp: 5.0, release: 0.1, attack: 0.01, sustain: 0.4 },
-    ]
+defonce :_state do
+  {}
+end
+
+define :set_state do |ns, state|
+  if _ns_ok(ns)
+    mutex.synchronize {
+      _state[ns] = state
+    }
+  end
+end
+
+define :drop_state do |ns|
+  if _ns_ok(ns)
+    mutex.synchronize {
+      _state.delete(ns)
+    }
+  end
+end
+
+define :drop_all_state do
+  mutex.synchronize {
+    _state.clear
   }
+end
+
+define :_ns_ok do |ns|
+  if not ns or not ns.is_a? Symbol
+    puts "ns #{ns} is not a symbol"
+    return false
+  end
+  return true
 end
