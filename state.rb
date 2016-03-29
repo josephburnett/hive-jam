@@ -32,6 +32,12 @@ define :drop_all_state do
   }
 end
 
+define :get_state_json do |ns|
+  mutex.synchronize {
+    return JSON.dump(_state[ns])
+  }
+end
+
 define :_ns_ok do |ns|
   if not ns or not ns.is_a? Symbol
     puts "ns #{ns} is not a symbol"

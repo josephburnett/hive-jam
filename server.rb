@@ -13,6 +13,7 @@ jam_server.add_method("/drop-state") do |args|
   client_id = args[0]
   ns = args[1].intern
   drop_state ns
+  jam_client.send("/state", client_id, ns, get_state_json(ns))
 end
 
 jam_server.add_method("/set-state") do |args|
@@ -21,11 +22,12 @@ jam_server.add_method("/set-state") do |args|
   ns = args[1].intern
   state = JSON.parse(args[2], symbolize_names: true)
   set_state ns, state
+  jam_client.send("/state", client_id, ns, get_state_json(ns))
 end
 
 jam_server.add_method("/get-state") do |args|
   assert(args.length == 2)
   client_id = args[0]
   ns = args[1].to_sym
-  jam_client.send("/state", client_id, ns, JSON.dump(_state[ns]))
+  jam_client.send("/state", client_id, ns, get_state_json(ns))
 end
