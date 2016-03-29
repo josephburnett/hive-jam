@@ -1,5 +1,11 @@
 # STATE
 
+require 'thread'
+
+define :mutex do
+  Mutex.new
+end
+
 defonce :_state do
   {}
 end

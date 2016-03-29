@@ -1,6 +1,6 @@
 # EXEC
 
-defonce :exec do
+defonce :exec, override: false do
   beat = 0
   in_thread do
     loop do
