@@ -10,12 +10,30 @@
 
 (defonce app-state (atom {:text "Hello world!"}))
 
-(om/root
-  (fn [data owner]
-    (reify om/IRender
-      (render [_]
-        (dom/h1 nil (:text data)))))
-  app-state
+(defn ping [data owner]
+  (reify
+    om/IWillMount
+    (will-mount [_]
+      (let [ws (js/WebSocket. "ws://127.0.0.1:4550/")]
+        (doall
+          (map #(aset ws (first %) (second %))
+               [["onopen" #(println "websocket open")]
+	        ["onclose" #(println "websocket close")]
+                ["onerror" #(println "websocket error:" %)]
+                ["onmessage" #(println "websocket message:" %)]]))
+        (om/set-state! owner :ws ws)))
+    om/IInitState
+    (init-state [_] {})
+    om/IRenderState
+    (render-state [owner state]
+      (dom/button
+        #js {:onClick #(do
+                         (println "Sending /ping")
+                         (.send (:ws state) "/ping")
+                         (println "Sent /ping"))}
+	"Ping"))))
+
+(om/root ping app-state
   {:target (. js/document (getElementById "app"))})
 
 
