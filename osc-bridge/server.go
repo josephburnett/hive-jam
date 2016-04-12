@@ -46,18 +46,20 @@ type Response struct {
 }
 
 func echoHandler(ws *websocket.Conn) {
-	msg := make([]byte, 512)
-	n, err := ws.Read(msg)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Receive: %s\n", msg[:n])
+	for {
+		msg := make([]byte, 512)
+		n, err := ws.Read(msg)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Receive: %s\n", msg[:n])
 
-	m, err := ws.Write(msg[:n])
-	if err != nil {
-		log.Fatal(err)
+		m, err := ws.Write(msg[:n])
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Send: %s\n", msg[:m])
 	}
-	fmt.Printf("Send: %s\n", msg[:m])
 }
 
 func main() {
