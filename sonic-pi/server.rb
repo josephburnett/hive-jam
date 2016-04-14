@@ -31,3 +31,9 @@ jam_server.add_method("/get-state") do |args|
   ns = args[1].to_sym
   jam_client.send("/state", client_id, ns, get_state_json(ns))
 end
+
+jam_server.add_method("/ping") do |args|
+  assert(args.length == 1)
+  client_id = args[0]
+  jam_client.send("/pong", client_id)
+end

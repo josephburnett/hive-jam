@@ -19,7 +19,7 @@
     om/IWillMount
     (will-mount [_]
       (go
-        (let [{:keys [ws-channel error]} (<! (ws-ch "ws://127.0.0.1:4550/grid"
+        (let [{:keys [ws-channel error]} (<! (ws-ch "ws://127.0.0.1:4550/oscbridge"
                                                     {:format :json}))]
           (om/set-state! owner :ws ws-channel)
           (go-loop []
@@ -40,10 +40,9 @@
     om/IRenderState
     (render-state [owner state]
       (dom/button
-        #js {:onClick #(do
-                         (println "Sending /ping")
-                         (go (>! (:ws state) "{}"))
-                         (println "Sent /ping"))}
+       #js {:onClick #(let [ping {:Address "/ping"}]
+                        (print "Sending message:" ping)
+                        (go (>! (:ws state) ping)))}
 	"Ping"))))
 
 (om/root ping app-state
