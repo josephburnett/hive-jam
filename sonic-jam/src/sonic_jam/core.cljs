@@ -14,6 +14,9 @@
 
 (defonce app-state (atom {:text "Hello world!"}))
 
+(defn handle-change [e owner]
+  (om/set-state! owner :state (.. e -target -value)))
+
 (defn ping [data owner]
   (reify
     om/IWillMount
@@ -22,28 +25,35 @@
         (let [{:keys [ws-channel error]} (<! (ws-ch "ws://127.0.0.1:4550/oscbridge"
                                                     {:format :json}))]
           (om/set-state! owner :ws ws-channel)
+          (>! ws-channel {:Address "/get-state" :Params ["beat"]})
           (go-loop []
-            (let [{:keys [message error] :as msg} (<! ws-channel)]
+            (let [{:keys [message error] :as msg} (<! ws-channel)
+                  address (get message "Address")
+                  params (get message "Params")]
               (print "Got message:" message)
+              (when (and (= "/state" address)
+                         (= "beat" (first params)))
+                (om/set-state! owner :state (second params)))
               (when message
                 (recur)))))))
-      ;; (let [ws (js/WebSocket. "ws://127.0.0.1:4550/grid")]
-      ;;   (doall
-      ;;     (map #(aset ws (first %) (second %))
-      ;;          [["onopen" #(println "websocket open")]
-      ;;           ["onclose" #(println "websocket close")]
-      ;;           ["onerror" #(println "websocket error:" %)]
-      ;;           ["onmessage" #(println "websocket message:" %)]]))
-      ;;   (om/set-state! owner :ws ws)))
     om/IInitState
-    (init-state [_] {})
+    (init-state [_] {:state "[]"})
     om/IRenderState
-    (render-state [owner state]
-      (dom/button
-       #js {:onClick #(let [ping {:Address "/ping"}]
-                        (print "Sending message:" ping)
-                        (go (>! (:ws state) ping)))}
-	"Ping"))))
+    (render-state [this state]
+      (dom/div nil
+       (dom/button
+        #js {:onClick #(let [ping {:Address "/ping"}]
+                         (print "Sending message:" ping)
+                         (go (>! (:ws state) ping)))}
+	"Ping")
+       (dom/textarea
+        #js {:type "text" :ref "state" :value (:state state)
+             :onChange #(handle-change % owner)})
+       (dom/button
+        #js {:onClick #(let [update {:Address "/set-state" :Params ["beat" (:state state)]}]
+                         (print "Sending message:" update)
+                         (go (>! (:ws state) update)))}
+        "Update")))))
 
 (om/root ping app-state
   {:target (. js/document (getElementById "app"))})

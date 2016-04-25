@@ -9,11 +9,11 @@ import "math/rand"
 import "github.com/scgolang/osc"
 import "net"
 
-// Use a simpler data model. Just addresses and messages.
+type Params []string
 
 type Message struct {
 	Address string
-	Params  []string
+	Params  Params
 }
 
 var toServer = make(chan *Message, 10)
@@ -137,11 +137,18 @@ func oscHandler(oscMsg *osc.Message) error {
 		Address: oscMsg.Address(),
 	}
 	for i := 0; i < oscMsg.CountArguments(); i++ {
-		param, err := oscMsg.ReadString()
+		paramsJson, err := oscMsg.ReadString()
 		if err != nil {
 			return err
 		}
-		msg.Params = append(msg.Params, param)
+		params := &Params{}
+		err = json.Unmarshal([]byte(paramsJson), params)
+		if err != nil {
+			return err
+		}
+		for _, param := range *params {
+			msg.Params = append(msg.Params, param)
+		}
 	}
 	toClient <- msg
 	log.Print("Forwarded to client: ", msg)
@@ -151,6 +158,7 @@ func oscHandler(oscMsg *osc.Message) error {
 func serveOSC() {
 	dispatcher := make(map[string]osc.Method)
 	dispatcher["/pong"] = oscHandler
+	dispatcher["/state"] = oscHandler
 	for {
 		err := oscServer.Serve(dispatcher)
 		if err != nil {
