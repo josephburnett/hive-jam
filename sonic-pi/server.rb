@@ -169,3 +169,9 @@ define :read_note do |beat|
     jam_client.send("/state", client_id, ns, get_state_json(ns))
   end
   
+  jam_server.add_method("/ping") do |args|
+    assert(args.length == 1)
+    client_id = args[0]
+    jam_client.send("/pong", client_id)
+  end
+  
