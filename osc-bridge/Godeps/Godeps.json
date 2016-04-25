@@ -1,0 +1,15 @@
+{
+	"ImportPath": "github.com/josephburnett/sonic-jam/osc-bridge",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v62",
+	"Deps": [
+		{
+			"ImportPath": "github.com/scgolang/osc",
+			"Rev": "d62addf23feb9dca8723e915e76ad19dfdf01fda"
+		},
+		{
+			"ImportPath": "golang.org/x/net/websocket",
+			"Rev": "b797637b7aeeed133049c7281bfa31dcc9ca42d6"
+		}
+	]
+}
