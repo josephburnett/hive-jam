@@ -8,6 +8,7 @@ import "time"
 import "math/rand"
 import "github.com/scgolang/osc"
 import "net"
+import "io"
 
 type Params []string
 
@@ -70,10 +71,12 @@ func sendToClient() {
 		msg.Params = msg.Params[1:]
 		msgJson, err := json.Marshal(msg)
 		if err != nil {
+			log.Print("Error marshalling message to client.")
 			log.Print(err)
 			continue
 		}
 		if _, err = ws.Write([]byte(msgJson)); err != nil {
+			log.Print("Error writing message to client websocket.")
 			log.Print(err)
 			continue
 		}
@@ -89,6 +92,7 @@ func sendToServer() {
 		}
 		oscMessage, err := osc.NewMessage(msg.Address)
 		if err != nil {
+			log.Print("Error create new OSC message to server.")
 			log.Print(err)
 			continue
 		}
@@ -97,6 +101,7 @@ func sendToServer() {
 		}
 		err = oscClient.Send(oscMessage)
 		if err != nil {
+			log.Print("Error sending OSC message to server.")
 			log.Print(err)
 			continue
 		}
@@ -105,11 +110,17 @@ func sendToServer() {
 
 func websocketHandler(ws *websocket.Conn) {
 	clientId := randStringRunes(16)
+	log.Print("Connected client: " + clientId)
 	clients[clientId] = ws
 	for {
 		msgJson := make([]byte, 512)
 		n, err := ws.Read(msgJson)
 		if err != nil {
+			if err == io.EOF {
+				log.Print("Disconnected client: " + clientId)
+				return
+			}
+			log.Print("Error reading from client websocket.")
 			log.Print(err)
 			continue
 		}
@@ -117,6 +128,7 @@ func websocketHandler(ws *websocket.Conn) {
 		msg := &Message{}
 		err = json.Unmarshal(msgJson[:n], msg)
 		if err != nil {
+			log.Print("Error unmarshalling message from client.")
 			log.Print(err)
 			continue
 		}
@@ -171,7 +183,9 @@ func serveOSC() {
 func main() {
 	go sendToClient()
 	go sendToServer()
+	log.Print("Starting OSC server.")
 	go serveOSC()
+	log.Print("Starting websocket server.")
 	http.Handle("/oscbridge", websocket.Handler(websocketHandler))
 	err := http.ListenAndServe("127.0.0.1:4550", nil)
 	if err != nil {
