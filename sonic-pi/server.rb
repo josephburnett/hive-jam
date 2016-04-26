@@ -1,6 +1,6 @@
 require 'thread'
 
-REBOOT = false
+REBOOT = true
 
 # TIME
 
@@ -104,6 +104,7 @@ define :read_note do |beat|
       mutex.synchronize {
         _state[ns] = state
       }
+      send_state_json("*", ns)
     end
   end
   
@@ -112,6 +113,7 @@ define :read_note do |beat|
       mutex.synchronize {
         _state.delete(ns)
       }
+      send_state_json("*", ns)
     end
   end
   
@@ -125,6 +127,10 @@ define :read_note do |beat|
     mutex.synchronize {
       return JSON.dump(_state[ns])
     }
+  end
+  
+  define :send_state_json do |client_id, ns|
+    jam_client.send("/state", JSON.dump([client_id, ns, get_state_json(ns)]))
   end
   
   define :_ns_ok do |ns|
@@ -150,7 +156,6 @@ define :read_note do |beat|
     client_id = args[0]
     ns = args[1].intern
     drop_state ns
-    jam_client.send("/state", client_id, ns, get_state_json(ns))
   end
   
   jam_server.add_method("/set-state") do |args|
@@ -159,19 +164,19 @@ define :read_note do |beat|
     ns = args[1].intern
     state = JSON.parse(args[2], symbolize_names: true)
     set_state ns, state
-    jam_client.send("/state", client_id, ns, get_state_json(ns))
   end
   
   jam_server.add_method("/get-state") do |args|
     assert(args.length == 2)
     client_id = args[0]
     ns = args[1].to_sym
-    jam_client.send("/state", client_id, ns, get_state_json(ns))
+    send_state_json(client_id, ns)
   end
   
   jam_server.add_method("/ping") do |args|
     assert(args.length == 1)
+    drop_all_state
     client_id = args[0]
-    jam_client.send("/pong", client_id)
+    jam_client.send("/pong", JSON.dump([client_id]))
   end
   

@@ -17,6 +17,17 @@ type Message struct {
 	Params  Params
 }
 
+func (m *Message) Clone() *Message {
+	p := make(Params, len(m.Params))
+	for i,v := range m.Params {
+		p[i] = v
+	}
+	return &Message{
+		Address: m.Address,
+		Params: p,
+	}
+}
+
 var toServer = make(chan *Message, 10)
 var toClient = make(chan *Message, 10)
 
@@ -162,8 +173,17 @@ func oscHandler(oscMsg *osc.Message) error {
 			msg.Params = append(msg.Params, param)
 		}
 	}
-	toClient <- msg
-	log.Print("Forwarded to client: ", msg)
+	if msg.Params[0] == "*" {
+		log.Print("Broadcasted message: ", msg)
+		for key := range clients {
+			m := msg.Clone()
+			m.Params[0] = key
+			toClient <- m
+		}
+	} else {
+		log.Print("Forwarded to single client: ", msg)
+		toClient <- msg
+	}
 	return nil
 }
 
