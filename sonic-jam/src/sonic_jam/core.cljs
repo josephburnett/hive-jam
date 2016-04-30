@@ -12,52 +12,58 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defonce app-state (atom {:text "Hello world!"}))
+(defonce app-state (atom {:grids {:test {}}}))
 
-(defn handle-change [e owner]
-  (om/set-state! owner :state (.. e -target -value)))
-
-(defn ping [data owner]
+(defn cell-view [cursor _]
   (reify
-    om/IWillMount
-    (will-mount [_]
+    om/IRender
+    (render [_]
+      (print "rendering cell" cursor)
+      (dom/p nil
+             (str " " cursor)))))
+
+(defn track-view [cursor _]
+  (reify
+    om/IRender
+    (render [_]
+      (apply dom/ol nil
+              (om/build-all cell-view (get cursor "beats"))))))
+
+(defn grid-view [cursor _]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div nil
+               (dom/h2 nil (get cursor "id"))
+               (apply dom/ul nil
+                      (om/build-all track-view (get cursor "tracks")))))))
+
+(defn app-view [cursor _]
+  (reify
+    om/IInitState
+    (init-state [_]
       (go
         (let [{:keys [ws-channel error]} (<! (ws-ch "ws://127.0.0.1:4550/oscbridge"
                                                     {:format :json}))]
-          (om/set-state! owner :ws ws-channel)
-          (>! ws-channel {:Address "/get-state" :Params ["beat"]})
+          (>! ws-channel {:Address "/get-state" :Params ["root"]})
           (go-loop []
             (let [{:keys [message error] :as msg} (<! ws-channel)
                   address (get message "Address")
                   params (get message "Params")]
               (print "Got message:" message)
-              (when (and (= "/state" address)
-                         (= "beat" (first params)))
-                (om/set-state! owner :state (second params)))
+              (when (= "/state" address)
+                (let [grid (js->clj (js/JSON.parse (second params)))]
+                  (om/update! cursor [:grids (first params)] grid)))
               (when message
-                (recur)))))))
-    om/IInitState
-    (init-state [_] {:state "[]"})
+                (recur))))))
+      {})
     om/IRenderState
-    (render-state [this state]
-      (dom/div nil
-       (dom/button
-        #js {:onClick #(let [ping {:Address "/ping"}]
-                         (print "Sending message:" ping)
-                         (go (>! (:ws state) ping)))}
-	"Ping")
-       (dom/textarea
-        #js {:type "text" :ref "state" :value (:state state)
-             :onChange #(handle-change % owner)})
-       (dom/button
-        #js {:onClick #(let [update {:Address "/set-state" :Params ["beat" (:state state)]}]
-                         (print "Sending message:" update)
-                         (go (>! (:ws state) update)))}
-        "Update")))))
-
-(om/root ping app-state
+    (render-state [_ state]      
+      (apply dom/div nil
+             (om/build-all grid-view (vals (:grids cursor)))))))
+        
+(om/root app-view app-state
   {:target (. js/document (getElementById "app"))})
-
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
