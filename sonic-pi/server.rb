@@ -36,7 +36,7 @@ define :dispatch_grid do |grid, t|
       puts "[ERROR] missing type #{track}"
       next
     end
-    on = (bools *track[:beats])[i]
+    on = (bools *track[:beats].map{|x|x[0]})[i]
     if type == "grid" and on
       id = track[:id].to_sym
       if id.nil?
@@ -187,7 +187,6 @@ end
 
 jam_server.add_method("/ping") do |args|
   assert(args.length == 1)
-  drop_all_state
   client_id = args[0]
   jam_client.send("/pong", JSON.dump([client_id]))
 end

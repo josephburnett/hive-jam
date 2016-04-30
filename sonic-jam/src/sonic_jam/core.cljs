@@ -8,59 +8,68 @@
 
 (enable-console-print!)
 
-(println "Edits to this text should show up in your developer console.")
-
-;; define your app data so that it doesn't get over-written on reload
-
-(defonce app-state (atom {:grids {:test {}}}))
+(defonce app-state (atom {:grids {}}))
 
 (defn cell-view [cursor _]
   (reify
-    om/IRender
-    (render [_]
-      (print "rendering cell" cursor)
-      (dom/p nil
-             (str " " cursor)))))
+    om/IRenderState
+    (render-state [_ state]
+      (dom/td #js {:onClick #(do
+                               (om/update! cursor [(mod (inc (first cursor)) 2)])
+                               (go (>! (:sync-grid state) (:ns state))))}
+             (str " " (first cursor))))))
 
 (defn track-view [cursor _]
   (reify
-    om/IRender
-    (render [_]
-      (apply dom/ol nil
-              (om/build-all cell-view (get cursor "beats"))))))
+    om/IRenderState
+    (render-state [_ state]
+      (apply dom/tr nil
+              (om/build-all cell-view (get cursor "beats") {:state state})))))
 
 (defn grid-view [cursor _]
   (reify
-    om/IRender
-    (render [_]
-      (dom/div nil
-               (dom/h2 nil (get cursor "id"))
-               (apply dom/ul nil
-                      (om/build-all track-view (get cursor "tracks")))))))
+    om/IRenderState
+    (render-state [_ state]
+      (let [grid (second cursor)
+            ns (first cursor)]
+        (dom/div nil
+                 (dom/h2 nil (get grid "name"))
+                 (apply dom/table nil
+                        (om/build-all track-view (get grid "tracks")
+                                      {:state (assoc state :ns ns)})))))))
 
 (defn app-view [cursor _]
   (reify
     om/IInitState
     (init-state [_]
-      (go
-        (let [{:keys [ws-channel error]} (<! (ws-ch "ws://127.0.0.1:4550/oscbridge"
-                                                    {:format :json}))]
-          (>! ws-channel {:Address "/get-state" :Params ["root"]})
-          (go-loop []
-            (let [{:keys [message error] :as msg} (<! ws-channel)
-                  address (get message "Address")
-                  params (get message "Params")]
-              (print "Got message:" message)
-              (when (= "/state" address)
-                (let [grid (js->clj (js/JSON.parse (second params)))]
-                  (om/update! cursor [:grids (first params)] grid)))
-              (when message
-                (recur))))))
-      {})
+      (let [sync-channel (chan)]
+        (go
+          (let [{:keys [ws-channel error]} (<! (ws-ch "ws://127.0.0.1:4550/oscbridge"
+                                                      {:format :json}))]
+            (>! ws-channel {:Address "/get-state" :Params ["root"]})
+            (go-loop []
+              (let [ns (<! sync-channel)
+                    grid (get-in @cursor [:grids ns])
+                    update #js {:Address "/set-state" :Params #js [ns (js/JSON.stringify (clj->js grid))]}]
+                (print "Syncing grid: " ns)
+                (go (>! ws-channel update)))
+              (recur))
+            
+            (go-loop []
+              (let [{:keys [message error] :as msg} (<! ws-channel)
+                    address (get message "Address")
+                    params (get message "Params")]
+                (print "Got message:" message)
+                (when (= "/state" address)
+                  (let [grid (js->clj (js/JSON.parse (second params)))]
+                    (om/update! cursor [:grids (first params)] grid)))
+                (when message
+                  (recur))))))
+        {:sync-grid sync-channel}))
     om/IRenderState
     (render-state [_ state]      
       (apply dom/div nil
-             (om/build-all grid-view (vals (:grids cursor)))))))
+             (om/build-all grid-view (seq (:grids cursor)) {:state state})))))
         
 (om/root app-view app-state
   {:target (. js/document (getElementById "app"))})
