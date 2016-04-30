@@ -2,10 +2,10 @@ require 'thread'
 
 # TIME
 
-define :res do Rational('1/8') end
+define :res do Rational('1/32') end
 
 live_loop :main do
-  use_bpm 120
+  use_bpm 110
   wait res
   root = _state[:root]
   if root.nil?
@@ -64,10 +64,13 @@ define :dispatch do |track|
   end
   
   if type == "play"
-    play p, **params
+    n = track[:note]
+    if n.nil?
+      puts "[ERROR] no note for track #{track}"
+    end
+    play n, **params
     return
   end
-  
 end
 
 # STATE
