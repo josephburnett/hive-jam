@@ -5,6 +5,18 @@ drop_all_state
 set_state :root,
 {
   id: "guid",
+  bpc: "2",
+  tracks:
+  [
+    { beats: [1], type: "grid", id: "beat" },
+    { beats: [1, 1, 1, 0], type: "sample", sample: :ambi_piano, params: {rpitch: 0, amp: 2.0}}, #, fx: :distortion },
+    { beats: [0, 0, 0, 1], type: "sample", sample: :ambi_piano, params: {rpitch: -2, amp: 2.0}}, #, fx: :distortion },
+  ]
+}
+
+set_state :beat,
+{
+  id: "guid",
   bpc: "1/4",
   tracks:
   [
@@ -14,12 +26,3 @@ set_state :root,
     { beats: [0, 0, 0, 0, 0, 0, 0, 1], type: "play", note: 27, params: {amp: 10.0, release: 0.1, attack: 0.01, sustain: 0.8 }},
   ]
 }
-
-##| X = [0].cycle(7).to_a + [1]
-##| O = [0].cycle(8).to_a
-
-##| set_state :errie,
-##| [
-##|   { beats: X + X + X + O, sample: :ambi_piano, rpitch: 0, amp: 2.0, fx: :distortion },
-##|   { beats: O + O + O + X, sample: :ambi_piano, rpitch: -2, amp: 2.0, fx: :distortion },
-##| ]

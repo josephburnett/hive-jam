@@ -4,8 +4,12 @@ require 'thread'
 
 define :res do Rational('1/32') end
 
+define :verbosity do 1 end
+
 live_loop :main do
   use_bpm 110
+  use_cue_logging (verbosity > 1) ? true : false
+  use_debug (verbosity > 0) ? true : false
   wait res
   root = _state[:root]
   if root.nil?
@@ -13,27 +17,51 @@ live_loop :main do
     next
   end
   t = tick
-  bpc = Rational(root[:bpc])
-  tpc = bpc / res
-  boundary = t % tpc.ceil
-  i = (t / tpc).ceil
-  #puts "[DEBUG] t: #{t} bpc: #{bpc} tpc: #{tpc} boundary: #{boundary} i: #{i}"
-  if boundary != 0
-    next
-  end
-  root[:tracks].each do |track|
-    on = (bools *track[:beats])[i]
-    if on
-      dispatch track
-    end
-  end
+  dispatch_grid root, t
 end
 
 # DISPATCH
 
-define :dispatch do |track|
+define :dispatch_grid do |grid, t|
+  bpc = Rational(grid[:bpc])
+  tpc = bpc / res
+  boundary = t % tpc.ceil
+  i = (t / tpc).ceil
+  if verbosity > 2
+    puts "[DEBUG] t: #{t} bpc: #{bpc} tpc: #{tpc} boundary: #{boundary} i: #{i}"
+  end
+  grid[:tracks].each do |track|
+    type = track[:type]
+    if type.nil?
+      puts "[ERROR] missing type #{track}"
+      next
+    end
+    on = (bools *track[:beats])[i]
+    if type == "grid" and on
+      id = track[:id].to_sym
+      if id.nil?
+        puts "[ERROR] missing id #{track}"
+        next
+      end
+      sub_grid = _state[id]
+      if sub_grid.nil?
+        puts "[ERROR] missing subgrid #{track}"
+        next
+      end
+      dispatch_grid sub_grid, t
+    else
+      if boundary == 0 and on
+        dispatch_track track
+      end
+    end
+  end
+end
+
+define :dispatch_track do |track|
   
-  #puts "[DEBUG] dispatching track #{track}"
+  if verbosity > 2
+    puts "[DEBUG] dispatching track #{track}"
+  end
   
   type = track[:type]
   if type.nil?
