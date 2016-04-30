@@ -124,7 +124,7 @@ func websocketHandler(ws *websocket.Conn) {
 	log.Print("Connected client: " + clientId)
 	clients[clientId] = ws
 	for {
-		msgJson := make([]byte, 512)
+		msgJson := make([]byte, 2000)
 		n, err := ws.Read(msgJson)
 		if err != nil {
 			if err == io.EOF {
