@@ -16,43 +16,80 @@
     (render-state [_ state]
       (dom/td #js {:onClick #(do
                                (om/update! cursor [(mod (inc (first cursor)) 2)])
-                               (go (>! (:sync-grid state) (:ns state))))}
+                               (go (>! (:set-state-ch state) (:ns state))))}
              (str " " (first cursor))))))
 
-(defn track-view [cursor _]
-  (reify
-    om/IRenderState
-    (render-state [_ state]
-      (apply dom/tr nil
-              (om/build-all cell-view (get cursor "beats") {:state state})))))
+(declare grid-view)
 
-(defn grid-view [cursor _]
+(defn track-view [cursor owner]
   (reify
+    om/IInitState
+    (init-state [_]
+      {:track-expanded true})
+    om/IWillMount
+    (will-mount [_]
+      (when (= "grid" (get cursor "type"))
+        (go (>! (om/get-state owner :get-state-ch) (get cursor "id")))))
     om/IRenderState
     (render-state [_ state]
-      (let [grid (second cursor)
-            ns (first cursor)]
-        (dom/div nil
-                 (dom/h2 nil (get grid "name"))
-                 (apply dom/table nil
-                        (om/build-all track-view (get grid "tracks")
-                                      {:state (assoc state :ns ns)})))))))
+      (if-not (:track-expanded state)
+        (dom/tr nil (dom/td #js {:onClick #(om/set-state! owner :track-expanded true)} ">"))
+        (dom/tr nil
+                (dom/td #js {:onClick #(om/set-state! owner :track-expanded false)} "<")
+                (dom/td nil
+                 (dom/table nil
+                  (apply dom/tr nil
+                         (om/build-all cell-view (get cursor "beats") {:state state}))))
+                (dom/td nil
+                        (when (= "grid" (get cursor "type"))
+                          (let [id (get cursor "id")
+                                root (om/root-cursor app-state)
+                                grids (:grids root)
+                                sub-grid (get grids id)
+                                sub-state {:set-state-ch (:set-state-ch state)
+                                           :get-state-ch (:get-state-ch state)
+                                           :ns id}]
+                            (om/build grid-view sub-grid {:state sub-state})))))))))
+
+                          
+                            
+
+(defn grid-view [cursor owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:grid-expanded false})
+    om/IRenderState
+    (render-state [_ state]
+      (dom/div nil
+               (if-not (:grid-expanded state)
+                 (dom/div nil (dom/p #js {:onClick #(om/set-state! owner :grid-expanded true)} "[+]"))
+                 (dom/div nil (dom/p #js {:onClick #(om/set-state! owner :grid-expanded false)} "[-]")
+                          (apply dom/table nil
+                                 (om/build-all track-view (get cursor "tracks")
+                                               {:state state}))))))))
 
 (defn app-view [cursor _]
   (reify
     om/IInitState
     (init-state [_]
-      (let [sync-channel (chan)]
+      (let [set-state-ch (chan)
+            get-state-ch (chan)]
         (go
           (let [{:keys [ws-channel error]} (<! (ws-ch "ws://127.0.0.1:4550/oscbridge"
                                                       {:format :json}))]
             (>! ws-channel {:Address "/get-state" :Params ["root"]})
             (go-loop []
-              (let [ns (<! sync-channel)
+              (let [ns (<! set-state-ch)
                     grid (get-in @cursor [:grids ns])
                     json (js/JSON.stringify (clj->js grid))
                     update #js {:Address "/set-state" :Params #js [ns json]}]
                 (go (>! ws-channel update)))
+              (recur))
+            (go-loop []
+              (let [ns (<! get-state-ch)
+                    request #js {:Address "/get-state" :Params #js [ns]}]
+                (go (>! ws-channel request)))
               (recur))
             (go-loop []
               (let [{:keys [message error] :as msg} (<! ws-channel)
@@ -62,11 +99,15 @@
                     (om/update! cursor [:grids (first params)] grid)))
                 (when message
                   (recur))))))
-        {:sync-grid sync-channel}))
+        {:set-state-ch set-state-ch
+         :get-state-ch get-state-ch}))
     om/IRenderState
-    (render-state [_ state]      
-      (apply dom/div nil
-             (om/build-all grid-view (seq (:grids cursor)) {:state state})))))
+    (render-state [_ state]
+      (let [root (get (:grids cursor) "root")]
+        (if root
+          (dom/div nil
+                   (om/build grid-view root {:state (assoc state :ns "root")}))
+          (dom/div nil "loading..."))))))
         
 (om/root app-view app-state
   {:target (. js/document (getElementById "app"))})
