@@ -57,6 +57,20 @@
                                            :get-state-ch (:get-state-ch state)}]
                             (om/build grid-view id {:state sub-state})))))))))
 
+(defn play-builder []
+  {"beats" [[0] [0] [0] [0]] "type" "play" "note" 30})
+
+(defn row-builder [{:keys [cursor id]} _]
+  (reify
+    om/IRenderState
+    (render-state [_ state]
+      (dom/p #js {:onClick #(do
+                              (om/transact! cursor "tracks"
+                                            (fn [x] (conj x (play-builder))))
+                              (go (>! (get state :set-state-ch) id)))
+                  :style #js {:color "#999"}}
+             "{}"))))
+
 (defn grid-view [id owner]
   (reify
     om/IInitState
@@ -68,17 +82,20 @@
         (dom/div #js {:style #js {:borderLeft "solid 3px #ccc"
                                   :paddingLeft "10px"}}
                  (if-not (:grid-expanded state)
-                   (dom/div nil (dom/p #js {:onClick #(om/set-state! owner :grid-expanded true)
-                                            :style #js {:color "#999"}}
-                                       (str "[+] " id)))
-                   (dom/div nil (dom/p #js {:onClick #(om/set-state! owner :grid-expanded false)
-                                            :style #js {:color "#999"}}
-                                       (str "[-] " id))
+                   (dom/div nil 
+                            (dom/p #js {:onClick #(om/set-state! owner :grid-expanded true)
+                                        :style #js {:color "#999"}}
+                                   (str "[+] " id)))
+                   (dom/div nil 
+                            (dom/p #js {:onClick #(om/set-state! owner :grid-expanded false)
+                                        :style #js {:color "#999"}}
+                                   (str "[-] " id))
                             (apply dom/table nil
                                    (let [cursors (map #(hash-map :cursor %1 :id %2)
                                                       (get cursor "tracks")
                                                       (repeat id))]
-                                     (om/build-all track-view cursors {:state state}))))))))))
+                                     (om/build-all track-view cursors {:state state})))
+                            (om/build row-builder {:cursor cursor :id id} {:state state}))))))))
 
 (defn app-view [cursor _]
   (reify
