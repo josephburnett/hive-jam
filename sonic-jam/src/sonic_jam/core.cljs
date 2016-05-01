@@ -16,7 +16,9 @@
     (render-state [_ state]
       (dom/td #js {:onClick #(do
                                (om/update! cursor [(mod (inc (first cursor)) 2)])
-                               (go (>! (:set-state-ch state) (:ns state))))}
+                               (go (>! (:set-state-ch state) (:ns state))))
+                   :style #js {:width "20px"
+                               :fontSize "20px"}}
              (str " " (first cursor))))))
 
 (declare grid-view)
@@ -33,9 +35,11 @@
     om/IRenderState
     (render-state [_ state]
       (if-not (:track-expanded state)
-        (dom/tr nil (dom/td #js {:onClick #(om/set-state! owner :track-expanded true)} ">"))
+        (dom/tr nil (dom/td #js {:onClick #(om/set-state! owner :track-expanded true)
+                                 :style #js {:color "#999"}} ">"))
         (dom/tr nil
-                (dom/td #js {:onClick #(om/set-state! owner :track-expanded false)} "<")
+                (dom/td #js {:onClick #(om/set-state! owner :track-expanded false)
+                             :style #js {:color "#999"}} "<")
                 (dom/td nil
                  (dom/table nil
                   (apply dom/tr nil
@@ -61,10 +65,15 @@
       {:grid-expanded false})
     om/IRenderState
     (render-state [_ state]
-      (dom/div nil
+      (dom/div #js {:style #js {:borderLeft "solid 3px #ccc"
+                                :paddingLeft "10px"}}
                (if-not (:grid-expanded state)
-                 (dom/div nil (dom/p #js {:onClick #(om/set-state! owner :grid-expanded true)} "[+]"))
-                 (dom/div nil (dom/p #js {:onClick #(om/set-state! owner :grid-expanded false)} "[-]")
+                 (dom/div nil (dom/p #js {:onClick #(om/set-state! owner :grid-expanded true)
+                                          :style #js {:color "#999"}}
+                                     (str "[+] " (:ns state))))
+                 (dom/div nil (dom/p #js {:onClick #(om/set-state! owner :grid-expanded false)
+                                          :style #js {:color "#999"}}
+                                     (str "[-] " (:ns state)))
                           (apply dom/table nil
                                  (om/build-all track-view (get cursor "tracks")
                                                {:state state}))))))))
@@ -105,7 +114,7 @@
     (render-state [_ state]
       (let [root (get (:grids cursor) "root")]
         (if root
-          (dom/div nil
+          (dom/div #js {:style #js {:fontFamily "monospace"}}
                    (om/build grid-view root {:state (assoc state :ns "root")}))
           (dom/div nil "loading..."))))))
         
