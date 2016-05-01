@@ -162,11 +162,13 @@ func oscHandler(oscMsg *osc.Message) error {
 	for i := 0; i < oscMsg.CountArguments(); i++ {
 		paramsJson, err := oscMsg.ReadString()
 		if err != nil {
+			log.Print(err)
 			return err
 		}
 		params := &Params{}
 		err = json.Unmarshal([]byte(paramsJson), params)
 		if err != nil {
+			log.Print(err)
 			return err
 		}
 		for _, param := range *params {
@@ -191,6 +193,7 @@ func serveOSC() {
 	dispatcher := make(map[string]osc.Method)
 	dispatcher["/pong"] = oscHandler
 	dispatcher["/state"] = oscHandler
+	dispatcher["/samples"] = oscHandler
 	for {
 		err := oscServer.Serve(dispatcher)
 		if err != nil {

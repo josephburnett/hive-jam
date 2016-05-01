@@ -87,7 +87,9 @@
       (print "sample-builder")
       (dom/p #js {:style #js {:color "#999"}}
              (dom/span #js {:onClick #(om/set-state! grid-state :builder-fn track-builder)} "{-")
-             (dom/span nil " sample options ")
+             (dom/select #js {:onChange #(print "bonk")}
+                         (dom/option nil "0")
+                         (dom/option nil "1"))
              (dom/span nil "}")))))
 
 (defn type-builder [{:keys [cursor id grid-state]} _]
@@ -168,6 +170,7 @@
           (let [{:keys [ws-channel error]} (<! (ws-ch "ws://127.0.0.1:4550/oscbridge"
                                                       {:format :json}))]
             (>! ws-channel {:Address "/get-state" :Params ["root"]})
+            (>! ws-channel {:Address "/get-samples" :Params []})
             (go-loop []
               (let [ns (<! set-state-ch)
                     grid (get-in @cursor [:grids ns])
@@ -183,9 +186,13 @@
             (go-loop []
               (let [{:keys [message error] :as msg} (<! ws-channel)
                     params (get message "Params")]
-                (when (= "/state" (get message "Address"))
+                (cond 
+                  (= "/state" (get message "Address"))
                   (let [grid (js->clj (js/JSON.parse (second params)))]
-                    (om/update! cursor [:grids (first params)] grid)))
+                    (om/update! cursor [:grids (first params)] grid))
+                  (= "/samples" (get message "Address"))
+                  (let [samples (js->clj (js/JSON.parse (first params)))]
+                    (om/update! cursor :samples samples)))
                 (when message
                   (recur))))))
         {:set-state-ch set-state-ch
