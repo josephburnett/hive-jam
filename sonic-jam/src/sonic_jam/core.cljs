@@ -57,25 +57,59 @@
                                            :get-state-ch (:get-state-ch state)}]
                             (om/build grid-view id {:state sub-state})))))))))
 
-(defn play-builder []
-  {"beats" [[0] [0] [0] [0]] "type" "play" "note" 30})
+(declare track-builder)
 
-(defn row-builder [{:keys [cursor id]} _]
+(defn play-builder [{:keys [cursor id grid]} _]
   (reify
+    om/IRender
+    (render [_]
+      (dom/p #js {:style #js {:color "#999"}}
+             (dom/span #js {:onClick #(om/set-state! grid :builder track-builder)} "{")
+             (dom/span nil " play options ")
+             (dom/span #js {:onClick #(om/set-state! grid :builder track-builder)} "}")))))
+
+(defn synth-builder [{:keys [cursor id grid]} _]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/p #js {:style #js {:color "#999"}}
+             (dom/span #js {:onClick #(om/set-state! grid :builder track-builder)} "{")
+             (dom/span nil " synth options ")
+             (dom/span #js {:onClick #(om/set-state! grid :builder track-builder)} "}")))))
+
+(defn sample-builder [{:keys [cursor id grid]} _]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/p #js {:style #js {:color "#999"}}
+             (dom/span #js {:onClick #(om/set-state! grid :builder track-builder)} "{")
+             (dom/span nil " sample options ")
+             (dom/span #js {:onClick #(om/set-state! grid :builder track-builder)} "}")))))
+
+(defn track-builder [{:keys [cursor id grid]} owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:track-builder-expanded false})
     om/IRenderState
     (render-state [_ state]
-      (dom/p #js {:onClick #(do
-                              (om/transact! cursor "tracks"
-                                            (fn [x] (conj x (play-builder))))
-                              (go (>! (get state :set-state-ch) id)))
-                  :style #js {:color "#999"}}
-             "{}"))))
+      (if-not (:track-builder-expanded state)
+        (dom/p #js {:onClick #(om/set-state! owner :track-builder-expanded true)
+                    :style #js {:color "#999"}}
+               "{}")
+        (dom/p #js {:style #js {:color "#999"}}
+               (dom/span #js {:onClick #(om/set-state! owner :track-builder-expanded false)} "{")
+               (dom/span #js {:onClick #(om/set-state! grid :builder play-builder)} " play ")
+               (dom/span #js {:onClick #(om/set-state! grid :builder synth-builder)} " synth ")
+               (dom/span #js {:onClick #(om/set-state! grid :builder sample-builder)} " sample ")
+               (dom/span #js {:onClick #(om/set-state! owner :track-builder-expanded false)} "}"))))))
 
 (defn grid-view [id owner]
   (reify
     om/IInitState
     (init-state [_]
-      {:grid-expanded false})
+      {:grid-expanded false
+       :builder track-builder})
     om/IRenderState
     (render-state [_ state]
       (let [cursor (get (om/observe owner (grids)) id)]
@@ -95,7 +129,8 @@
                                                       (get cursor "tracks")
                                                       (repeat id))]
                                      (om/build-all track-view cursors {:state state})))
-                            (om/build row-builder {:cursor cursor :id id} {:state state}))))))))
+                            (om/build (:builder state) {:cursor cursor :id id :grid owner}
+                                      {:state state}))))))))
 
 (defn app-view [cursor _]
   (reify
