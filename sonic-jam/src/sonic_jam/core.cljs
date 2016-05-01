@@ -50,17 +50,14 @@
             (go-loop []
               (let [ns (<! sync-channel)
                     grid (get-in @cursor [:grids ns])
-                    update #js {:Address "/set-state" :Params #js [ns (js/JSON.stringify (clj->js grid))]}]
-                (print "Syncing grid: " ns)
+                    json (js/JSON.stringify (clj->js grid))
+                    update #js {:Address "/set-state" :Params #js [ns json]}]
                 (go (>! ws-channel update)))
               (recur))
-            
             (go-loop []
               (let [{:keys [message error] :as msg} (<! ws-channel)
-                    address (get message "Address")
                     params (get message "Params")]
-                (print "Got message:" message)
-                (when (= "/state" address)
+                (when (= "/state" (get message "Address"))
                   (let [grid (js->clj (js/JSON.parse (second params)))]
                     (om/update! cursor [:grids (first params)] grid)))
                 (when message
@@ -73,9 +70,3 @@
         
 (om/root app-view app-state
   {:target (. js/document (getElementById "app"))})
-
-(defn on-js-reload []
-  ;; optionally touch your app-state to force rerendering depending on
-  ;; your application
-  ;; (swap! app-state update-in [:__figwheel_counter] inc)
-)
