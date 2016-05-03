@@ -2,7 +2,7 @@ require 'thread'
 
 # TIME
 
-define :res do Rational('1/32') end
+define :res do Rational('1/8') end
 
 define :verbosity do 1 end
 
@@ -183,6 +183,19 @@ jam_server.add_method("/get-state") do |args|
   client_id = args[0]
   ns = args[1].to_sym
   send_state_json(client_id, ns)
+end
+
+jam_server.add_method("/get-samples") do |args|
+  assert(args.length == 1)
+  client_id = args[0]
+  while not done
+    b = a.take(10)
+    jam_client.send("/samples", JSON.dump([client_id, JSON.dump(Array.new(b))]))
+    a = a.drop(10)
+    if a.count == 0
+      done = true
+    end
+  end
 end
 
 jam_server.add_method("/ping") do |args|

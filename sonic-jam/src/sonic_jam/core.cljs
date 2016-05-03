@@ -8,7 +8,8 @@
 
 (enable-console-print!)
 
-(defonce app-state (atom {:grids {}}))
+(defonce app-state (atom {:grids {}
+                          :samples []}))
 
 (defn grids []
   (om/ref-cursor (:grids (om/root-cursor app-state))))
@@ -109,7 +110,7 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:grid-expanded true}) ;; false
+      {:grid-expanded false})
     om/IRenderState
     (render-state [_ state]
       (let [cursor (get (om/observe owner (grids)) id)]
@@ -162,10 +163,10 @@
                 (cond 
                   (= "/state" (get message "Address"))
                   (let [grid (js->clj (js/JSON.parse (second params)))]
-                    (om/update! cursor [:grids (first params)] grid))
+                    (om/transact! cursor :grids #(assoc % (first params) grid)))
                   (= "/samples" (get message "Address"))
                   (let [samples (js->clj (js/JSON.parse (first params)))]
-                    (om/update! cursor :samples samples)))
+                    (om/transact! cursor :samples #(into % samples))))
                 (when message
                   (recur))))))
         {:set-state-ch set-state-ch
