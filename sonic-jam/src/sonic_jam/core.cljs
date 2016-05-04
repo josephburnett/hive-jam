@@ -85,12 +85,11 @@
                                  (go (>! set-state-ch id)))
                       "grid" (let [track {"type" "grid"
                                           "id" (:text state)
-                                          "bpc" (:width state) ;; should be separate parameter
                                           "beats" (repeat (:width state) [0])}
                                    tracks (clj->js (conj cursor track))
                                    grid (clj->js {"name" (:text state)
                                                   "id" (:text state)
-                                                  "bpc" (:width state)
+                                                  "bpc" (:bpc state)
                                                   "tracks" []})]
                                (transition {:state :init})
                                (let [grids (om/observe owner (grids))]
@@ -112,13 +111,28 @@
                     (dom/span nil "}"))
           :type (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " ... "))
                    (dom/span #js {:onClick #(transition {:state :sample :type "sample"})} " sample ")
-                   (dom/span #js {:onClick #(transition {:state :grid :type "grid"})} " grid ")
+                   (dom/span #js {:onClick #(transition {:state :bpc :type "grid"})} " grid ")
                    (dom/span nil "}"))
           :sample (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " sample ... "))
                      (apply dom/select #js {:onChange #(transition {:state :commit :sample (-> % .-target .-value)})}
                             (map #(dom/option nil %) (om/observe owner (samples))))
                      (dom/span nil "}"))
-          :grid (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " grid ..."))
+          :bpc (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " grid ... "))
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1/32"})} " 1/32 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1/16"})} " 1/16 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1/8"})} " 1/8 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1/4"})} " 1/4 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1/2"})} " 1/2 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1"})} " 1 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "2"})} " 2 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "4"})} " 4 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "8"})} " 8 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "16"})} " 16 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "32"})} " 32 ")
+                  (dom/span #js {:onClick #(transition {:state :grid :bpc "64"})} " 64 ")
+                  (dom/span nil "}"))
+          :grid (p (dom/span #js {:onClick #(transition {:state :init})}
+                             (str "{- " (:width state) " (" (:bpc state) ") ... "))
                    (dom/input #js {:type "text" :value (:text state)
                                    :onChange #(handle-change % owner state)})
                    (dom/span #js {:onClick commit} " commit? ")
@@ -146,7 +160,7 @@
                    (dom/div nil 
                             (dom/p #js {:onClick #(om/set-state! owner :grid-expanded false)
                                         :style #js {:color "#999"}}
-                                   (str "[-] " id " (" (get cursor "bpc") " )"))
+                                   (str "[-] " id " (" (get cursor "bpc") ")"))
                             (apply dom/table nil
                                    (let [cursors (map #(hash-map :cursor %1 :id %2)
                                                       (get cursor "tracks")
