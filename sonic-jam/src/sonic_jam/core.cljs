@@ -99,7 +99,7 @@
                    (dom/span nil "}"))
           :sample (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " sample ... "))
                      (apply dom/select #js {:onChange #(transition {:state :commit :sample (-> % .-target .-value)})}
-                            (map #(dom/option nil %) (om/observe owner (samples)) id))
+                            (map #(dom/option nil %) (om/observe owner (samples))))
                      (dom/span nil "}"))
           :commit (p (dom/span #js {:onClick #(transition {:state :init})}
                                (str "{- " (:width state) " sample " (:sample state) " ... "))
