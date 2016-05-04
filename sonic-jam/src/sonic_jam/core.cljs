@@ -17,6 +17,9 @@
 (defn samples []
   (om/ref-cursor (:samples (om/root-cursor app-state))))
 
+(defn handle-change [e owner {:keys [text]}]
+  (om/set-state! owner :text (.. e -target -value)))
+
 (defn cell-view [{:keys [cursor id]} _]
   (reify
     om/IRenderState
@@ -80,6 +83,21 @@
                                  (transition {:state :init})
                                  (om/update! cursor tracks)
                                  (go (>! set-state-ch id)))
+                      "grid" (let [track {"type" "grid"
+                                          "id" (:text state)
+                                          "bpc" (:width state) ;; should be separate parameter
+                                          "beats" (repeat (:width state) [0])}
+                                   tracks (clj->js (conj cursor track))
+                                   grid (clj->js {"name" (:text state)
+                                                  "id" (:text state)
+                                                  "bpc" (:width state)
+                                                  "tracks" []})]
+                               (transition {:state :init})
+                               (let [grids (om/observe owner (grids))]
+                                 (om/transact! grids (fn [s] (assoc s (:text state) grid))))
+                               (om/update! cursor tracks)
+                               (go (>! set-state-ch id))
+                               (go (>! set-state-ch (:text state))))
                       :else (print "cannot commit"))]
         (condp = (:state state)
           :init (p (dom/span #js {:onClick #(transition {:state :width})} "{+}"))
@@ -94,13 +112,17 @@
                     (dom/span nil "}"))
           :type (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " ... "))
                    (dom/span #js {:onClick #(transition {:state :sample :type "sample"})} " sample ")
-                   (dom/span #js {:onClick #(print "bonk")} " play ")
-                   (dom/span #js {:onClick #(print "bonk")} " synth ")
+                   (dom/span #js {:onClick #(transition {:state :grid :type "grid"})} " grid ")
                    (dom/span nil "}"))
           :sample (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " sample ... "))
                      (apply dom/select #js {:onChange #(transition {:state :commit :sample (-> % .-target .-value)})}
                             (map #(dom/option nil %) (om/observe owner (samples))))
                      (dom/span nil "}"))
+          :grid (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " grid ..."))
+                   (dom/input #js {:type "text" :value (:text state)
+                                   :onChange #(handle-change % owner state)})
+                   (dom/span #js {:onClick commit} " commit? ")
+                   (dom/span nil "}"))
           :commit (p (dom/span #js {:onClick #(transition {:state :init})}
                                (str "{- " (:width state) " sample " (:sample state) " ... "))
                      (dom/span #js {:onClick commit} " commit? ")
@@ -120,11 +142,11 @@
                    (dom/div nil 
                             (dom/p #js {:onClick #(om/set-state! owner :grid-expanded true)
                                         :style #js {:color "#999"}}
-                                   (str "[+] " id)))
+                                   (str "[+] " id " (" (get cursor "bpc") ")")))
                    (dom/div nil 
                             (dom/p #js {:onClick #(om/set-state! owner :grid-expanded false)
                                         :style #js {:color "#999"}}
-                                   (str "[-] " id))
+                                   (str "[-] " id " (" (get cursor "bpc") " )"))
                             (apply dom/table nil
                                    (let [cursors (map #(hash-map :cursor %1 :id %2)
                                                       (get cursor "tracks")
