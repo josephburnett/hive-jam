@@ -188,6 +188,8 @@ end
 jam_server.add_method("/get-samples") do |args|
   assert(args.length == 1)
   client_id = args[0]
+  a = all_sample_names
+  done = false
   while not done
     b = a.take(10)
     jam_client.send("/samples", JSON.dump([client_id, JSON.dump(Array.new(b))]))
