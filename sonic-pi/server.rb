@@ -58,11 +58,11 @@ define :dispatch_grid do |grid, t|
 end
 
 define :dispatch_track do |track|
-  
+
   if verbosity > 2
     puts "[DEBUG] dispatching track #{track}"
   end
-  
+
   type = track[:type]
   if type.nil?
     puts "[ERROR] no type for track #{track}"
@@ -73,7 +73,7 @@ define :dispatch_track do |track|
     puts "[ERROR] no params for track #{track}"
     return
   end
-  
+
   if type == "sample"
     s = track[:sample].to_sym
     if s.nil?
@@ -90,7 +90,7 @@ define :dispatch_track do |track|
     end
     return
   end
-  
+
   if type == "play"
     n = track[:note]
     if n.nil?
@@ -108,7 +108,14 @@ define :mutex do
 end
 
 defonce :_state do
-  {}
+  {
+    root: {
+      name: "root",
+      id: "root",
+      bpc: 1,
+      tracks: [],
+    }
+  }
 end
 
 define :set_state do |ns, state|
