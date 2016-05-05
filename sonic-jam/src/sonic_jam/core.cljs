@@ -33,37 +33,26 @@
 
 (declare grid-view)
 
-(defn track-view [{:keys [cursor id]} owner]
+(defn track-editor [{:keys [cursor id index set-state-ch]} owner]
   (reify
     om/IInitState
     (init-state [_]
-      {:track-expanded true})
-    om/IWillMount
-    (will-mount [_]
-      (when (= "grid" (get cursor "type"))
-        (go (>! (om/get-state owner :get-state-ch) (get cursor "id")))))
+      {:state :init})
     om/IRenderState
     (render-state [_ state]
-      (if-not (:track-expanded state)
-        (dom/tr nil (dom/td #js {:onClick #(om/set-state! owner :track-expanded true)
-                                 :style #js {:color "#999"}} ">"))
-        (dom/tr nil
-                (dom/td #js {:onClick #(om/set-state! owner :track-expanded false)
-                             :style #js {:color "#999"}} "<")
-                (dom/td nil
-                 (dom/table nil
-                  (apply dom/tr nil
-                         (let [cursors (map #(hash-map :cursor %1 :id %2)
-                                            (get cursor "beats")
-                                            (repeat id))]
-                           (om/build-all cell-view cursors {:state state})))))
-                (dom/td #js {:style #js {:color "#999" :paddingRight "10px"}} "{~}")
-                (dom/td nil
-                        (when (= "grid" (get cursor "type"))
-                          (let [id (get cursor "id")
-                                sub-state {:set-state-ch (:set-state-ch state)
-                                           :get-state-ch (:get-state-ch state)}]
-                            (om/build grid-view id {:state sub-state})))))))))
+      (let [delete #(let [grid (get (om/observe owner (grids)) id)]
+                      (om/transact! (get grid "tracks") 
+                                    (fn [s] 
+                                      (print index)
+                                      (vec (concat (subvec s 0 index)
+                                                   (subvec s (+ 1 index) (count s)))))))]
+        (condp = (:state state)
+          :init (dom/p #js {:style #js {:color "#999"}}
+                       (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{~}"))
+          :open (dom/p #js {:style #js {:color "#999"}}
+                       (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))} "{-")
+                       (dom/span #js {:onClick delete} " delete? ")
+                       (dom/span nil "}")))))))
 
 (defn track-builder [{:keys [cursor id set-state-ch]} owner]
   (reify
@@ -142,6 +131,39 @@
                      (dom/span #js {:onClick commit} " commit? ")
                      (dom/span nil "}")))))))
 
+(defn track-view [{:keys [cursor id index]} owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:track-expanded true})
+    om/IWillMount
+    (will-mount [_]
+      (when (= "grid" (get cursor "type"))
+        (go (>! (om/get-state owner :get-state-ch) (get cursor "id")))))
+    om/IRenderState
+    (render-state [_ state]
+      (if-not (:track-expanded state)
+        (dom/tr nil (dom/td #js {:onClick #(om/set-state! owner :track-expanded true)
+                                 :style #js {:color "#999"}} ">"))
+        (dom/tr nil
+                (dom/td #js {:onClick #(om/set-state! owner :track-expanded false)
+                             :style #js {:color "#999"}} "<")
+                (dom/td nil
+                 (dom/table nil
+                  (apply dom/tr nil
+                         (let [cursors (map #(hash-map :cursor %1 :id %2)
+                                            (get cursor "beats")
+                                            (repeat id))]
+                           (om/build-all cell-view cursors {:state state})))))
+                (dom/td #js {:style #js {:color "#999" :paddingRight "10px"}}
+                        (om/build track-editor {:id id :index index}))
+                (dom/td nil
+                        (when (= "grid" (get cursor "type"))
+                          (let [id (get cursor "id")
+                                sub-state {:set-state-ch (:set-state-ch state)
+                                           :get-state-ch (:get-state-ch state)}]
+                            (om/build grid-view id {:state sub-state})))))))))
+
 (defn grid-view [id owner]
   (reify
     om/IInitState
@@ -162,9 +184,10 @@
                                         :style #js {:color "#999"}}
                                    (str "[-] " id " (" (get cursor "bpc") ")"))
                             (apply dom/table nil
-                                   (let [cursors (map #(hash-map :cursor %1 :id %2)
+                                   (let [cursors (map #(hash-map :cursor %1 :id %2 :index %3)
                                                       (get cursor "tracks")
-                                                      (repeat id))]
+                                                      (repeat id)
+                                                      (range))]
                                      (om/build-all track-view cursors {:state state})))
                             (om/build track-builder {:cursor (get cursor "tracks")
                                                      :id id
