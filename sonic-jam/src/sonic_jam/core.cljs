@@ -3,7 +3,7 @@
                    [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [cljs.core.async :refer [chan <! >!]]
+            [cljs.core.async :refer [chan put! <! >!]]
             [chord.client :refer [ws-ch]]))
 
 (enable-console-print!)
@@ -33,26 +33,20 @@
 
 (declare grid-view)
 
-(defn track-editor [{:keys [cursor id index set-state-ch]} owner]
+(defn track-editor [{:keys [cursor id delete-ch]} owner]
   (reify
     om/IInitState
     (init-state [_]
       {:state :init})
     om/IRenderState
-    (render-state [_ state]
-      (let [delete #(let [grid (get (om/observe owner (grids)) id)]
-                      (om/transact! (get grid "tracks") 
-                                    (fn [s] 
-                                      (print index)
-                                      (vec (concat (subvec s 0 index)
-                                                   (subvec s (+ 1 index) (count s)))))))]
-        (condp = (:state state)
-          :init (dom/p #js {:style #js {:color "#999"}}
-                       (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{~}"))
-          :open (dom/p #js {:style #js {:color "#999"}}
-                       (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))} "{-")
-                       (dom/span #js {:onClick delete} " delete? ")
-                       (dom/span nil "}")))))))
+    (render-state [this state]
+      (condp = (:state state)
+        :init (dom/p #js {:style #js {:color "#999"}}
+                     (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{~}"))
+        :open (dom/p #js {:style #js {:color "#999"}}
+                     (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))} "{-")
+                     (dom/span #js {:onClick #(go (>! delete-ch cursor))} " delete? ")
+                     (dom/span nil "}"))))))
 
 (defn track-builder [{:keys [cursor id set-state-ch]} owner]
   (reify
@@ -128,7 +122,7 @@
                      (dom/span #js {:onClick commit} " commit? ")
                      (dom/span nil "}")))))))
 
-(defn track-view [{:keys [cursor id index]} owner]
+(defn track-view [{:keys [cursor id delete-ch]} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -153,7 +147,7 @@
                                             (repeat id))]
                            (om/build-all cell-view cursors {:state state})))))
                 (dom/td #js {:style #js {:color "#999" :paddingRight "10px"}}
-                        (om/build track-editor {:id id :index index}))
+                        (om/build track-editor {:cursor cursor :id id :delete-ch delete-ch}))
                 (dom/td nil
                         (when (= "grid" (get cursor "type"))
                           (let [id (get cursor "id")
@@ -165,7 +159,19 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:grid-expanded false})
+      (let [delete-ch (chan)]
+        {:grid-expanded false
+         :delete-ch delete-ch}))
+    om/IWillMount
+    (will-mount [this]
+      (let [delete-ch (:delete-ch (om/get-state owner))
+            set-state-ch (:set-state-ch (om/get-state owner))]
+        (go-loop []
+          (let [track (<! delete-ch)
+                cursor (get-in (om/observe owner (grids)) [id "tracks"])]
+            (om/update! cursor (vec (remove (partial = track) cursor)))
+            (put! set-state-ch id)
+            (recur)))))
     om/IRenderState
     (render-state [_ state]
       (let [cursor (get (om/observe owner (grids)) id)]
@@ -181,10 +187,10 @@
                                         :style #js {:color "#999"}}
                                    (str "[-] " id " (" (get cursor "bpc") ")"))
                             (apply dom/table nil
-                                   (let [cursors (map #(hash-map :cursor %1 :id %2 :index %3)
+                                   (let [cursors (map #(hash-map :cursor %1 :id %2 :delete-ch %3)
                                                       (get cursor "tracks")
                                                       (repeat id)
-                                                      (range))]
+                                                      (repeat (:delete-ch state)))]
                                      (om/build-all track-view cursors {:state state})))
                             (om/build track-builder {:cursor (get cursor "tracks")
                                                      :id id
