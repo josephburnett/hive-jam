@@ -33,6 +33,37 @@
 
 (declare grid-view)
 
+(defn param-editor [{:keys [cursor id set-state-ch]} owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:state :init})
+    om/IRenderState
+    (render-state [this state]
+      (condp = (:state state)
+        :init (dom/table nil
+                         (apply dom/tbody nil
+                                (map (fn [k v] (dom/tr nil
+                                                       (dom/td nil k)
+                                                       (dom/td #js {:onClick #(do
+                                                                                (print "bonk")
+                                                                                (om/update-state! owner
+                                                                                                  (fn [s] (merge s {:state :editing
+                                                                                                                    :text v
+                                                                                                                    :field k}))))} v)))
+                                     (keys cursor)
+                                     (vals cursor))))
+        :editing (dom/table nil
+                            (apply dom/tbody nil
+                                   (map (fn [k v] (dom/tr nil
+                                                          (dom/td nil k)
+                                                          (dom/td nil
+                                                                  (dom/input #js {:type "text" :value (:text state)
+                                                                                  :onChange #(handle-change % owner state)})))))
+                                   (keys cursor)
+                                   (vals cursor)))))))
+                         
+
 (defn track-editor [{:keys [cursor id delete-ch]} owner]
   (reify
     om/IInitState
@@ -45,6 +76,8 @@
                      (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{~}"))
         :open (dom/p #js {:style #js {:color "#999"}}
                      (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))} "{-")
+                     (dom/span nil
+                               (om/build param-editor {:cursor (get cursor "params") :id id :set-state-ch nil}))
                      (dom/span #js {:onClick #(go (>! delete-ch cursor))} " delete? ")
                      (dom/span nil "}"))))))
 
