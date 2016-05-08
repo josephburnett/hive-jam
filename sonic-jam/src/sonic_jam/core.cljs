@@ -40,31 +40,42 @@
       {:state :init})
     om/IRenderState
     (render-state [this state]
-      (condp = (:state state)
-        :init (dom/table nil
-                         (apply dom/tbody nil
-                                (map (fn [k v] (dom/tr nil
-                                                       (dom/td nil k)
-                                                       (dom/td #js {:onClick #(do
-                                                                                (print "bonk")
-                                                                                (om/update-state! owner
+      (let [commit #(do
+                      (om/update-state! owner (fn [s] (merge s {:state :init})))
+                      (om/transact! cursor (fn [c] (assoc c (:field state) (:text state))))
+                      (go (>! set-state-ch id)))]
+        (condp = (:state state)
+          :init (dom/table nil
+                           (apply dom/tbody nil
+                                  (map (fn [k v] (dom/tr nil
+                                                         (dom/td nil k)
+                                                         (dom/td #js {:onClick #(om/update-state! owner
                                                                                                   (fn [s] (merge s {:state :editing
                                                                                                                     :text v
-                                                                                                                    :field k}))))} v)))
-                                     (keys cursor)
-                                     (vals cursor))))
-        :editing (dom/table nil
-                            (apply dom/tbody nil
-                                   (map (fn [k v] (dom/tr nil
-                                                          (dom/td nil k)
-                                                          (dom/td nil
-                                                                  (dom/input #js {:type "text" :value (:text state)
-                                                                                  :onChange #(handle-change % owner state)})))))
-                                   (keys cursor)
-                                   (vals cursor)))))))
+                                                                                                                    :field k})))}
+                                                                 v)))
+                                       (keys cursor)
+                                       (vals cursor))))
+          :editing (dom/table nil
+                              (apply dom/tbody nil
+                                     (map (fn [k v] (dom/tr nil
+                                                            (dom/td nil k)
+                                                            (if (= k (:field state))
+                                                              (dom/td nil
+                                                                      (dom/input #js {:type "text" :value (:text state)
+                                                                                      :onChange #(handle-change % owner state)
+                                                                                      :onKeyDown #(when (= 13 (.-which %))
+                                                                                                    (commit))}))
+                                                              (dom/td #js {:onClick #(om/update-state! owner
+                                                                                                       (fn [s] (merge s {:state :editing
+                                                                                                                         :text v
+                                                                                                                         :field k})))}
+                                                                      v))))
+                                          (keys cursor)
+                                          (vals cursor)))))))))
                          
 
-(defn track-editor [{:keys [cursor id delete-ch]} owner]
+(defn track-editor [{:keys [cursor id delete-ch set-state-ch]} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -77,7 +88,7 @@
         :open (dom/p #js {:style #js {:color "#999"}}
                      (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))} "{-")
                      (dom/span nil
-                               (om/build param-editor {:cursor (get cursor "params") :id id :set-state-ch nil}))
+                               (om/build param-editor {:cursor (get cursor "params") :id id :set-state-ch set-state-ch}))
                      (dom/span #js {:onClick #(go (>! delete-ch cursor))} " delete? ")
                      (dom/span nil "}"))))))
 
@@ -180,7 +191,8 @@
                                             (repeat id))]
                            (om/build-all cell-view cursors {:state state})))))
                 (dom/td #js {:style #js {:color "#999" :paddingRight "10px"}}
-                        (om/build track-editor {:cursor cursor :id id :delete-ch delete-ch}))
+                        (om/build track-editor {:cursor cursor :id id :delete-ch delete-ch
+                                                :set-state-ch (:set-state-ch state)}))
                 (dom/td nil
                         (when (= "grid" (get cursor "type"))
                           (let [id (get cursor "id")
