@@ -140,7 +140,8 @@
                      (condp = (get cursor "type")
                        "sample" (dom/span nil (str "sample: " (get cursor "sample")))
                        "play" (dom/span nil (str "note: " (get cursor "note")))
-                       "grid" (dom/span nil nil))
+                       "grid" (dom/span nil nil)
+                       (print "Unable to show open type: " (get cursor "type") " This is a bug."))
                      (dom/span nil
                                (om/build param-editor {:cursor (get cursor "params") :id id :set-state-ch set-state-ch}))
                      (dom/span #js {:onClick #(go (>! delete-ch cursor))} " delete? ")
@@ -186,7 +187,7 @@
                                (transition {:state :init})
                                (om/update! cursor tracks)
                                (go (>! set-state-ch id)))
-                      :else (print "cannot commit"))]
+                      (print "Cannot commit."))]
         (condp = (:state state)
           :init (p (dom/span #js {:onClick #(transition {:state :width})} "{+}"))
           :type (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " ... "))
