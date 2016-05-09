@@ -206,6 +206,7 @@
           :sample (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " sample ... "))
                      (apply dom/select #js {:value (:sample state)
                                             :onChange #(handle-change % owner state :sample)
+                                            :onClick #(handle-change % owner state :sample)
                                             :onKeyDown #(when (= 13 (.-which %))
                                                           (commit))}
                             (map #(dom/option nil %) (om/observe owner (samples))))
