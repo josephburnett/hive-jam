@@ -136,7 +136,11 @@
         :init (dom/p #js {:style #js {:color "#999"}}
                      (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{~}"))
         :open (dom/p #js {:style #js {:color "#999"}}
-                     (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))} "{-")
+                     (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))} "{- ")
+                     (condp = (get cursor "type")
+                       "sample" (dom/span nil (str "sample: " (get cursor "sample")))
+                       "play" (dom/span nil (str "note: " (get cursor "note")))
+                       "grid" (dom/span nil nil))
                      (dom/span nil
                                (om/build param-editor {:cursor (get cursor "params") :id id :set-state-ch set-state-ch}))
                      (dom/span #js {:onClick #(go (>! delete-ch cursor))} " delete? ")
@@ -174,11 +178,20 @@
                                (om/update! cursor tracks)
                                (go (>! set-state-ch id))
                                (go (>! set-state-ch (:text state))))
+                      "play" (let [track {"type" "play"
+                                          "note" (int (:text state))
+                                          "beats" (repeat (:width state) [0])
+                                          "params" {}}
+                                   tracks (clj->js (conj cursor track))]
+                               (transition {:state :init})
+                               (om/update! cursor tracks)
+                               (go (>! set-state-ch id)))
                       :else (print "cannot commit"))]
         (condp = (:state state)
           :init (p (dom/span #js {:onClick #(transition {:state :width})} "{+}"))
           :type (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " ... "))
                    (dom/span #js {:onClick #(transition {:state :sample :type "sample"})} " sample ")
+                   (dom/span #js {:onClick #(transition {:state :note :type "play"})} " note ")
                    (dom/span #js {:onClick #(transition {:state :bpc :type "grid"})} " grid ")
                    (dom/span nil "}"))
           :width (p (dom/span #js {:onClick #(transition {:state :init})} "{-")
@@ -190,7 +203,10 @@
                     (dom/span #js {:onClick #(transition {:state :type :width 8})} " 8 ")
                     (dom/span nil "}"))
           :sample (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " sample ... "))
-                     (apply dom/select #js {:onChange #(transition {:state :commit :sample (-> % .-target .-value)})}
+                     (apply dom/select #js {:value (:sample state)
+                                            :onChange #(handle-change % owner state :sample)
+                                            :onKeyDown #(when (= 13 (.-which %))
+                                                          (commit))}
                             (map #(dom/option nil %) (om/observe owner (samples))))
                      (dom/span nil "}"))
           :bpc (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " grid ... "))
@@ -211,10 +227,12 @@
                                    :onChange #(handle-change % owner state :text)})
                    (dom/span #js {:onClick commit} " commit? ")
                    (dom/span nil "}"))
-          :commit (p (dom/span #js {:onClick #(transition {:state :init})}
-                               (str "{- " (:width state) " sample " (:sample state) " ... "))
-                     (dom/span #js {:onClick commit} " commit? ")
-                     (dom/span nil "}")))))))
+          :note (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " note ... "))
+                   (dom/input #js {:type "text" :value (:text state)
+                                   :onChange #(handle-change % owner state :text)
+                                   :onKeyDown #(when (= 13 (.-which %))
+                                                 (commit))})
+                   (dom/span nil "}")))))))
 
 (defn track-view [{:keys [cursor id delete-ch]} owner]
   (reify
