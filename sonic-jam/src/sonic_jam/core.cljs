@@ -299,12 +299,13 @@
                             (dom/p #js {:onClick #(om/set-state! owner :grid-expanded false)
                                         :style #js {:color "#999"}}
                                    (str "[-] " id " (" (get cursor "bpc") ")"))
-                            (apply dom/table nil
-                                   (let [cursors (map #(hash-map :cursor %1 :id %2 :delete-ch %3)
-                                                      (get cursor "tracks")
-                                                      (repeat id)
-                                                      (repeat (:delete-ch state)))]
-                                     (om/build-all track-view cursors {:state state})))
+                            (dom/table nil
+                                       (apply dom/tbody nil
+                                              (let [cursors (map #(hash-map :cursor %1 :id %2 :delete-ch %3)
+                                                                 (get cursor "tracks")
+                                                                 (repeat id)
+                                                                 (repeat (:delete-ch state)))]
+                                                (om/build-all track-view cursors {:state state}))))
                             (om/build track-builder {:cursor (get cursor "tracks")
                                                      :id id
                                                      :set-state-ch (:set-state-ch state)}))))))))
