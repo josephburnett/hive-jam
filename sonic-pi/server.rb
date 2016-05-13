@@ -7,7 +7,7 @@ define :res do Rational('1/8') end
 define :verbosity do 1 end
 
 live_loop :main do
-  use_bpm 110
+  use_bpm 150
   use_cue_logging (verbosity > 1) ? true : false
   use_debug (verbosity > 0) ? true : false
   wait res
@@ -97,6 +97,16 @@ define :dispatch_track do |track|
       puts "[ERROR] no note for track #{track}"
     end
     play n, **params
+    return
+  end
+
+  if type == "synth"
+    s = track[:synth].to_sym
+    if s.nil?
+      puts "[ERROR] no synth for track #{track}"
+      return
+    end
+    synth s, **params
     return
   end
 end
@@ -200,6 +210,21 @@ jam_server.add_method("/get-samples") do |args|
   while not done
     b = a.take(10)
     jam_client.send("/samples", JSON.dump([client_id, JSON.dump(Array.new(b))]))
+    a = a.drop(10)
+    if a.count == 0
+      done = true
+    end
+  end
+end
+
+jam_server.add_method("/get-synths") do |args|
+  assert(args.length == 1)
+  client_id = args[0]
+  a = synth_names
+  done = false
+  while not done
+    b = a.take(10)
+    jam_client.send("/synths", JSON.dump([client_id, JSON.dump(Array.new(b))]))
     a = a.drop(10)
     if a.count == 0
       done = true

@@ -9,13 +9,17 @@
 (enable-console-print!)
 
 (defonce app-state (atom {:grids {}
-                          :samples []}))
+                          :samples []
+                          :synths []}))
 
 (defn grids []
   (om/ref-cursor (:grids (om/root-cursor app-state))))
 
 (defn samples []
   (om/ref-cursor (:samples (om/root-cursor app-state))))
+
+(defn synths []
+  (om/ref-cursor (:synths (om/root-cursor app-state))))
 
 (defn handle-change [e owner state key]
   (om/set-state! owner key (.. e -target -value)))
@@ -165,6 +169,14 @@
                                  (transition {:state :init})
                                  (om/update! cursor tracks)
                                  (go (>! set-state-ch id)))
+                      "synth" (let [track {"type" (:type state)
+                                           "beats" (repeat (:width state) [0])
+                                           "synth" (:synth state)
+                                           "params" {}}
+                                    tracks (clj->js (conj cursor track))]
+                                (transition {:state :init})
+                                (om/update! cursor tracks)
+                                (go (>! set-state-ch id)))
                       "grid" (let [track {"type" "grid"
                                           "id" (:text state)
                                           "beats" (repeat (:width state) [0])}
@@ -193,6 +205,7 @@
           :type (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " ... "))
                    (dom/span #js {:onClick #(transition {:state :sample :type "sample"})} " sample ")
                    (dom/span #js {:onClick #(transition {:state :note :type "play"})} " note ")
+                   (dom/span #js {:onClick #(transition {:state :synth :type "synth"})} " synth ")
                    (dom/span #js {:onClick #(transition {:state :bpc :type "grid"})} " grid ")
                    (dom/span nil "}"))
           :width (p (dom/span #js {:onClick #(transition {:state :init})} "{-")
@@ -234,7 +247,16 @@
                                    :onChange #(handle-change % owner state :text)
                                    :onKeyDown #(when (= 13 (.-which %))
                                                  (commit))})
-                   (dom/span nil "}")))))))
+                   (dom/span nil "}"))
+          :synth (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " synth ... "))
+                     (apply dom/select #js {:value (:synth state)
+                                            :onChange #(handle-change % owner state :synth)
+                                            :onClick #(handle-change % owner state :synth)
+                                            :onKeyDown #(when (= 13 (.-which %))
+                                                          (commit))}
+                            (map #(dom/option nil %) (om/observe owner (synths))))
+                     (dom/span nil "}")))))))
+
 
 (defn track-view [{:keys [cursor id delete-ch]} owner]
   (reify
@@ -323,6 +345,7 @@
                                                       {:format :json}))]
             (>! ws-channel {:Address "/get-state" :Params ["root"]})
             (>! ws-channel {:Address "/get-samples" :Params []})
+            (>! ws-channel {:Address "/get-synths" :Params []})
             (go-loop []
               (let [ns (<! set-state-ch)
                     grid (get-in @cursor [:grids ns])
@@ -344,7 +367,10 @@
                     (om/transact! cursor :grids #(assoc % (first params) grid)))
                   (= "/samples" (get message "Address"))
                   (let [samples (js->clj (js/JSON.parse (first params)))]
-                    (om/transact! cursor :samples #(into % samples))))
+                    (om/transact! cursor :samples #(into % samples)))
+                  (= "/synths" (get message "Address"))
+                  (let [synths (js->clj (js/JSON.parse (first params)))]
+                    (om/transact! cursor :synths #(into % synths))))
                 (when message
                   (recur))))))
         {:set-state-ch set-state-ch

@@ -194,6 +194,7 @@ func serveOSC() {
 	dispatcher["/pong"] = oscHandler
 	dispatcher["/state"] = oscHandler
 	dispatcher["/samples"] = oscHandler
+	dispatcher["/synths"] = oscHandler
 	for {
 		err := oscServer.Serve(dispatcher)
 		if err != nil {
