@@ -136,6 +136,7 @@
       {:state :init})
     om/IRenderState
     (render-state [this state]
+      (print cursor)
       (condp = (:state state)
         :init (dom/p #js {:style #js {:color "#999"}}
                      (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{~}"))
@@ -179,7 +180,8 @@
                                 (go (>! set-state-ch id)))
                       "grid" (let [track {"type" "grid"
                                           "id" (:text state)
-                                          "beats" (repeat (:width state) [0])}
+                                          "beats" (repeat (:width state) [0])
+                                          "params" {}}
                                    tracks (clj->js (conj cursor track))
                                    grid (clj->js {"name" (:text state)
                                                   "id" (:text state)

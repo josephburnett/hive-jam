@@ -17,12 +17,12 @@ live_loop :main do
     next
   end
   t = tick
-  dispatch_grid root, t
+  dispatch_grid root, t, {}
 end
 
 # DISPATCH
 
-define :dispatch_grid do |grid, t|
+define :dispatch_grid do |grid, t, inherited_params|
   bpc = Rational(grid[:bpc])
   tpc = bpc / res
   boundary = t % tpc.ceil
@@ -37,6 +37,12 @@ define :dispatch_grid do |grid, t|
       next
     end
     on = (bools *track[:beats].map{|x|x[0]})[i]
+    params = track[:params]
+    if params.nil?
+      puts "[ERROR] missing params #{track}"
+      next
+    end
+    params = inherited_params.merge(params)
     if type == "grid" and on
       id = track[:id].to_sym
       if id.nil?
@@ -48,16 +54,16 @@ define :dispatch_grid do |grid, t|
         puts "[ERROR] missing subgrid #{track}"
         next
       end
-      dispatch_grid sub_grid, t
+      dispatch_grid sub_grid, t, params
     else
       if boundary == 0 and on
-        dispatch_track track
+        dispatch_track track, params
       end
     end
   end
 end
 
-define :dispatch_track do |track|
+define :dispatch_track do |track, inherited_params|
 
   if verbosity > 2
     puts "[DEBUG] dispatching track #{track}"
@@ -66,11 +72,6 @@ define :dispatch_track do |track|
   type = track[:type]
   if type.nil?
     puts "[ERROR] no type for track #{track}"
-    return
-  end
-  params = track[:params]
-  if params.nil?
-    puts "[ERROR] no params for track #{track}"
     return
   end
 
@@ -83,10 +84,10 @@ define :dispatch_track do |track|
     fx = track[:fx]
     if not fx.nil?
       with_fx fx.to_sym do
-        sample s, **params
+        sample s, **inherited_params
       end
     else
-      sample s, **params
+      sample s, **inherited_params
     end
     return
   end
@@ -96,7 +97,7 @@ define :dispatch_track do |track|
     if n.nil?
       puts "[ERROR] no note for track #{track}"
     end
-    play n, **params
+    play n, **inherited_params
     return
   end
 
@@ -106,7 +107,7 @@ define :dispatch_track do |track|
       puts "[ERROR] no synth for track #{track}"
       return
     end
-    synth s, **params
+    synth s, **inherited_params
     return
   end
 end
