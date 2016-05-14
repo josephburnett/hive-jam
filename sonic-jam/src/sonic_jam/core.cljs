@@ -152,6 +152,51 @@
                      (dom/span #js {:onClick #(go (>! delete-ch cursor))} " delete? ")
                      (dom/span nil "}"))))))
 
+(defn new-id []
+  (let [letters (map char (range 97 123))]
+    (apply str (take 32 (repeatedly #(rand-nth letters))))))
+
+(def style-grey #js {:style #js {:color "#999"}})
+
+(defn track-builder2 [{:keys [cursor id set-state-ch]} owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:state :init})
+    om/IRenderState
+    (render-state [_ state]
+      (let [transition #(om/update-state! owner (fn [s] (merge s %)))
+            set-width #(om/transact!
+                        cursor (fn [s]
+                                 (clj->js
+                                  (conj s {"type" "none"
+                                           "id" (new-id)
+                                           "beats" (repeat % [0])
+                                           "params" {}}))))
+            width-selection (fn [w s]
+                              (dom/span #js {:onClick
+                                             #(do
+                                                (set-width w)
+                                                (transition {:state :init})
+                                                (go (>! set-state-ch id)))} s))]
+        (condp = (:state state)
+          :init (let [width (apply max (map #(count (get % "beats")) cursor))]
+                  (if (= 0 (count cursor))
+                    (dom/p style-grey
+                           (dom/span #js {:onClick #(transition {:state :open})} "{+}"))
+                    (dom/p style-grey
+                           (dom/span #js {:onClick #(transition {:state :open})} "{+")
+                           (width-selection width (str " " width))
+                           (dom/span nil "}"))))
+          :open (dom/p style-grey
+                       (dom/span #js {:onClick #(transition {:state :init})} "{- ")
+                       (width-selection 1 " 1")
+                       (width-selection 2 " 2")
+                       (width-selection 4 " 4")
+                       (width-selection 8 " 8")
+                       (width-selection 16 " 16")
+                       (dom/span nil "}")))))))
+
 (defn track-builder [{:keys [cursor id set-state-ch]} owner]
   (reify
     om/IInitState
@@ -259,7 +304,6 @@
                             (map #(dom/option nil %) (om/observe owner (synths))))
                      (dom/span nil "}")))))))
 
-
 (defn track-view [{:keys [cursor id delete-ch]} owner]
   (reify
     om/IInitState
@@ -332,9 +376,9 @@
                                                                  (repeat id)
                                                                  (repeat (:delete-ch state)))]
                                                 (om/build-all track-view cursors {:state state}))))
-                            (om/build track-builder {:cursor (get cursor "tracks")
-                                                     :id id
-                                                     :set-state-ch (:set-state-ch state)}))))))))
+                            (om/build track-builder2 {:cursor (get cursor "tracks")
+                                                      :id id
+                                                      :set-state-ch (:set-state-ch state)}))))))))
 
 (defn app-view [cursor _]
   (reify
