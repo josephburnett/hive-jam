@@ -158,7 +158,7 @@
 
 (def style-grey #js {:style #js {:color "#999"}})
 
-(defn track-builder2 [{:keys [cursor id set-state-ch]} owner]
+(defn track-builder [{:keys [cursor id set-state-ch]} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -196,113 +196,6 @@
                        (width-selection 8 " 8")
                        (width-selection 16 " 16")
                        (dom/span nil "}")))))))
-
-(defn track-builder [{:keys [cursor id set-state-ch]} owner]
-  (reify
-    om/IInitState
-    (init-state [_]
-      {:state :init})
-    om/IRenderState
-    (render-state [_ state]
-      (let [p (partial dom/p #js {:style #js {:color "#999"}})
-            transition #(om/update-state! owner (fn [s] (merge s %)))
-            commit #(condp = (:type state)
-                      "sample" (let [track {"type" (:type state)
-                                            "beats" (repeat (:width state) [0])
-                                            "sample" (:sample state)
-                                            "params" {}}
-                                     tracks (clj->js (conj cursor track))]
-                                 (transition {:state :init})
-                                 (om/update! cursor tracks)
-                                 (go (>! set-state-ch id)))
-                      "synth" (let [track {"type" (:type state)
-                                           "beats" (repeat (:width state) [0])
-                                           "synth" (:synth state)
-                                           "params" {}}
-                                    tracks (clj->js (conj cursor track))]
-                                (transition {:state :init})
-                                (om/update! cursor tracks)
-                                (go (>! set-state-ch id)))
-                      "grid" (let [track {"type" "grid"
-                                          "id" (:text state)
-                                          "beats" (repeat (:width state) [0])
-                                          "params" {}}
-                                   tracks (clj->js (conj cursor track))
-                                   grid (clj->js {"name" (:text state)
-                                                  "id" (:text state)
-                                                  "bpc" (:bpc state)
-                                                  "tracks" []})]
-                               (transition {:state :init})
-                               (let [grids (om/observe owner (grids))]
-                                 (om/transact! grids (fn [s] (assoc s (:text state) grid))))
-                               (om/update! cursor tracks)
-                               (go (>! set-state-ch id))
-                               (go (>! set-state-ch (:text state))))
-                      "play" (let [track {"type" "play"
-                                          "note" (int (:text state))
-                                          "beats" (repeat (:width state) [0])
-                                          "params" {}}
-                                   tracks (clj->js (conj cursor track))]
-                               (transition {:state :init})
-                               (om/update! cursor tracks)
-                               (go (>! set-state-ch id)))
-                      (print "Cannot commit."))]
-        (condp = (:state state)
-          :init (p (dom/span #js {:onClick #(transition {:state :width})} "{+}"))
-          :type (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " ... "))
-                   (dom/span #js {:onClick #(transition {:state :sample :type "sample"})} " sample ")
-                   (dom/span #js {:onClick #(transition {:state :note :type "play"})} " note ")
-                   (dom/span #js {:onClick #(transition {:state :synth :type "synth"})} " synth ")
-                   (dom/span #js {:onClick #(transition {:state :bpc :type "grid"})} " grid ")
-                   (dom/span nil "}"))
-          :width (p (dom/span #js {:onClick #(transition {:state :init})} "{-")
-                    (dom/span #js {:onClick #(transition {:state :type :width 1})} " 1 ")
-                    (dom/span #js {:onClick #(transition {:state :type :width 2})} " 2 ")
-                    (dom/span #js {:onClick #(transition {:state :type :width 3})} " 3 ")
-                    (dom/span #js {:onClick #(transition {:state :type :width 4})} " 4 ")
-                    (dom/span #js {:onClick #(transition {:state :type :width 6})} " 6 ")
-                    (dom/span #js {:onClick #(transition {:state :type :width 8})} " 8 ")
-                    (dom/span nil "}"))
-          :sample (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " sample ... "))
-                     (apply dom/select #js {:value (:sample state)
-                                            :onChange #(handle-change % owner state :sample)
-                                            :onClick #(handle-change % owner state :sample)
-                                            :onKeyDown #(when (= 13 (.-which %))
-                                                          (commit))}
-                            (map #(dom/option nil %) (om/observe owner (samples))))
-                     (dom/span nil "}"))
-          :bpc (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " grid ... "))
-                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1/32"})} " 1/32 ")
-                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1/16"})} " 1/16 ")
-                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1/8"})} " 1/8 ")
-                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1/4"})} " 1/4 ")
-                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1/2"})} " 1/2 ")
-                  (dom/span #js {:onClick #(transition {:state :grid :bpc "1"})} " 1 ")
-                  (dom/span #js {:onClick #(transition {:state :grid :bpc "2"})} " 2 ")
-                  (dom/span #js {:onClick #(transition {:state :grid :bpc "4"})} " 4 ")
-                  (dom/span #js {:onClick #(transition {:state :grid :bpc "6"})} " 6 ")
-                  (dom/span #js {:onClick #(transition {:state :grid :bpc "8"})} " 8 ")
-                  (dom/span nil "}"))
-          :grid (p (dom/span #js {:onClick #(transition {:state :init})}
-                             (str "{- " (:width state) " (" (:bpc state) ") ... "))
-                   (dom/input #js {:type "text" :value (:text state)
-                                   :onChange #(handle-change % owner state :text)})
-                   (dom/span #js {:onClick commit} " commit? ")
-                   (dom/span nil "}"))
-          :note (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " note ... "))
-                   (dom/input #js {:type "text" :value (:text state)
-                                   :onChange #(handle-change % owner state :text)
-                                   :onKeyDown #(when (= 13 (.-which %))
-                                                 (commit))})
-                   (dom/span nil "}"))
-          :synth (p (dom/span #js {:onClick #(transition {:state :init})} (str "{- " (:width state) " synth ... "))
-                     (apply dom/select #js {:value (:synth state)
-                                            :onChange #(handle-change % owner state :synth)
-                                            :onClick #(handle-change % owner state :synth)
-                                            :onKeyDown #(when (= 13 (.-which %))
-                                                          (commit))}
-                            (map #(dom/option nil %) (om/observe owner (synths))))
-                     (dom/span nil "}")))))))
 
 (defn track-view [{:keys [cursor id delete-ch]} owner]
   (reify
@@ -376,9 +269,9 @@
                                                                  (repeat id)
                                                                  (repeat (:delete-ch state)))]
                                                 (om/build-all track-view cursors {:state state}))))
-                            (om/build track-builder2 {:cursor (get cursor "tracks")
-                                                      :id id
-                                                      :set-state-ch (:set-state-ch state)}))))))))
+                            (om/build track-builder {:cursor (get cursor "tracks")
+                                                     :id id
+                                                     :set-state-ch (:set-state-ch state)}))))))))
 
 (defn app-view [cursor _]
   (reify
