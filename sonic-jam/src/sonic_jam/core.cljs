@@ -35,6 +35,12 @@
                                :fontSize "20px"}}
              (str " " (first cursor))))))
 
+(def style-grey #js {:style #js {:color "#999"}})
+
+(defn new-id []
+  (let [letters (map char (range 97 123))]
+    (apply str (take 32 (repeatedly #(rand-nth letters))))))
+
 (declare grid-view)
 
 (defn param-editor [{:keys [cursor id set-state-ch]} owner]
@@ -129,34 +135,80 @@
                                                                                    (commit))})))])))))))
                          
 
-(defn track-editor [{:keys [cursor id delete-ch set-state-ch]} owner]
+(defn type-editor [{:keys [cursor id set-state-ch]} owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:state :init
+       :type (get cursor "type")})
+    om/IRenderState
+    (render-state [this state]
+      (condp = (:state state)
+        :init (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :selecting})))}
+                        (get cursor "type"))
+        :selecting (dom/select #js {:value (:type state)
+                                    :onChange #(handle-change % owner state :type)
+                                    :onClick #(handle-change % owner state :type)
+                                    :onKeyDown #(when (= 13 (.-which %))
+                                                  (om/update-state! owner (fn [s] (merge s {:state :init})))
+                                                  (om/transact! cursor (fn [c] (assoc c "type" (:type state))))
+                                                  (when-not (contains? cursor "id")
+                                                    (let [grid {"name" "sub-grid"
+                                                                "id" (new-id)
+                                                                "bpc" 1
+                                                                "tracks" []}]
+                                                      (om/transact! (om/observe owner (grids))
+                                                                    (fn [c] (assoc c (get grid "id") grid)))
+                                                      (go (>! set-state-ch (get grid "id")))))
+                                                  (go (>! set-state-ch id)))}
+                               (dom/option nil "synth")
+                               (dom/option nil "sample")
+                               (dom/option nil "play")
+                               (dom/option nil "grid"))))))
+
+(defn track-editor [{:keys [cursor id delete-ch set-state-ch] :as input} owner]
   (reify
     om/IInitState
     (init-state [_]
       {:state :init})
     om/IRenderState
     (render-state [this state]
-      (print cursor)
-      (condp = (:state state)
-        :init (dom/p #js {:style #js {:color "#999"}}
-                     (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{~}"))
-        :open (dom/p #js {:style #js {:color "#999"}}
-                     (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))} "{- ")
-                     (condp = (get cursor "type")
-                       "sample" (dom/span nil (str "sample: " (get cursor "sample")))
-                       "play" (dom/span nil (str "note: " (get cursor "note")))
-                       "grid" (dom/span nil nil)
-                       (print "Unable to show open type: " (get cursor "type") " This is a bug."))
-                     (dom/span nil
-                               (om/build param-editor {:cursor (get cursor "params") :id id :set-state-ch set-state-ch}))
-                     (dom/span #js {:onClick #(go (>! delete-ch cursor))} " delete? ")
-                     (dom/span nil "}"))))))
-
-(defn new-id []
-  (let [letters (map char (range 97 123))]
-    (apply str (take 32 (repeatedly #(rand-nth letters))))))
-
-(def style-grey #js {:style #js {:color "#999"}})
+      (let [closer #js {:onClick  #(om/update-state! owner (fn [s] (merge s {:state :init})))}]
+        (condp = (:state state)
+          :init (dom/p style-grey
+                       (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{..}"))
+          :open (dom/p style-grey
+                       (dom/table nil
+                                  (dom/tbody nil
+                                             (dom/tr nil
+                                                     (dom/td closer "{")
+                                                     (dom/td nil nil)
+                                                     (dom/td nil nil))
+                                             (dom/tr nil
+                                                     (dom/td nil nil)
+                                                     (dom/td nil "type:")
+                                                     (dom/td nil (om/build type-editor input)))
+                                             (condp = (get cursor "type")
+                                               "synth"
+                                               (dom/tr nil
+                                                       (dom/td nil nil)
+                                                       (dom/td nil "synth:")
+                                                       (dom/td nil (get cursor "synth")))
+                                               "sample"
+                                               (dom/tr nil
+                                                       (dom/td nil nil)
+                                                       (dom/td nil "sample:")
+                                                       (dom/td nil (get cursor "sample")))
+                                               "play"
+                                               (dom/tr nil
+                                                       (dom/td nil nil)
+                                                       (dom/td nil "note:")
+                                                       (dom/td nil (get cursor "note")))
+                                               (print "Unable to show open type. This is a bug."))
+                                             (dom/tr nil
+                                                     (dom/td closer "}")
+                                                     (dom/td nil nil)
+                                                     (dom/td nil))))))))))
 
 (defn track-builder [{:keys [cursor id set-state-ch]} owner]
   (reify

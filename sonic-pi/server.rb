@@ -76,7 +76,11 @@ define :dispatch_track do |track, inherited_params|
   end
 
   if type == "sample"
-    s = track[:sample].to_sym
+    sample = track[:sample]
+    if sample.nil?
+      return
+    end
+    s = sample.to_sym
     if s.nil?
       puts "[ERROR] no sample for track #{track}"
       return
@@ -95,14 +99,18 @@ define :dispatch_track do |track, inherited_params|
   if type == "play"
     n = track[:note]
     if n.nil?
-      puts "[ERROR] no note for track #{track}"
+      return
     end
     play n, **inherited_params
     return
   end
 
   if type == "synth"
-    s = track[:synth].to_sym
+    synth = track[:synth]
+    if synth.nil?
+      return
+    end
+    s = synth.to_sym
     if s.nil?
       puts "[ERROR] no synth for track #{track}"
       return
