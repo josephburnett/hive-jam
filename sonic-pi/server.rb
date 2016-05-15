@@ -22,7 +22,7 @@ end
 
 # DISPATCH
 
-define :dispatch_grid do |grid, t, inherited_params|
+define :dispatch_grid do |grid, t, inherited_params, inherited_type=nil, inherited_type_value=nil|
   bpc = Rational(grid[:bpc])
   tpc = bpc / res
   boundary = t % tpc.ceil
@@ -37,33 +37,37 @@ define :dispatch_grid do |grid, t, inherited_params|
       next
     end
     on = (bools *track[:beats].map{|x|x[0]})[i]
-    params = track[:params]
-    if params.nil?
-      puts "[ERROR] missing params #{track}"
-      next
-    end
-    params = inherited_params.merge(params)
-    if type == "grid" and on
+    if type == "grid"
+      if not on
+        next
+      end
+      grid_type = grid[:'grid-type']
       id = track[:id].to_sym
-      if id.nil?
-        puts "[ERROR] missing id #{track}"
-        next
-      end
       sub_grid = _state[id]
-      if sub_grid.nil?
-        puts "[ERROR] missing subgrid #{track}"
-        next
+      if grid_type = "synth"
+        params = track[:'synth-params']
+        params = inherited_params.merge(params)
+        grid_synth = track[:'grid-synth']
+        dispatch_grid sub_grid, t, params, grid_type, grid_synth
+      elsif grid_type = "sample"
+        params = track[:'sample-params']
+        params = inherited_params.merge(params)
+        grid_sample = track[:'grid-sample']
+        dispatch_grid sub_grid, t, params, grid_type, grid_sample
+      else
+        dispatch_grid sub_grid, t, inherted_params
       end
-      dispatch_grid sub_grid, t, params
     else
+      params = track[:params]
+      params = inherited_params.merge(params)
       if boundary == 0 and on
-        dispatch_track track, params
+        dispatch_track track, params, inherited_type, inherited_type_value
       end
     end
   end
 end
 
-define :dispatch_track do |track, inherited_params|
+define :dispatch_track do |track, inherited_params, inherited_type=nil, inherited_type_value=nil|
 
   if verbosity > 2
     puts "[DEBUG] dispatching track #{track}"
@@ -75,10 +79,17 @@ define :dispatch_track do |track, inherited_params|
     return
   end
 
+  if type == "none" and inherited_type
+    type = inherited_type
+  end
+
   if type == "sample"
     sample = track[:sample]
     if sample.nil?
-      return
+      if not inherited_type_value
+        return
+      end
+      sample = inherited_type_value
     end
     s = sample.to_sym
     if s.nil?
@@ -108,7 +119,10 @@ define :dispatch_track do |track, inherited_params|
   if type == "synth"
     synth = track[:synth]
     if synth.nil?
-      return
+      if not inherited_type_value
+        return
+      end
+      synth = inherited_type_value
     end
     s = synth.to_sym
     if s.nil?

@@ -10,10 +10,14 @@
 
 (defonce app-state (atom {:grids {}
                           :samples []
-                          :synths []}))
+                          :synths []
+                          :grid-types ["synth" "sample"]}))
 
 (defn grids []
   (om/ref-cursor (:grids (om/root-cursor app-state))))
+
+(defn grid-types []
+  (om/ref-cursor (:grid-types (om/root-cursor app-state))))
 
 (defn samples []
   (om/ref-cursor (:samples (om/root-cursor app-state))))
@@ -43,148 +47,157 @@
 
 (declare grid-view)
 
-(defn param-editor [{:keys [cursor id set-state-ch]} owner]
-  (let [cursor (get cursor "params")]
+(defn param-editor-builder [key]
+  (fn [{:keys [cursor id set-state-ch]} owner]
     (reify
       om/IInitState
       (init-state [_]
         {:state :init})
       om/IRenderState
       (render-state [this state]
-        (let [commit #(do
-                        (om/update-state! owner (fn [s] (merge s {:state :open})))
-                        (om/transact! cursor (fn [c] (assoc c (:field state) (:text state))))
-                        (go (>! set-state-ch id)))
-              closer #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))}
-              canceller #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))}]
-          (condp = (:state state)
-            :init (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{..}")
-            :open (dom/table nil
-                             (apply dom/tbody nil
-                                    (concat
-                                     [(dom/tr nil
-                                              (dom/td closer "{")
-                                              (dom/td nil nil)
-                                              (dom/td nil nil))]
-                                     (map (fn [k v] (dom/tr nil
-                                                            (dom/td nil nil)
-                                                            (dom/td nil (str k ":"))
-                                                            (dom/td #js {:onClick #(om/update-state! owner
-                                                                                                     (fn [s] (merge s {:state :editing
-                                                                                                                       :text v
-                                                                                                                       :field k})))}
-                                                                    v)))
-                                          (keys cursor)
-                                          (vals cursor))
-                                     [(dom/tr nil
-                                              (dom/td nil nil)
-                                              (dom/td #js {:onClick #(om/update-state! owner
-                                                                                       (fn [s] (merge s {:state :adding-field
-                                                                                                         :text nil
-                                                                                                         :field ""})))}
-                                                      "[+]")
-                                              (dom/td nil nil))
-                                      (dom/tr nil
-                                              (dom/td closer "}")
-                                              (dom/td nil nil)
-                                              (dom/td nil nil))])))
-            :editing (dom/table nil
-                                (apply dom/tbody nil
+        (let [cursor (get cursor key)]
+          (let [commit #(do
+                          (om/update-state! owner (fn [s] (merge s {:state :open})))
+                          (om/transact! cursor (fn [c] (assoc c (:field state) (:text state))))
+                          (go (>! set-state-ch id)))
+                closer #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))}
+                canceller #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))}]
+            (condp = (:state state)
+              :init (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{..}")
+              :open (dom/table nil
+                               (apply dom/tbody nil
+                                      (concat
+                                       [(dom/tr nil
+                                                (dom/td closer "{")
+                                                (dom/td nil nil)
+                                                (dom/td nil nil))]
+                                       (map (fn [k v] (dom/tr nil
+                                                              (dom/td nil nil)
+                                                              (dom/td nil (str k ":"))
+                                                              (dom/td #js {:onClick #(om/update-state! owner
+                                                                                                       (fn [s] (merge s {:state :editing
+                                                                                                                         :text v
+                                                                                                                         :field k})))}
+                                                                      v)))
+                                            (keys cursor)
+                                            (vals cursor))
+                                       [(dom/tr nil
+                                                (dom/td nil nil)
+                                                (dom/td #js {:onClick #(om/update-state! owner
+                                                                                         (fn [s] (merge s {:state :adding-field
+                                                                                                           :text nil
+                                                                                                           :field ""})))}
+                                                        "[+]")
+                                                (dom/td nil nil))
+                                        (dom/tr nil
+                                                (dom/td closer "}")
+                                                (dom/td nil nil)
+                                                (dom/td nil nil))])))
+              :editing (dom/table nil
+                                  (apply dom/tbody nil
+                                         (concat
+                                          [(dom/tr closer
+                                                   (dom/td closer "{")
+                                                   (dom/td nil nil)
+                                                   (dom/td nil nil))]
+                                          (map (fn [k v] (dom/tr nil
+                                                                 (dom/td nil (str k ":"))
+                                                                 (if (= k (:field state))
+                                                                   (dom/td nil
+                                                                           (dom/input #js {:type "text" :value (:text state)
+                                                                                           :onChange #(handle-change % owner state :text)
+                                                                                           :onKeyDown #(when (= 13 (.-which %))
+                                                                                                         (commit))}))
+                                                                   (dom/td #js {:onClick #(om/update-state! owner
+                                                                                                            (fn [s] (merge s {:state :editing
+                                                                                                                              :text v
+                                                                                                                              :field k})))}
+                                                                           v))))
+                                               (keys cursor)
+                                               (vals cursor))
+                                          [(dom/tr nil
+                                                   (dom/td nil nil)
+                                                   (dom/td #js {:onClick #(om/update-state! owner
+                                                                                            (fn [s] (merge s {:state :adding-field
+                                                                                                              :text nil
+                                                                                                              :field ""})))}
+                                                           "[+]")
+                                                   (dom/td nil nil))
+                                           (dom/tr nil
+                                                   (dom/td closer "}")
+                                                   (dom/td nil nil)
+                                                   (dom/td nil nil))])))
+              :adding-field (dom/table nil
                                        (concat
-                                        [(dom/tr closer
+                                        [(dom/tr nil
                                                  (dom/td closer "{")
                                                  (dom/td nil nil)
                                                  (dom/td nil nil))]
                                         (map (fn [k v] (dom/tr nil
+                                                               (dom/td nil nil)
                                                                (dom/td nil (str k ":"))
-                                                               (if (= k (:field state))
-                                                                 (dom/td nil
-                                                                         (dom/input #js {:type "text" :value (:text state)
-                                                                                         :onChange #(handle-change % owner state :text)
-                                                                                         :onKeyDown #(when (= 13 (.-which %))
-                                                                                                       (commit))}))
-                                                                 (dom/td #js {:onClick #(om/update-state! owner
-                                                                                                          (fn [s] (merge s {:state :editing
-                                                                                                                            :text v
-                                                                                                                            :field k})))}
-                                                                         v))))
+                                                               (dom/td #js {:onClick #(om/update-state! owner
+                                                                                                        (fn [s] (merge s {:state :editing
+                                                                                                                          :text v
+                                                                                                                          :field k})))}
+                                                                       v)))
                                              (keys cursor)
                                              (vals cursor))
                                         [(dom/tr nil
                                                  (dom/td nil nil)
-                                                 (dom/td #js {:onClick #(om/update-state! owner
-                                                                                          (fn [s] (merge s {:state :adding-field
-                                                                                                            :text nil
-                                                                                                            :field ""})))}
-                                                         "[+]")
-                                                 (dom/td nil nil))
+                                                 (dom/td nil
+                                                         (dom/span canceller "[- ")
+                                                         (dom/input #js {:type "text" :value (:field state)
+                                                                         :onChange #(handle-change % owner state :field)
+                                                                         :onKeyDown #(when (= 13 (.-which %))
+                                                                                       (om/update-state! owner
+                                                                                                         (fn [s] (merge {:state :adding-value
+                                                                                                                         :field (:field state)}))))}))
+                                                 (dom/td nil " ]"))
                                          (dom/tr nil
                                                  (dom/td closer "}")
                                                  (dom/td nil nil)
-                                                 (dom/td nil nil))])))
-            :adding-field (dom/table nil
-                                     (concat
-                                      [(dom/tr nil
-                                               (dom/td closer "{")
-                                               (dom/td nil nil)
-                                               (dom/td nil nil))]
-                                      (map (fn [k v] (dom/tr nil
-                                                             (dom/td nil nil)
-                                                             (dom/td nil (str k ":"))
-                                                             (dom/td #js {:onClick #(om/update-state! owner
-                                                                                                      (fn [s] (merge s {:state :editing
-                                                                                                                        :text v
-                                                                                                                        :field k})))}
-                                                                     v)))
-                                           (keys cursor)
-                                           (vals cursor))
-                                       [(dom/tr nil
-                                                (dom/td nil nil)
-                                                (dom/td nil
-                                                        (dom/span canceller "[- ")
-                                                        (dom/input #js {:type "text" :value (:field state)
-                                                                        :onChange #(handle-change % owner state :field)
-                                                                        :onKeyDown #(when (= 13 (.-which %))
-                                                                                      (om/update-state! owner
-                                                                                                        (fn [s] (merge {:state :adding-value
-                                                                                                                        :field (:field state)}))))}))
-                                                (dom/td nil " ]"))
-                                        (dom/tr nil
-                                                (dom/td closer "}")
-                                                (dom/td nil nil)
-                                                (dom/td nil nil))]))
-            :adding-value (dom/table nil
-                                     (concat
-                                      [(dom/tr nil
-                                               (dom/td closer "}")
-                                               (dom/td nil nil)
-                                               (dom/td nil nil))]
-                                      (map (fn [k v] (dom/tr nil
-                                                             (dom/td nil nil)
-                                                             (dom/td nil (str k ":"))
-                                                             (dom/td #js {:onClick #(om/update-state! owner
-                                                                                                      (fn [s] (merge s {:state :editing
-                                                                                                                        :text v
-                                                                                                                        :field k})))}
-                                                                     v)))
-                                           (keys cursor)
-                                           (vals cursor))
-                                      [(dom/tr nil
-                                               (dom/td nil nil)
-                                               (dom/td nil
-                                                       (dom/span canceller "[- ")
-                                                       (dom/span nil (str (:field state) ":")))
-                                               (dom/td nil
-                                                       (dom/input #js {:type "text" :value (:text state)
-                                                                       :onChange #(handle-change % owner state :text)
-                                                                       :onKeyDown #(when (= 13 (.-which %))
-                                                                                     (commit))})
-                                                       (dom/span nil " ]")))
-                                       (dom/tr nil
-                                               (dom/td closer "}")
-                                               (dom/td nil nil)
-                                               (dom/td nil nil))]))))))))
-                         
+                                                 (dom/td nil nil))]))
+              :adding-value (dom/table nil
+                                       (concat
+                                        [(dom/tr nil
+                                                 (dom/td closer "}")
+                                                 (dom/td nil nil)
+                                                 (dom/td nil nil))]
+                                        (map (fn [k v] (dom/tr nil
+                                                               (dom/td nil nil)
+                                                               (dom/td nil (str k ":"))
+                                                               (dom/td #js {:onClick #(om/update-state! owner
+                                                                                                        (fn [s] (merge s {:state :editing
+                                                                                                                          :text v
+                                                                                                                          :field k})))}
+                                                                       v)))
+                                             (keys cursor)
+                                             (vals cursor))
+                                        [(dom/tr nil
+                                                 (dom/td nil nil)
+                                                 (dom/td nil
+                                                         (dom/span canceller "[- ")
+                                                         (dom/span nil (str (:field state) ":")))
+                                                 (dom/td nil
+                                                         (dom/input #js {:type "text" :value (:text state)
+                                                                         :onChange #(handle-change % owner state :text)
+                                                                         :onKeyDown #(when (= 13 (.-which %))
+                                                                                       (commit))})
+                                                         (dom/span nil " ]")))
+                                         (dom/tr nil
+                                                 (dom/td closer "}")
+                                                 (dom/td nil nil)
+                                                 (dom/td nil nil))])))))))))
+
+(def param-editor
+  (param-editor-builder "params"))
+
+(def synth-param-editor
+  (param-editor-builder "synth-params"))
+
+(def sample-param-editor
+  (param-editor-builder "sample-params"))
 
 (defn type-editor [{:keys [cursor id set-state-ch]} owner]
   (reify
@@ -201,19 +214,23 @@
                                     :onChange #(handle-change % owner state :type)
                                     :onClick #(handle-change % owner state :type)
                                     :onKeyDown #(when (= 13 (.-which %))
-                                                  (let [grid-id (new-id)]
-                                                    (om/update-state! owner (fn [s] (merge s {:state :immutable})))
-                                                    (om/transact! cursor (fn [c] (assoc c
-                                                                                        "type" (:type state)
-                                                                                        "id" grid-id)))
-                                                    (let [grid {"name" "sub-grid"
+                                                  (om/update-state! owner (fn [s] (merge s {:state :immutable})))
+                                                  (if-not (= "grid" (:type state))
+                                                    (om/transact! cursor (fn [c] (assoc c "type" (:type state))))
+                                                    (let [grid-id (new-id)
+                                                          grid {"name" "sub-grid"
                                                                 "id" grid-id
                                                                 "bpc" 1
                                                                 "tracks" []}]
+                                                      (om/transact! cursor (fn [c] (assoc c
+                                                                                          "type" (:type state)
+                                                                                          "synth-params" {}
+                                                                                          "sample-params" {}
+                                                                                          "id" grid-id)))
                                                       (om/transact! (om/observe owner (grids))
                                                                     (fn [c] (assoc c (get grid "id") grid)))
-                                                      (go (>! set-state-ch (get grid "id"))))
-                                                    (go (>! set-state-ch id))))}
+                                                      (go (>! set-state-ch grid-id))))
+                                                  (go (>! set-state-ch id)))}
                                (dom/option nil "synth")
                                (dom/option nil "sample")
                                (dom/option nil "play")
@@ -240,11 +257,20 @@
                                                (go (>! set-state-ch id)))}
                  (map #(dom/option nil %) (om/observe owner (options-ref)))))))))
 
+(def grid-type-editor
+  (select-editor-builder "grid-type" grid-types))
+
 (def synth-editor
   (select-editor-builder "synth" synths))
 
+(def grid-synth-editor
+  (select-editor-builder "grid-synth" synths))
+
 (def sample-editor
   (select-editor-builder "sample" samples))
+
+(def grid-sample-editor
+  (select-editor-builder "grid-sample" samples))
 
 (defn track-editor [{:keys [cursor id delete-ch set-state-ch] :as input} owner]
   (reify
@@ -259,41 +285,69 @@
                        (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{..}"))
           :open (dom/p style-grey
                        (dom/table nil
-                                  (dom/tbody nil
-                                             (dom/tr nil
+                                  (apply dom/tbody nil
+                                         (concat
+                                             [(dom/tr nil
                                                      (dom/td closer "{")
                                                      (dom/td nil nil)
                                                      (dom/td nil nil))
-                                             (dom/tr nil
-                                                     (dom/td nil nil)
-                                                     (dom/td nil "type:")
-                                                     (dom/td nil (om/build type-editor input)))
+                                              (dom/tr nil
+                                                      (dom/td nil nil)
+                                                      (dom/td nil "type:")
+                                                      (dom/td nil (om/build type-editor input)))]
                                              (condp = (get cursor "type")
-                                               "synth"
-                                               (dom/tr nil
-                                                       (dom/td nil nil)
-                                                       (dom/td nil "synth:")
-                                                       (dom/td nil (om/build synth-editor input)))
-                                               "sample"
-                                               (dom/tr nil
-                                                       (dom/td nil nil)
-                                                       (dom/td nil "sample:")
-                                                       (dom/td nil (om/build sample-editor input)))
-                                               "play"
-                                               (dom/tr nil
-                                                       (dom/td nil nil)
-                                                       (dom/td nil "note:")
-                                                       (dom/td nil (get cursor "note")))
-                                               nil)
-                                             (when-not (= "none" (get cursor "type"))
-                                               (dom/tr nil
-                                                       (dom/td nil nil)
-                                                       (dom/td nil "params:")
-                                                       (dom/td nil (om/build param-editor input))))
-                                             (dom/tr nil
-                                                     (dom/td closer "}")
-                                                     (dom/td nil nil)
-                                                     (dom/td nil))))))))))
+                                               "synth" [(dom/tr nil
+                                                                (dom/td nil nil)
+                                                                (dom/td nil "synth:")
+                                                                (dom/td nil (om/build synth-editor input)))]
+                                               "sample" [(dom/tr nil
+                                                                 (dom/td nil nil)
+                                                                 (dom/td nil "sample:")
+                                                                 (dom/td nil (om/build sample-editor input)))]
+                                               "play" [(dom/tr nil
+                                                               (dom/td nil nil)
+                                                               (dom/td nil "note:")
+                                                               (dom/td nil (get cursor "note")))]
+                                               [])
+                                             (condp = (get cursor "type")
+                                               "none" []
+                                               "grid" (condp = (get cursor "grid-type")
+                                                        "synth" [(dom/tr nil
+                                                                         (dom/td nil nil)
+                                                                         (dom/td nil "grid-type:")
+                                                                         (dom/td nil (om/build grid-type-editor input)))
+                                                                 (dom/tr nil
+                                                                         (dom/td nil nil)
+                                                                         (dom/td nil "synth:")
+                                                                         (dom/td nil (om/build grid-synth-editor input)))
+                                                                 (dom/tr nil
+                                                                         (dom/td nil nil)
+                                                                         (dom/td nil "params:")
+                                                                         (dom/td nil (om/build synth-param-editor input)))]
+                                                        "sample" [(dom/tr nil
+                                                                         (dom/td nil nil)
+                                                                         (dom/td nil "grid-type:")
+                                                                         (dom/td nil (om/build grid-type-editor input)))
+                                                                  (dom/tr nil
+                                                                          (dom/td nil nil)
+                                                                          (dom/td nil "sample:")
+                                                                          (dom/td nil (om/build grid-sample-editor input)))
+                                                                  (dom/tr nil
+                                                                          (dom/td nil nil)
+                                                                          (dom/td nil "params:")
+                                                                          (dom/td nil (om/build sample-param-editor input)))]
+                                                        [(dom/tr nil
+                                                                 (dom/td nil nil)
+                                                                 (dom/td nil "grid-type:")
+                                                                 (dom/td nil (om/build grid-type-editor input)))])
+                                               [(dom/tr nil
+                                                        (dom/td nil nil)
+                                                        (dom/td nil "params:")
+                                                        (dom/td nil (om/build param-editor input)))])
+                                             [(dom/tr nil
+                                                      (dom/td closer "}")
+                                                      (dom/td nil nil)
+                                                      (dom/td nil))])))))))))
 
 (defn track-builder [{:keys [cursor id set-state-ch]} owner]
   (reify
@@ -386,7 +440,6 @@
     (render-state [_ state]
       (let [cursor (get (om/observe owner (grids)) id)
             name (get cursor "name")]
-        (print id " : " cursor)
         (dom/div #js {:style #js {:borderLeft "solid 3px #ccc"
                                   :paddingLeft "10px"}}
                  (if-not (:grid-expanded state)
