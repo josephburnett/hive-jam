@@ -218,7 +218,7 @@
                                                   (if-not (= "grid" (:type state))
                                                     (om/transact! cursor (fn [c] (assoc c "type" (:type state))))
                                                     (let [grid-id (new-id)
-                                                          grid {"name" "sub-grid"
+                                                          grid {"name" ""
                                                                 "id" grid-id
                                                                 "bpc" 1
                                                                 "tracks" []}]
@@ -446,11 +446,11 @@
                    (dom/div nil 
                             (dom/p #js {:onClick #(om/set-state! owner :grid-expanded true)
                                         :style #js {:color "#999"}}
-                                   (str name " (" (get cursor "bpc") ")")))
+                                   (str name " {..}")))
                    (dom/div nil 
                             (dom/p #js {:onClick #(om/set-state! owner :grid-expanded false)
                                         :style #js {:color "#999"}}
-                                   (str name " (" (get cursor "bpc") ")"))
+                                   (str name " {..}"))
                             (dom/table nil
                                        (apply dom/tbody nil
                                               (let [cursors (map #(hash-map :cursor %1 :id %2 :delete-ch %3)
