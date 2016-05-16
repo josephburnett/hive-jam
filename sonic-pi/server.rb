@@ -30,7 +30,8 @@ define :dispatch_grid do |grid, t, inherited_params, inherited_type=nil, inherit
   if verbosity > 2
     puts "[DEBUG] t: #{t} bpc: #{bpc} tpc: #{tpc} boundary: #{boundary} i: #{i}"
   end
-  grid[:tracks].each do |track|
+  grid[:tracks].each_index do |index|
+    track = grid[:tracks][index]
     type = track[:type]
     if type.nil?
       puts "[ERROR] missing type #{track}"
@@ -61,13 +62,13 @@ define :dispatch_grid do |grid, t, inherited_params, inherited_type=nil, inherit
       params = track[:params]
       params = inherited_params.merge(params)
       if boundary == 0 and on
-        dispatch_track track, params, inherited_type, inherited_type_value
+        dispatch_track track, params, index, inherited_type, inherited_type_value
       end
     end
   end
 end
 
-define :dispatch_track do |track, inherited_params, inherited_type=nil, inherited_type_value=nil|
+define :dispatch_track do |track, inherited_params, index, inherited_type=nil, inherited_type_value=nil|
 
   if verbosity > 2
     puts "[DEBUG] dispatching track #{track}"
@@ -81,6 +82,13 @@ define :dispatch_track do |track, inherited_params, inherited_type=nil, inherite
 
   if type == "none" and inherited_type
     type = inherited_type
+  end
+
+  inherited_params.each do |key, value|
+    if value.start_with?("\\")
+      materialized_value = eval value[1..-1], get_binding(index)
+      inherited_params[key] = materialized_value
+    end
   end
 
   if type == "sample"
@@ -132,6 +140,10 @@ define :dispatch_track do |track, inherited_params, inherited_type=nil, inherite
     synth s, **inherited_params
     return
   end
+end
+
+define :get_binding do |index|
+  return binding
 end
 
 # STATE
