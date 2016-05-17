@@ -424,6 +424,38 @@
                                            :get-state-ch (:get-state-ch state)}]
                             (om/build grid-view id {:state sub-state})))))))))
 
+(defn grid-editor [{:keys [id cursor set-state-ch]} owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:state :init
+       :bpc (get cursor "bpc")})
+    om/IRenderState
+    (render-state [_ state]
+      (let [transition #(om/update-state! owner (fn [s] (merge s %)))
+            closer #(dom/span #js {:onClick (fn [] (transition {:state :init}))} %)]
+        (condp = (:state state)
+          :init (dom/span #js {:onClick #(transition {:state :open})}
+                          "{..}")
+          :open (dom/span nil
+                          (closer "{ ")
+                          (dom/span nil
+                                    (dom/span nil "bpc: ")
+                                    (dom/span #js {:onClick #(transition {:state :editing-bpc})}
+                                              (str (get cursor "bpc"))))
+                          (dom/span nil " }"))
+          :editing-bpc (dom/span nil
+                                 (closer "{ ")
+                                 (dom/span nil
+                                           (dom/span nil "bpc: "))
+                                 (dom/input #js {:type "text" :value (:bpc state)
+                                                 :onChange #(handle-change % owner state :bpc)
+                                                 :onKeyDown #(when (= 13 (.-which %))
+                                                               (transition {:state :open})
+                                                               (om/transact! cursor (fn [c] (assoc c "bpc"(:bpc state))))
+                                                               (go (>! set-state-ch id)))})
+                                 (dom/span nil " }")))))))
+
 (defn grid-view [id owner]
   (reify
     om/IInitState
@@ -449,13 +481,16 @@
                                   :paddingLeft "10px"}}
                  (if-not (:grid-expanded state)
                    (dom/div nil 
-                            (dom/p #js {:onClick #(om/set-state! owner :grid-expanded true)
-                                        :style #js {:color "#999"}}
-                                   (str name " {..}")))
+                            (dom/p style-grey
+                                   (dom/span #js {:onClick #(om/set-state! owner :grid-expanded true)} "+")))
                    (dom/div nil 
-                            (dom/p #js {:onClick #(om/set-state! owner :grid-expanded false)
-                                        :style #js {:color "#999"}}
-                                   (str name " {..}"))
+                            (dom/p style-grey
+                                   (dom/span #js {:onClick #(om/set-state! owner :grid-expanded false)}
+                                             (str "- "))
+                                   (dom/span nil (str name " "))
+                                   (om/build grid-editor {:id id
+                                                          :set-state-ch (:set-state-ch state)
+                                                          :cursor cursor}))
                             (dom/table nil
                                        (apply dom/tbody nil
                                               (let [cursors (map #(hash-map :cursor %1 :id %2 :delete-ch %3)

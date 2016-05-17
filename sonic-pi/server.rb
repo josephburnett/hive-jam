@@ -155,7 +155,7 @@ end
 defonce :_state do
   {
     root: {
-      name: "",
+      name: "root",
       id: "root",
       bpc: 1,
       tracks: [],
