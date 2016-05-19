@@ -433,16 +433,40 @@
     om/IRenderState
     (render-state [_ state]
       (let [transition #(om/update-state! owner (fn [s] (merge s %)))
-            closer #(dom/span #js {:onClick (fn [] (transition {:state :init}))} %)]
+            closer #(dom/span #js {:onClick (fn [] (transition {:state :init}))} %)
+            double-width #(let [tracks (get cursor "tracks")
+                                doubled-tracks (map (fn [t]
+                                                      (let [beats (get t "beats")]
+                                                        (assoc t "beats"
+                                                               (take (* 2 (count beats))
+                                                                     (cycle beats)))))
+                                                    tracks)]
+                            (om/transact! cursor (fn [c] (assoc cursor "tracks" (clj->js doubled-tracks))))
+                            (go (>! set-state-ch id)))
+            half-width #(let [tracks (get cursor "tracks")
+                              halved-tracks (map (fn [t]
+                                                   (let [beats (get t "beats")]
+                                                     (assoc t "beats"
+                                                            (take (int (/ (count beats) 2)) beats))))
+                                                 tracks)]
+                          (print tracks)
+                          (print halved-tracks)
+                          (om/transact! cursor (fn [c] (assoc cursor "tracks" (clj->js halved-tracks))))
+                          (go (>! set-state-ch id)))]
         (condp = (:state state)
           :init (dom/span #js {:onClick #(transition {:state :open})}
                           "{..}")
           :open (dom/span nil
-                          (closer "{ ")
+                          (closer "{")
                           (dom/span nil
-                                    (dom/span nil "bpc: ")
+                                    (dom/span nil " bpc: ")
                                     (dom/span #js {:onClick #(transition {:state :editing-bpc})}
                                               (str (get cursor "bpc"))))
+                          (dom/span nil
+                                    (dom/span nil " width: ")
+                                    (dom/span #js {:onClick double-width} "+")
+                                    (dom/span nil "/")
+                                    (dom/span #js {:onClick half-width} "-"))
                           (dom/span nil " }"))
           :editing-bpc (dom/span nil
                                  (closer "{ ")
