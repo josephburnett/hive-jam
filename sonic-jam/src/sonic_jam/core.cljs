@@ -279,33 +279,52 @@
       {:state :init})
     om/IRenderState
     (render-state [_ state]
-      (let [transition #(om/update-state! owner (fn [s] (merge {:state %})))]
+      (let [transition #(om/update-state! owner (fn [s] (merge {:state %})))
+            closing-row #(dom/tr nil
+                                 (dom/td #js {:onClick (fn [] (transition :init))} %)
+                                 (dom/td nil nil)
+                                 (dom/td nil nil))
+            body-rows (map #(dom/tr nil
+                                    (dom/td nil nil)
+                                    (dom/td nil (get % "fx"))
+                                    (dom/td nil (om/build param-editor
+                                                          {:cursor %
+                                                           :id id
+                                                           :set-state-ch set-state-ch})))
+                           cursor)
+            commit #(let [new-fx {:fx (:fx state)
+                                  :params {}}]
+                      (transition :open)
+                      (print cursor)
+                      (om/transact! cursor (fn [c] (clj->js (into c [new-fx]))))
+                      (go (>! set-state-ch id)))]
         (condp = (:state state)
           :init (dom/span #js {:onClick #(transition :open)}
                           "{..}")
           :open (dom/table nil
                            (apply dom/tbody nil
                                   (concat
-                                   [(dom/tr nil
-                                            (dom/td #js {:onClick #(transition :init)} "{")
-                                            (dom/td nil nil)
-                                            (dom/td nil nil))]
-                                   (map #(dom/tr nil
-                                                 (dom/td nil nil)
-                                                 (dom/td nil (get % "fx"))
-                                                 (dom/td nil (om/build param-editor
-                                                                       {:cursor %
-                                                                        :id id
-                                                                        :set-state-ch set-state-ch})))
-                                        cursor)
+                                   [(closing-row "{")]
+                                   body-rows
                                    [(dom/tr nil
                                             (dom/td nil nil)
-                                            (dom/td #js {:onClick #(transition :open)} "[+]") ; TODO(:adding)
+                                            (dom/td #js {:onClick #(transition :adding)} "[+]")
                                             (dom/td nil nil))
-                                    (dom/tr nil
-                                            (dom/td #js {:onClick #(transition :init)} "}")
-                                            (dom/td nil nil)
-                                            (dom/td nil nil))]))))))))
+                                    (closing-row "}")])))
+          :adding (dom/table nil
+                             (apply dom/tbody  nil
+                                    (concat
+                                     [(closing-row "{")]
+                                     body-rows
+                                     [(dom/tr nil
+                                              (dom/td nil nil)
+                                              (dom/td nil
+                                                      (dom/input #js {:type "text" :value (:fx state)
+                                                                      :onChange #(handle-change % owner state :fx)
+                                                                      :onKeyDown #(when (= 13 (.-which %)) (commit))}))
+                                              (dom/td nil nil))
+
+                                      (closing-row "}")]))))))))
 
 (defn track-editor [{:keys [cursor id delete-ch set-state-ch] :as input} owner]
   (reify
@@ -412,7 +431,8 @@
                                  (clj->js
                                   (conj s {"type" "none"
                                            "beats" (repeat % [0])
-                                           "params" {}}))))
+                                           "params" {}
+                                           "fx" []}))))
             width-selection (fn [w s]
                               (dom/span #js {:onClick
                                              #(do
