@@ -272,6 +272,41 @@
 (def grid-sample-editor
   (select-editor-builder "grid-sample" samples))
 
+(defn fx-editor [{:keys [cursor id set-state-ch]} owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:state :init})
+    om/IRenderState
+    (render-state [_ state]
+      (let [transition #(om/update-state! owner (fn [s] (merge {:state %})))]
+        (condp = (:state state)
+          :init (dom/span #js {:onClick #(transition :open)}
+                          "{..}")
+          :open (dom/table nil
+                           (apply dom/tbody nil
+                                  (concat
+                                   [(dom/tr nil
+                                            (dom/td #js {:onClick #(transition :init)} "{")
+                                            (dom/td nil nil)
+                                            (dom/td nil nil))]
+                                   (map #(dom/tr nil
+                                                 (dom/td nil nil)
+                                                 (dom/td nil (get % "fx"))
+                                                 (dom/td nil (om/build param-editor
+                                                                       {:cursor %
+                                                                        :id id
+                                                                        :set-state-ch set-state-ch})))
+                                        cursor)
+                                   [(dom/tr nil
+                                            (dom/td nil nil)
+                                            (dom/td #js {:onClick #(transition :open)} "[+]") ; TODO(:adding)
+                                            (dom/td nil nil))
+                                    (dom/tr nil
+                                            (dom/td #js {:onClick #(transition :init)} "}")
+                                            (dom/td nil nil)
+                                            (dom/td nil nil))]))))))))
+
 (defn track-editor [{:keys [cursor id delete-ch set-state-ch] :as input} owner]
   (reify
     om/IInitState
@@ -283,76 +318,86 @@
         (condp = (:state state)
           :init (dom/p style-grey
                        (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{..}"))
-          :open (dom/p style-grey
-                       (dom/table nil
-                                  (apply dom/tbody nil
-                                         (concat
-                                          [(dom/tr nil
-                                                   (dom/td nil nil)
-                                                   (dom/td nil nil)
-                                                   (dom/td nil (dom/span #js {:onClick #(go (>! delete-ch cursor))
-                                                                              :style #js {:float "right"}} "X")))
-                                           (dom/tr nil
-                                                   (dom/td closer "{")
-                                                   (dom/td nil nil)
-                                                   (dom/td nil nil))
-                                           (dom/tr nil
-                                                   (dom/td nil nil)
-                                                   (dom/td nil "type:")
-                                                   (dom/td nil (om/build type-editor input)))]
-                                          (condp = (get cursor "type")
-                                            "synth" [(dom/tr nil
-                                                             (dom/td nil nil)
-                                                             (dom/td nil "synth:")
-                                                             (dom/td nil (om/build synth-editor input)))]
-                                            "sample" [(dom/tr nil
-                                                              (dom/td nil nil)
-                                                              (dom/td nil "sample:")
-                                                              (dom/td nil (om/build sample-editor input)))]
-                                            "play" [(dom/tr nil
-                                                            (dom/td nil nil)
-                                                            (dom/td nil "note:")
-                                                            (dom/td nil (get cursor "note")))]
-                                            [])
-                                          (condp = (get cursor "type")
-                                            "none" []
-                                            "grid" (condp = (get cursor "grid-type")
-                                                     "synth" [(dom/tr nil
-                                                                      (dom/td nil nil)
-                                                                      (dom/td nil "grid-type:")
-                                                                      (dom/td nil (om/build grid-type-editor input)))
-                                                              (dom/tr nil
-                                                                      (dom/td nil nil)
-                                                                      (dom/td nil "synth:")
-                                                                      (dom/td nil (om/build grid-synth-editor input)))
-                                                              (dom/tr nil
-                                                                      (dom/td nil nil)
-                                                                      (dom/td nil "params:")
-                                                                      (dom/td nil (om/build synth-param-editor input)))]
-                                                     "sample" [(dom/tr nil
-                                                                       (dom/td nil nil)
-                                                                       (dom/td nil "grid-type:")
-                                                                       (dom/td nil (om/build grid-type-editor input)))
-                                                               (dom/tr nil
-                                                                       (dom/td nil nil)
-                                                                       (dom/td nil "sample:")
-                                                                       (dom/td nil (om/build grid-sample-editor input)))
-                                                               (dom/tr nil
-                                                                       (dom/td nil nil)
-                                                                       (dom/td nil "params:")
-                                                                       (dom/td nil (om/build sample-param-editor input)))]
-                                                     [(dom/tr nil
-                                                              (dom/td nil nil)
-                                                              (dom/td nil "grid-type:")
-                                                              (dom/td nil (om/build grid-type-editor input)))])
+          :open (let [fx-row (dom/tr nil
+                                     (dom/td nil nil)
+                                     (dom/td nil "fx:")
+                                     (dom/td nil (om/build fx-editor {:cursor (get cursor "fx")
+                                                                      :id id
+                                                                      :set-state-ch set-state-ch})))]
+                  (dom/p style-grey
+                         (dom/table nil
+                                    (apply dom/tbody nil
+                                           (concat
                                             [(dom/tr nil
                                                      (dom/td nil nil)
-                                                     (dom/td nil "params:")
-                                                     (dom/td nil (om/build param-editor input)))])
-                                          [(dom/tr nil
-                                                   (dom/td closer "}")
-                                                   (dom/td nil nil)
-                                                   (dom/td nil))])))))))))
+                                                     (dom/td nil nil)
+                                                     (dom/td nil (dom/span #js {:onClick #(go (>! delete-ch cursor))
+                                                                                :style #js {:float "right"}} "X")))
+                                             (dom/tr nil
+                                                     (dom/td closer "{")
+                                                     (dom/td nil nil)
+                                                     (dom/td nil nil))
+                                             (dom/tr nil
+                                                     (dom/td nil nil)
+                                                     (dom/td nil "type:")
+                                                     (dom/td nil (om/build type-editor input)))]
+                                            (condp = (get cursor "type")
+                                              "synth" [(dom/tr nil
+                                                               (dom/td nil nil)
+                                                               (dom/td nil "synth:")
+                                                               (dom/td nil (om/build synth-editor input)))]
+                                              "sample" [(dom/tr nil
+                                                                (dom/td nil nil)
+                                                                (dom/td nil "sample:")
+                                                                (dom/td nil (om/build sample-editor input)))]
+                                              "play" [(dom/tr nil
+                                                              (dom/td nil nil)
+                                                              (dom/td nil "note:")
+                                                              (dom/td nil (get cursor "note")))]
+                                              [])
+                                            (condp = (get cursor "type")
+                                              "none" []
+                                              "grid" (condp = (get cursor "grid-type")
+                                                       "synth" [(dom/tr nil
+                                                                        (dom/td nil nil)
+                                                                        (dom/td nil "grid-type:")
+                                                                        (dom/td nil (om/build grid-type-editor input)))
+                                                                (dom/tr nil
+                                                                        (dom/td nil nil)
+                                                                        (dom/td nil "synth:")
+                                                                        (dom/td nil (om/build grid-synth-editor input)))
+                                                                (dom/tr nil
+                                                                        (dom/td nil nil)
+                                                                        (dom/td nil "params:")
+                                                                        (dom/td nil (om/build synth-param-editor input)))
+                                                                fx-row]
+                                                       "sample" [(dom/tr nil
+                                                                         (dom/td nil nil)
+                                                                         (dom/td nil "grid-type:")
+                                                                         (dom/td nil (om/build grid-type-editor input)))
+                                                                 (dom/tr nil
+                                                                         (dom/td nil nil)
+                                                                         (dom/td nil "sample:")
+                                                                         (dom/td nil (om/build grid-sample-editor input)))
+                                                                 (dom/tr nil
+                                                                         (dom/td nil nil)
+                                                                         (dom/td nil "params:")
+                                                                         (dom/td nil (om/build sample-param-editor input)))
+                                                                 fx-row]
+                                                       [(dom/tr nil
+                                                                (dom/td nil nil)
+                                                                (dom/td nil "grid-type:")
+                                                                (dom/td nil (om/build grid-type-editor input)))
+                                                        fx-row])
+                                              [(dom/tr nil
+                                                       (dom/td nil nil)
+                                                       (dom/td nil "params:")
+                                                       (dom/td nil (om/build param-editor input)))
+                                               fx-row])
+                                            [(dom/tr nil
+                                                     (dom/td closer "}")
+                                                     (dom/td nil nil)
+                                                     (dom/td nil))]))))))))))
 
 (defn track-builder [{:keys [cursor id set-state-ch]} owner]
   (reify
