@@ -146,6 +146,26 @@ define :get_binding do |index|
   return binding
 end
 
+# USER STATE FUNCTIONS
+
+define :save_state do |filename|
+  mutex.synchronize {
+    open(filename, 'w') do |f|
+      f.puts JSON.dump(_state)
+    end
+  }
+end
+
+define :load_state do |filename|
+  state = JSON.parse(File.read(filename), symbolize_names: true)
+  mutex.synchronize {
+    _state.clear
+    state.each do |key, value|
+      _state[key] = value
+    end
+  }
+end
+
 # STATE
 
 define :mutex do
