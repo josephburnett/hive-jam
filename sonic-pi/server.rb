@@ -104,14 +104,12 @@ define :dispatch_track do |track, inherited_params, index, inherited_type=nil, i
       puts "[ERROR] no sample for track #{track}"
       return
     end
-    fx = track[:fx]
-    if not fx.nil?
-      with_fx fx.to_sym do
-        sample s, **inherited_params
-      end
-    else
-      sample s, **inherited_params
+    thunk = lambda { sample s, **inherited_params }
+    fx_chain = track[:fx]
+    if fx_chain.nil?
+      fx_chain = []
     end
+    apply_fx fx_chain, thunk
     return
   end
 
@@ -137,13 +135,30 @@ define :dispatch_track do |track, inherited_params, index, inherited_type=nil, i
       puts "[ERROR] no synth for track #{track}"
       return
     end
-    synth s, **inherited_params
+    thunk = lambda { synth s, **inherited_params }
+    fx_chain = track[:fx]
+    if fx_chain.nil?
+      fx_chain = []
+    end
+    apply_fx fx_chain, thunk
     return
   end
 end
 
 define :get_binding do |index|
   return binding
+end
+
+define :apply_fx do |fx_chain, thunk|
+  if fx_chain.length == 0
+    thunk.call()
+  else
+    fx = fx_chain[0]
+    fx_chain = fx_chain[1..-1]
+    with_fx fx[:fx], **fx[:params] do
+      apply_fx fx_chain, thunk
+    end
+  end
 end
 
 # USER STATE FUNCTIONS
