@@ -166,7 +166,7 @@ end
 define :save_state do |filename|
   mutex.synchronize {
     open(filename, 'w') do |f|
-      f.puts JSON.dump(_state)
+      f.puts JSON.pretty_generate(_state)
     end
   }
 end
