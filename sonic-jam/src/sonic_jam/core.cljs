@@ -284,18 +284,22 @@
                                  (dom/td #js {:onClick (fn [] (transition :init))} %)
                                  (dom/td nil nil)
                                  (dom/td nil nil))
+            remove #(do
+                      (om/transact! cursor (fn [c] (vec (into (subvec c 0 %)
+                                                              (subvec c (+ 1 %))))))
+                      (go (>! set-state-ch id)))
             body-rows (map #(dom/tr nil
-                                    (dom/td nil nil)
-                                    (dom/td nil (get % "fx"))
+                                    (dom/td #js {:onClick (fn [] (remove %2))} "X")
+                                    (dom/td nil (get %1 "fx"))
                                     (dom/td nil (om/build param-editor
-                                                          {:cursor %
-                                                           :id id
+                                                          {:cursor %1
+                                                          :id id
                                                            :set-state-ch set-state-ch})))
-                           cursor)
+                           cursor
+                           (range))
             commit #(let [new-fx {:fx (:fx state)
                                   :params {}}]
                       (transition :open)
-                      (print cursor)
                       (om/transact! cursor (fn [c] (clj->js (into c [new-fx]))))
                       (go (>! set-state-ch id)))]
         (condp = (:state state)
