@@ -19,13 +19,13 @@ module SonicJam
     
     def test_set_get_state
       assert_nil @state.get_state "abc"
-      @state.set_state "abc", @abc
+      @state.set_state @abc
       assert_equal @abc, (@state.get_state "abc")
     end
 
     def test_drop_state
       assert_nil @state.get_state "abc"
-      @state.set_state "abc", @abc
+      @state.set_state @abc
       assert_equal @abc, (@state.get_state "abc")
       @state.drop_state "abc"
       assert_nil @state.get_state "abc"

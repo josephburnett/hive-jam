@@ -2,6 +2,9 @@ require "json"
 require "thread"
 
 module SonicJam
+
+  class InvalidState < ArgumentError ; end
+  
   class State
 
     def initialize
@@ -26,7 +29,10 @@ module SonicJam
 
     def load_state(filename)
       state = JSON.parse(File.read(filename), symbolize_names: true)
-      # TODO validate state
+      state.each do |key, value|
+        validate value
+        check key.equal?(value[:id].to_sym), "Grid must be registered under its id."
+      end
       @mutex.synchronize {
         @state = state
       }
@@ -38,10 +44,11 @@ module SonicJam
       }
     end
 
-    def set_state(id, state)
-      # TODO validate state
+    def set_state(state)
+      validate state
+      id = state[:id].to_sym
       @mutex.synchronize {
-        @state[id.to_sym] = state
+        @state[id] = state
       }
       # TODO broadcast state change?
     end
@@ -51,6 +58,26 @@ module SonicJam
         @state.delete(id.to_sym)
       }
       # TODO broadcast state change?
+    end
+
+    private
+
+    def check(predicate, message)
+      if not predicate
+        raise InvalidState.new(message)
+      end
+    end
+
+    def check_not(predicate, message)
+      if predicate
+        raise InvalidState.new(message)
+      end
+    end
+    
+    def validate(grid)
+      check_not grid.nil?, "Grid must not be nil."
+      check_not grid[:name].nil?, "Grid name must not be nil."
+      check_not grid[:id].nil?, "Grid id must not be nil."
     end
     
   end
