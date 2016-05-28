@@ -30,7 +30,7 @@ module SonicJam
     def load_state(filename)
       state = JSON.parse(File.read(filename), symbolize_names: true)
       state.each do |key, value|
-        validate value
+        validate_grid value
         check key.equal?(value[:id].to_sym), "Grid must be registered under its id."
       end
       @mutex.synchronize {
@@ -45,7 +45,7 @@ module SonicJam
     end
 
     def set_state(state)
-      validate state
+      validate_grid state
       id = state[:id].to_sym
       @mutex.synchronize {
         @state[id] = state
@@ -74,11 +74,12 @@ module SonicJam
       end
     end
     
-    def validate(grid)
+    def validate_grid(grid)
       check_not grid.nil?, "Grid must not be nil."
       check_not grid[:name].nil?, "Grid name must not be nil."
       check_not grid[:id].nil?, "Grid id must not be nil."
+      # TODO validate tracks
     end
-    
+
   end
 end
