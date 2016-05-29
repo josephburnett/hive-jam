@@ -12,7 +12,17 @@ module SonicJam
         name: "abc",
         id: "abc",
         bpc: 2,
-        tracks: [],
+        tracks: [
+          {
+            type: "synth",
+            beats: [[0]],
+            params: {},
+            fx: [],
+            id: "xyz", 
+            :'synth-params' => {},
+            :'sample-params' => {},
+          },
+        ],
       }
       @tempfile = Tempfile.new('state')
     end
@@ -39,6 +49,15 @@ module SonicJam
       assert_nil @state.get_state "abc"
       @state.load_state @tempfile.path
       assert_equal original_root, (@state.get_state "root")
+    end
+
+    def test_validate_no_extra_keys
+      assert_raises(InvalidState) {
+        @state._validate_grid @abc.merge({extra_key: ""})
+      }
+      assert_raises(InvalidState) {
+        @state._validate_track @abc[:tracks][0].merge({extra_key: ""})
+      }
     end
     
   end
