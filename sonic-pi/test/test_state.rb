@@ -59,6 +59,36 @@ module SonicJam
         @state._validate_track @abc[:tracks][0].merge({extra_key: ""})
       }
     end
-    
+
+    def test_validate_acyclic_tree
+      state = {
+        a: {id: "a",
+            tracks: [{type: "grid", id: "b"},
+                     {type: "grid", id: "c"}]},
+        b: {id: "b",
+            tracks: [{type: "grid", id: "d"}]},
+        c: {id: "c"},
+        d: {id: "d"},
+      }
+      @state._validate_acyclic(state[:a], state=state)
+    end
+
+    def test_validate_acyclic_fail
+      assert_raises(InvalidState) {
+        state = {
+          a: {id: "a",
+              tracks: [{type: "grid", id: "b"},
+                       {type: "grid", id: "c"}]},
+          b: {id: "b",
+              tracks: [{type: "grid", id: "d"}]},
+          c: {id: "c"},
+          d: {id: "d"},
+        }
+        bad_grid = {id: "d",
+                    tracks: [{type: "grid", id: "a"}]}
+        @state._validate_acyclic(bad_grid, state=state)
+      }
+    end
+
   end
 end

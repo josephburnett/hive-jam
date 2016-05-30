@@ -82,6 +82,10 @@ module SonicJam
     def _check_array(value, message)
       _check value.kind_of?(Array), message
     end
+
+    def _check_hash(value, message)
+      _check value.kind_of?(Hash), message
+    end
     
     def _check_one_of(value, message, *one_of)
       _check one_of.include?(value), "#{message} (#{value}) (#{one_of})"
@@ -102,6 +106,7 @@ module SonicJam
       _check_not grid[:tracks].nil?, "Grid tracks must not be nil."
       _check_array grid[:tracks], "Grid tracks must be an array."
       _check_keys grid, "Grid keys must be one of.", :name, :id, :bpc, :tracks
+      _validate_acyclic grid, @state
     end
 
     def _validate_track(track)
@@ -113,7 +118,46 @@ module SonicJam
       _check_not track[:beats].nil?, "Track beats must not be nil."
       _check_array track[:beats], "Track beats must be an array."
       _check_keys track, "Track keys must be one of.", :type, :id, :beats,
-                  :params, :fx, :'synth-params', :'sample-params'
+                  :fx, :synth, :'synth-params', :sample, :'sample-params',
+                  :'grid-type', :id, :params
+      if track[:params]
+        _check_hash track[:params], "Track params must be a hash."
+      end
+      if track[:fx]
+        fx = track[:fx]
+        _check_array fx, "Fx chain must be an array."
+        fx.each do |x|
+          _check_not x.nil?, "Fx must not be nil."
+          _check_hash x, "Fx must be a hash."
+        end
+      end
+      # TODO validate grid id references
+      # TODO validate no circular references
+    end
+
+    def _validate_acyclic(candidate_grid, state, current_grid=nil, path=nil)
+      if path
+        _check_not path.include?(current_grid[:id]), "Grid introduces a cycle."
+        path = path + [current_grid[:id]]
+      else
+        path = [candidate_grid[:id]]
+        current_grid = candidate_grid
+      end
+      if not current_grid[:tracks]
+        return
+      end
+      current_grid[:tracks].each do |t|
+        if t[:type] == "grid"
+          if t[:id] == candidate_grid[:id]
+            # Check the state as it would be with the candidate grid.
+            next_grid = candidate_grid
+          else
+            next_grid = state[t[:id].to_sym]
+          end
+          _check_not next_grid.nil?, "Missing grid #{t[:id]} when validating acyclic."
+          _validate_acyclic(candidate_grid, state, next_grid, path)
+        end
+      end
     end
     
   end
