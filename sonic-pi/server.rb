@@ -1,5 +1,3 @@
-require 'thread'
-
 # TIME
 
 define :res do Rational('1/8') end
@@ -11,7 +9,7 @@ live_loop :main do
   use_cue_logging (verbosity > 1) ? true : false
   use_debug (verbosity > 0) ? true : false
   wait res
-  root = _state[:root]
+  root = _state.get_state :root
   if root.nil?
     puts "[ERROR] no root state"
     next
@@ -164,68 +162,35 @@ end
 # USER STATE FUNCTIONS
 
 define :save_state do |filename|
-  mutex.synchronize {
-    open(filename, 'w') do |f|
-      f.puts JSON.pretty_generate(_state)
-    end
-  }
+  _state.save_state filename
 end
 
 define :load_state do |filename|
-  state = JSON.parse(File.read(filename), symbolize_names: true)
-  mutex.synchronize {
-    _state.clear
-    state.each do |key, value|
-      _state[key] = value
-    end
-  }
+  _state.load_state filename
 end
 
 # STATE
 
-define :mutex do
-  Mutex.new
-end
-
 defonce :_state do
-  {
-    root: {
-      name: "root",
-      id: "root",
-      bpc: 1,
-      tracks: [],
-    }
-  }
+  SonicJam::State.new
 end
 
 define :set_state do |ns, state|
   if _ns_ok(ns)
-    mutex.synchronize {
-      _state[ns] = state
-    }
+    _state.set_state state
     send_state_json("*", ns)
   end
 end
 
 define :drop_state do |ns|
   if _ns_ok(ns)
-    mutex.synchronize {
-      _state.delete(ns)
-    }
+    _state.drop_state ns
     send_state_json("*", ns)
   end
 end
 
-define :drop_all_state do
-  mutex.synchronize {
-    _state.clear
-  }
-end
-
 define :get_state_json do |ns|
-  mutex.synchronize {
-    return JSON.dump(_state[ns])
-  }
+  return JSON.dump(_state.get_state(ns))
 end
 
 define :send_state_json do |client_id, ns|
@@ -260,7 +225,7 @@ end
 jam_server.add_method("/set-state") do |args|
   assert(args.length == 3)
   client_id = args[0]
-  ns = args[1].intern
+  ns = args[1].to_sym
   state = JSON.parse(args[2], symbolize_names: true)
   set_state ns, state
 end

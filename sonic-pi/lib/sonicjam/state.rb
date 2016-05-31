@@ -4,7 +4,7 @@ require "thread"
 module SonicJam
 
   class InvalidState < ArgumentError ; end
-  
+
   class State
 
     def initialize
@@ -51,14 +51,12 @@ module SonicJam
       @mutex.synchronize {
         @state[id] = state
       }
-      # TODO broadcast state change?
     end
 
     def drop_state(id)
       @mutex.synchronize {
         @state.delete(id.to_sym)
       }
-      # TODO broadcast state change?
     end
 
     def _check(predicate, message)
@@ -86,7 +84,7 @@ module SonicJam
     def _check_hash(value, message)
       _check value.kind_of?(Hash), message
     end
-    
+
     def _check_one_of(value, message, *one_of)
       _check one_of.include?(value), "#{message} (#{value}) (#{one_of})"
     end
@@ -96,7 +94,7 @@ module SonicJam
         _check_one_of k, message, *one_of
       end
     end
-    
+
     def _validate_grid(grid)
       _check_not grid.nil?, "Grid must not be nil."
       _check_not grid[:name].nil?, "Grid name must not be nil."
@@ -114,12 +112,12 @@ module SonicJam
       _check_not track[:id], "Track id must not be nil."
       _check_not track[:type], "Track type must not be nil."
       _check_one_of track[:type], "Track type must be one one of.",
-                   ["none", "grid", "synth", "sample"]
+        ["none", "grid", "synth", "sample"]
       _check_not track[:beats].nil?, "Track beats must not be nil."
       _check_array track[:beats], "Track beats must be an array."
       _check_keys track, "Track keys must be one of.", :type, :id, :beats,
-                  :fx, :synth, :'synth-params', :sample, :'sample-params',
-                  :'grid-type', :id, :params
+        :fx, :synth, :'synth-params', :sample, :'sample-params',
+        :'grid-type', :id, :params
       if track[:params]
         _check_hash track[:params], "Track params must be a hash."
       end
@@ -159,6 +157,6 @@ module SonicJam
         end
       end
     end
-    
+
   end
 end
