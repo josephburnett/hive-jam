@@ -119,6 +119,31 @@ module SonicJam
         { sample: "sample-2", params: {}, fx: [] },
       ]
     end
+
+    def test_dispatch_grid_fx_inheritance
+      @state.set_state({ id: "a", name: "a", bpc: "1",
+                         tracks: [
+                           { type: "synth", synth: "synth-1", beats: [[1]] },
+                           { type: "synth", synth: "synth-2", beats: [[1]],
+                             fx: [{ fx: "fx-1", params: {} }]},
+                         ]
+                       })
+      @state.set_state({ id: "root", name: "root", bpc: "1",
+                         tracks: [
+                           { type: "grid", id: "a", beats: [[1]],
+                             fx: [{ fx: "fx-2", params: {} }]},
+                         ]
+                       })
+      check_dispatch_grid_calls [
+        { synth: "synth-1", params: {}, fx: [
+            { fx: "fx-2", params: {}}
+          ]},
+        { synth: "synth-2", params: {}, fx: [
+            { fx: "fx-1", params: {} },
+            { fx: "fx-2", params: {} },
+          ]},
+      ]
+    end
     
     def check_dispatch_grid_calls(expected)
       @dispatch.instance_variable_set(:@calls, [])

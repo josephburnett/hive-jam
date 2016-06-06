@@ -29,8 +29,7 @@ module SonicJam
         sample = track.fetch(:sample, parent_track.fetch(:sample, nil))
         sample_params = track.fetch(:'sample-params', {})
         sample_params = parent_track.fetch(:'sample-params', {}).merge(sample_params)
-        fx = track.fetch(:fx, [])
-        fx = parent_track.fetch(:fx, []) + fx
+        fx = track.fetch(:fx, []) + parent_track.fetch(:fx, [])
 
         if type == "none"
           type = grid_type
