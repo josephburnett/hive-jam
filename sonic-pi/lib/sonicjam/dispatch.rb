@@ -2,9 +2,12 @@ module SonicJam
 
   class Dispatch
 
-    def initialize(state, resolution)
+    def initialize(state, resolution, with_fx, synth, sample)
       @state = state
       @resolution = resolution
+      @with_fx = with_fx
+      @synth = synth
+      @sample = sample
     end
 
     def dispatch(tick)
@@ -72,11 +75,29 @@ module SonicJam
     end
 
     def _dispatch_synth(synth, params, fx)
-      # TODO
+      thunk = lambda { @synth.call(synth, **params) }
+      apply_fx(fx, thunk)
     end
 
     def _dispatch_sample(sample, params, fx)
-      # TODO
+      thunk = lambda { @sample.call(sample, **params) }
+      apply_fx(fx, thunk)
+    end
+
+    def _get_binding
+      return binding
+    end
+
+    def _apply_fx(fx_chain, thunk)
+      if fx_chain.length == 0
+        thunk.call()
+      else
+        fx = fx_chain[0]
+        fx_chain = fx_chain[1..-1]
+        @with_fx.call(fx[:fx], **fx[:params]) do
+          apply_fx fx_chain, thunk
+        end
+      end
     end
   end
 

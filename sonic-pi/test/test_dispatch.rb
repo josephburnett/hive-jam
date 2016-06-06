@@ -7,7 +7,7 @@ module SonicJam
 
     def setup
       @state = State.new
-      @dispatch = Dispatch.new(@state, "1/32")
+      @dispatch = Dispatch.new(@state, "1/32", nil, nil, nil)
     end
 
     def test_on_the_beat

@@ -15,148 +15,7 @@ live_loop :main do
     next
   end
   t = tick
-  dispatch_grid root, t, {}
-end
-
-# DISPATCH
-
-define :dispatch_grid do |grid, t, inherited_params, inherited_type=nil, inherited_type_value=nil|
-  bpc = Rational(grid[:bpc])
-  tpc = bpc / res
-  boundary = t % tpc.ceil
-  i = (t / tpc).ceil
-  if verbosity > 2
-    puts "[DEBUG] t: #{t} bpc: #{bpc} tpc: #{tpc} boundary: #{boundary} i: #{i}"
-  end
-  grid[:tracks].each_index do |index|
-    track = grid[:tracks][index]
-    type = track[:type]
-    if type.nil?
-      puts "[ERROR] missing type #{track}"
-      next
-    end
-    on = (bools *track[:beats].map{|x|x[0]})[i]
-    if type == "grid"
-      if not on
-        next
-      end
-      grid_type = grid[:'grid-type']
-      id = track[:id].to_sym
-      sub_grid = _state[id]
-      if grid_type = "synth"
-        params = track[:'synth-params']
-        params = inherited_params.merge(params)
-        grid_synth = track[:'grid-synth']
-        dispatch_grid sub_grid, t, params, grid_type, grid_synth
-      elsif grid_type = "sample"
-        params = track[:'sample-params']
-        params = inherited_params.merge(params)
-        grid_sample = track[:'grid-sample']
-        dispatch_grid sub_grid, t, params, grid_type, grid_sample
-      else
-        dispatch_grid sub_grid, t, inherted_params
-      end
-    else
-      params = track[:params]
-      params = inherited_params.merge(params)
-      if boundary == 0 and on
-        dispatch_track track, params, index, inherited_type, inherited_type_value
-      end
-    end
-  end
-end
-
-define :dispatch_track do |track, inherited_params, index, inherited_type=nil, inherited_type_value=nil|
-
-  if verbosity > 2
-    puts "[DEBUG] dispatching track #{track}"
-  end
-
-  type = track[:type]
-  if type.nil?
-    puts "[ERROR] no type for track #{track}"
-    return
-  end
-
-  if type == "none" and inherited_type
-    type = inherited_type
-  end
-
-  inherited_params.each do |key, value|
-    if value.start_with?("\\")
-      materialized_value = eval value[1..-1], get_binding(index)
-      inherited_params[key] = materialized_value
-    end
-  end
-
-  if type == "sample"
-    sample = track[:sample]
-    if sample.nil?
-      if not inherited_type_value
-        return
-      end
-      sample = inherited_type_value
-    end
-    s = sample.to_sym
-    if s.nil?
-      puts "[ERROR] no sample for track #{track}"
-      return
-    end
-    thunk = lambda { sample s, **inherited_params }
-    fx_chain = track[:fx]
-    if fx_chain.nil?
-      fx_chain = []
-    end
-    apply_fx fx_chain, thunk
-    return
-  end
-
-  if type == "play"
-    n = track[:note]
-    if n.nil?
-      return
-    end
-    play n, **inherited_params
-    return
-  end
-
-  if type == "synth"
-    synth = track[:synth]
-    if synth.nil?
-      if not inherited_type_value
-        return
-      end
-      synth = inherited_type_value
-    end
-    s = synth.to_sym
-    if s.nil?
-      puts "[ERROR] no synth for track #{track}"
-      return
-    end
-    thunk = lambda { synth s, **inherited_params }
-    fx_chain = track[:fx]
-    if fx_chain.nil?
-      fx_chain = []
-    end
-    apply_fx fx_chain, thunk
-    return
-  end
-end
-
-define :get_binding do |index|
-  return binding
-end
-
-define :apply_fx do |fx_chain, thunk|
-  if fx_chain.length == 0
-    thunk.call()
-  else
-    fx = fx_chain[0]
-    fx_chain = fx_chain[1..-1]
-    with_fx fx[:fx], **fx[:params] do
-      apply_fx fx_chain, thunk
-    end
-  end
+  _dispatch.dispatch t
 end
 
 # USER STATE FUNCTIONS
@@ -174,6 +33,15 @@ end
 defonce :_state do
   SonicJam::State.new
 end
+
+# DISPATCH
+
+define :_dispatch do
+  SonicJam::Dispatch.new(_state, "1/32", with_fx, synth, sample)
+end
+
+
+
 
 define :set_state do |ns, state|
   if _ns_ok(ns)
