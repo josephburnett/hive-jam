@@ -17,11 +17,12 @@ module SonicJam
       thunks = []
       grid[:tracks].each_index do |index|
         track = grid[:tracks][index]
-        type = track[:type]
         beats = track[:beats]
         on, boundary = SonicJam::_on_the_beat?(bpc, @resolution, beats, tick)
 
         # Apply inheritance from parent track
+        type = track.fetch(:type, "none")
+        grid_type = track.fetch(:'grid-type', parent_track.fetch(:'grid-type', "none"))
         synth = track.fetch(:synth, parent_track.fetch(:synth, nil))
         synth_params = track.fetch(:'synth-params', {})
         synth_params = parent_track.fetch(:'synth-params', {}).merge(synth_params)
@@ -31,15 +32,25 @@ module SonicJam
         fx = track.fetch(:fx, [])
         fx = parent_track.fetch(:fx, []) + fx
 
+        if type == "none"
+          type = grid_type
+        end
+        
         case type
         when "grid"
           if not on
             next
           end
+          if not track[:id]
+            next
+          end
           grid_id = track[:id].to_sym
           sub_grid = @state.get_state(grid_id)
           thunks += _dispatch_grid sub_grid, tick, {
+                                    :'grid-type' => grid_type,
+                                    synth: synth,
                                     :'synth-params' => synth_params,
+                                    sample: sample,
                                     :'sample-params' => sample_params,
                                     fx: fx
                                   }

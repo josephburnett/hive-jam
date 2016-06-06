@@ -54,7 +54,7 @@ module SonicJam
                            { type: "grid", id: "a", beats: [[1]] }
                          ]
                        })
-      check_dispatch_grid [
+      check_dispatch_grid_calls [
         {
           synth: "synth",
           params: {},
@@ -86,7 +86,7 @@ module SonicJam
                            { type: "grid", id: "b", beats: [[1]] }
                          ]
                        })
-      check_dispatch_grid [
+      check_dispatch_grid_calls [
         {
           synth: "synth-1",
           params: { from: "grid-b-0" },
@@ -109,8 +109,34 @@ module SonicJam
         }
       ]
     end
+
+    def test_dispatch_grid_type_inheritance
+      @state.set_state({ id: "a", name: "a", bpc: "1",
+                         tracks: [
+                           { type: "synth", synth: "synth-1", beats: [[1]] },
+                           { type: "sample", sample: "sample-1", beats: [[1]] },
+                           { type: "none", beats: [[1]] },
+                         ]
+                       })
+      @state.set_state({ id: "root", name: "root", bpc: "1",
+                         tracks: [
+                           { type: "grid", id: "a", beats: [[1]],
+                             :'grid-type' => "synth", :'synth' => "synth-2" },
+                           { type: "grid", id: "a", beats: [[1]],
+                             :'grid-type' => "sample", :'sample' => "sample-2" },
+                         ]
+                       })
+      check_dispatch_grid_calls [
+        { synth: "synth-1", params: {}, fx: [] },
+        { sample: "sample-1", params: {}, fx: [] },
+        { synth: "synth-2", params: {}, fx: [] },
+        { synth: "synth-1", params: {}, fx: [] },
+        { sample: "sample-1", params: {}, fx: [] },
+        { sample: "sample-2", params: {}, fx: [] },
+      ]
+    end
     
-    def check_dispatch_grid(expected)
+    def check_dispatch_grid_calls(expected)
       @dispatch.instance_variable_set(:@calls, [])
       def @dispatch._dispatch_synth(synth, params, fx)
         @calls.push({ synth: synth, params: params, fx: fx })

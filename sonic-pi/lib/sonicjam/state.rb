@@ -130,7 +130,6 @@ module SonicJam
         end
       end
       # TODO validate grid id references
-      # TODO validate no circular references
     end
 
     def _validate_acyclic(candidate_grid, state, current_grid=nil, path=nil)
@@ -145,6 +144,9 @@ module SonicJam
         return
       end
       current_grid[:tracks].each do |t|
+        if not t[:id]
+          next
+        end
         if t[:type] == "grid"
           if t[:id] == candidate_grid[:id]
             # Check the state as it would be with the candidate grid.
