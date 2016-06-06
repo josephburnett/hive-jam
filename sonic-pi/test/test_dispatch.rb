@@ -87,26 +87,10 @@ module SonicJam
                          ]
                        })
       check_dispatch_grid_calls [
-        {
-          synth: "synth-1",
-          params: { from: "grid-b-0" },
-          fx: [],
-        },
-        {
-          synth: "synth-2",
-          params: { from: "grid-a-1" },
-          fx: [],
-        },
-        {
-          sample: "sample-1",
-          params: { from: "grid-b-0" },
-          fx: [],
-        },
-        {
-          sample: "sample-2",
-          params: { from: "grid-a-3" },
-          fx: [],
-        }
+        { synth: "synth-1", params: { from: "grid-b-0" }, fx: [] },
+        { synth: "synth-2", params: { from: "grid-a-1" }, fx: [] },
+        { sample: "sample-1", params: { from: "grid-b-0" }, fx: [] },
+        { sample: "sample-2", params: { from: "grid-a-3" }, fx: [] },
       ]
     end
 
