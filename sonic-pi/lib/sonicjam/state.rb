@@ -117,9 +117,12 @@ module SonicJam
       _check_array track[:beats], "Track beats must be an array."
       _check_keys track, "Track keys must be one of.", :type, :id, :beats,
         :fx, :synth, :'synth-params', :sample, :'sample-params',
-        :'grid-type', :id, :params
-      if track[:params]
-        _check_hash track[:params], "Track params must be a hash."
+        :'grid-type', :id
+      if track[:'synth-params']
+        _check_hash track[:'synth-params'], "Track synth-params must be a hash."
+      end
+      if track[:'sample-params']
+        _check_hash track[:'sample-params'], "Track sample-params must be a hash."
       end
       if track[:fx]
         fx = track[:fx]
