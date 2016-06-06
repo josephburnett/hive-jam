@@ -90,5 +90,15 @@ module SonicJam
       }
     end
 
+    def test_invalid_grid_reference
+      assert_raises(InvalidState) {
+        @state.set_state({ id: "root", name: "root", bpc: "1",
+                           tracks: [
+                             { type: "grid", id: "nonexistent", beats: [[1]] },
+                           ]
+                         })
+      }
+    end
+    
   end
 end
