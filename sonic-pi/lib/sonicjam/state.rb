@@ -86,7 +86,7 @@ module SonicJam
     end
 
     def _check_one_of(value, message, *one_of)
-      _check one_of.include?(value), "#{message} (#{value}) (#{one_of})"
+      _check one_of.include?(value), "#{message} #{one_of} (#{value})"
     end
 
     def _check_keys(hash, message, *one_of)
@@ -118,9 +118,9 @@ module SonicJam
         "none", "grid", "synth", "sample"
       _check_not track[:beats].nil?, "Track beats must not be nil."
       _check_array track[:beats], "Track beats must be an array."
-      _check_keys track, "Track keys must be one of.", :type, :id, :beats,
+      _check_keys track, "Track keys must be one of.", :type, :beats,
         :fx, :synth, :'synth-params', :sample, :'sample-params',
-        :'grid-type', :id
+        :'grid-type', :'grid-id'
       if track[:'synth-params']
         _check_hash track[:'synth-params'], "Track synth-params must be a hash."
       end

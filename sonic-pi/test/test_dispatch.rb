@@ -51,7 +51,7 @@ module SonicJam
                        })
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
-                           { type: "grid", id: "a", beats: [[1]] }
+                           { type: "grid", :'grid-id' => "a", beats: [[1]] }
                          ]
                        })
       check_dispatch_grid_calls [
@@ -72,14 +72,14 @@ module SonicJam
                        })
       @state.set_state({ id: "b", name: "b", bpc: "1",
                          tracks: [
-                           { type: "grid", id: "a", beats: [[1]],
+                           { type: "grid", :'grid-id' => "a", beats: [[1]],
                              :'synth-params' => { from: "grid-b-0" },
                              :'sample-params' => { from: "grid-b-0" },}
                          ]
                        })
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
-                           { type: "grid", id: "b", beats: [[1]] }
+                           { type: "grid", :'grid-id' => "b", beats: [[1]] }
                          ]
                        })
       check_dispatch_grid_calls [
@@ -100,9 +100,9 @@ module SonicJam
                        })
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
-                           { type: "grid", id: "a", beats: [[1]],
+                           { type: "grid", :'grid-id' => "a", beats: [[1]],
                              :'grid-type' => "synth", :'synth' => "synth-2" },
-                           { type: "grid", id: "a", beats: [[1]],
+                           { type: "grid", :'grid-id' => "a", beats: [[1]],
                              :'grid-type' => "sample", :'sample' => "sample-2" },
                          ]
                        })
@@ -126,7 +126,7 @@ module SonicJam
                        })
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
-                           { type: "grid", id: "a", beats: [[1]],
+                           { type: "grid", :'grid-id' => "a", beats: [[1]],
                              fx: [{ fx: "fx-2", params: {} }]},
                          ]
                        })

@@ -40,10 +40,10 @@ module SonicJam
           if not on
             next
           end
-          if not track[:id]
+          if not track[:'grid-id']
             next
           end
-          grid_id = track[:id].to_sym
+          grid_id = track[:'grid-id'].to_sym
           sub_grid = @state.get_state(grid_id)
           thunks += _dispatch_grid sub_grid, tick, {
                                     :'grid-type' => grid_type,

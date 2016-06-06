@@ -17,7 +17,6 @@ module SonicJam
             type: "synth",
             beats: [[0]],
             fx: [],
-            id: "xyz",
             :'synth-params' => {},
             :'sample-params' => {},
           },
