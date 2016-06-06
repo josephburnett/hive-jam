@@ -55,11 +55,7 @@ module SonicJam
                          ]
                        })
       check_dispatch_grid_calls [
-        {
-          synth: "synth",
-          params: {},
-          fx: [],
-        }
+        { synth: "synth", params: {}, fx: [] }
       ]
     end
 
