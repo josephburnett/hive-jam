@@ -104,15 +104,18 @@ module SonicJam
       _check_not grid[:tracks].nil?, "Grid tracks must not be nil."
       _check_array grid[:tracks], "Grid tracks must be an array."
       _check_keys grid, "Grid keys must be one of.", :name, :id, :bpc, :tracks
+      grid[:tracks].each do |track|
+        _validate_track(track)
+      end
+      # TODO validate fx
       _validate_acyclic grid, @state
     end
 
     def _validate_track(track)
       _check_not track.nil?, "Track must not be nil."
-      _check_not track[:id], "Track id must not be nil."
-      _check_not track[:type], "Track type must not be nil."
+      _check_not track[:type].nil?, "Track type must not be nil."
       _check_one_of track[:type], "Track type must be one one of.",
-        ["none", "grid", "synth", "sample"]
+        "none", "grid", "synth", "sample"
       _check_not track[:beats].nil?, "Track beats must not be nil."
       _check_array track[:beats], "Track beats must be an array."
       _check_keys track, "Track keys must be one of.", :type, :id, :beats,
