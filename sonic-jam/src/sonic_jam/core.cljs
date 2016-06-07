@@ -11,7 +11,8 @@
 (defonce app-state (atom {:grids {}
                           :samples []
                           :synths []
-                          :grid-types ["synth" "sample"]}))
+                          :grid-types ["synth" "sample"]
+                          :errors []}))
 
 (defn grids []
   (om/ref-cursor (:grids (om/root-cursor app-state))))
@@ -595,6 +596,14 @@
                                                      :id id
                                                      :set-state-ch (:set-state-ch state)}))))))))
 
+(defn error-view [cursor]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {:style #js {:color "#FF0000"}}
+               (apply dom/ul nil
+                      (map (partial dom/li nil) cursor))))))
+
 (defn app-view [cursor _]
   (reify
     om/IInitState
@@ -631,7 +640,10 @@
                     (om/transact! cursor :samples #(into % samples)))
                   (= "/synths" (get message "Address"))
                   (let [synths (js->clj (js/JSON.parse (first params)))]
-                    (om/transact! cursor :synths #(into % synths))))
+                    (om/transact! cursor :synths #(into % synths)))
+                  (= "/errors" (get message "Address"))
+                  (let [errors (js->clj (js/JSON.parse (first params)))]
+                    (om/update! cursor :errors errors)))
                 (when message
                   (recur))))))
         {:set-state-ch set-state-ch
@@ -639,7 +651,8 @@
     om/IRenderState
     (render-state [_ state]
       (dom/div #js {:style #js {:fontFamily "monospace"}}
+               (om/build error-view (:errors cursor))
                (om/build grid-view "root" {:state state})))))
-        
+
 (om/root app-view app-state
   {:target (. js/document (getElementById "app"))})
