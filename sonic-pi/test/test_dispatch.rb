@@ -140,6 +140,15 @@ module SonicJam
           ]},
       ]
     end
+
+    def test_dispatch_grid_silence
+      @state.set_state({ id: "root", name: "root", bpc: "1",
+                         tracks: [
+                           { type: "synth", synth: "synth-1", beats: [[0]] }
+                         ]
+                       })
+      check_dispatch_grid_calls []
+    end
     
     def check_dispatch_grid_calls(expected)
       dispatches = @dispatch.dispatch(0)
