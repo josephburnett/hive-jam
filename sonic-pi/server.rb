@@ -37,10 +37,14 @@ end
 # DISPATCH
 
 define :_dispatch do
-  SonicJam::Dispatch.new(_state, "1/32", with_fx, synth, sample)
+  def to_proc(&proc)
+    proc
+  end
+  SonicJam::Dispatch.new(_state, "1/32",
+                         to_proc { |fx, **args| with_fx fx, **args },
+                         to_proc { |s, **args| synth s, **args },
+                         to_proc { |s, **args| sample s, **args })
 end
-
-
 
 
 define :set_state do |ns, state|

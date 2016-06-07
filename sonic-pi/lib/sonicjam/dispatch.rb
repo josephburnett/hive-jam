@@ -2,7 +2,7 @@ module SonicJam
 
   class Dispatch
 
-    def initialize(state, resolution, with_fx, synth, sample)
+    def initialize(state, resolution, &with_fx, &synth, &sample)
       @state = state
       @resolution = resolution
       @with_fx = with_fx
