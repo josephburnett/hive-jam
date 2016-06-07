@@ -7,7 +7,7 @@ module SonicJam
 
     def setup
       @state = State.new
-      @dispatch = Dispatch.new(@state, "1/32", nil, nil, nil)
+      @dispatch = Dispatch.new(@state, "1/32")
     end
 
     def test_on_the_beat
@@ -142,18 +142,8 @@ module SonicJam
     end
     
     def check_dispatch_grid_calls(expected)
-      @dispatch.instance_variable_set(:@calls, [])
-      def @dispatch._dispatch_synth(synth, params, fx)
-        @calls.push({ synth: synth, params: params, fx: fx })
-      end
-      def @dispatch._dispatch_sample(sample, params, fx)
-        @calls.push({ sample: sample, params: params, fx: fx })
-      end
-      thunks = @dispatch.dispatch(0)
-      thunks.each do |thunk|
-        thunk.call()
-      end
-      assert_equal expected, @dispatch.instance_variable_get(:@calls)
+      dispatches = @dispatch.dispatch(0)
+      assert_equal expected, dispatches
     end
     
   end

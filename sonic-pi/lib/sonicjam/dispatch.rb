@@ -2,12 +2,9 @@ module SonicJam
 
   class Dispatch
 
-    def initialize(state, resolution, &with_fx, &synth, &sample)
+    def initialize(state, resolution)
       @state = state
       @resolution = resolution
-      @with_fx = with_fx
-      @synth = synth
-      @sample = sample
     end
 
     def dispatch(tick)
@@ -17,7 +14,7 @@ module SonicJam
 
     def _dispatch_grid(grid, tick, parent_track={})
       bpc = grid[:bpc]
-      thunks = []
+      dispatches = []
       grid[:tracks].each_index do |index|
         track = grid[:tracks][index]
         beats = track[:beats]
@@ -48,7 +45,7 @@ module SonicJam
           end
           grid_id = track[:'grid-id'].to_sym
           sub_grid = @state.get_state(grid_id)
-          thunks += _dispatch_grid sub_grid, tick, {
+          dispatches += _dispatch_grid sub_grid, tick, {
                                     :'grid-type' => grid_type,
                                     synth: synth,
                                     :'synth-params' => synth_params,
@@ -60,44 +57,19 @@ module SonicJam
           if not on and boundary
             next
           end
-          thunks.push(lambda { _dispatch_synth synth, synth_params, fx })
+          dispatches.push({ synth: synth, params: synth_params, fx: fx })
         when "sample"
           if not on and boundary
             next
           end
-          thunks.push(lambda { _dispatch_sample sample, sample_params, fx })
+          dispatches.push({ sample: sample, params: sample_params, fx: fx })
         else
           # do nothing
         end
       end
 
-      return thunks
-    end
+      return dispatches
 
-    def _dispatch_synth(synth, params, fx)
-      thunk = lambda { @synth.call(synth, **params) }
-      apply_fx(fx, thunk)
-    end
-
-    def _dispatch_sample(sample, params, fx)
-      thunk = lambda { @sample.call(sample, **params) }
-      apply_fx(fx, thunk)
-    end
-
-    def _get_binding
-      return binding
-    end
-
-    def _apply_fx(fx_chain, thunk)
-      if fx_chain.length == 0
-        thunk.call()
-      else
-        fx = fx_chain[0]
-        fx_chain = fx_chain[1..-1]
-        @with_fx.call(fx[:fx], **fx[:params]) do
-          apply_fx fx_chain, thunk
-        end
-      end
     end
   end
 
