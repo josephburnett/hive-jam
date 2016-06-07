@@ -216,8 +216,16 @@
                                     :onClick #(handle-change % owner state :type)
                                     :onKeyDown #(when (= 13 (.-which %))
                                                   (om/update-state! owner (fn [s] (merge s {:state :immutable})))
-                                                  (if-not (= "grid" (:type state))
-                                                    (om/transact! cursor (fn [c] (assoc c "type" (:type state))))
+                                                  (condp = (:type state)
+                                                    "synth"
+                                                    (om/transact! cursor (fn [c] (assoc c
+                                                                                        "type" (:type state)
+                                                                                        "synth-params" {})))
+                                                    "sample"
+                                                    (om/transact! cursor (fn [c] (assoc c
+                                                                                        "type" (:type state)
+                                                                                        "sample-params" {})))
+                                                    "grid"
                                                     (let [grid-id (new-id)
                                                           grid {"name" ""
                                                                 "grid-id" grid-id
@@ -234,7 +242,6 @@
                                                   (go (>! set-state-ch id)))}
                                (dom/option nil "synth")
                                (dom/option nil "sample")
-                               (dom/option nil "play")
                                (dom/option nil "grid"))
         :immutable (dom/span nil (get cursor "type"))))))
 
@@ -413,11 +420,15 @@
                                                                 (dom/td nil "grid-type:")
                                                                 (dom/td nil (om/build grid-type-editor input)))
                                                         fx-row])
-                                              [(dom/tr nil
-                                                       (dom/td nil nil)
-                                                       (dom/td nil "params:")
-                                                       (dom/td nil (om/build param-editor input)))
-                                               fx-row])
+                                              "sample" [(dom/tr nil
+                                                                (dom/td nil nil)
+                                                                (dom/td nil "params:")
+                                                                (dom/td nil (om/build sample-param-editor input)))
+                                                        fx-row]
+                                              "synth" [(dom/tr nil
+                                                               (dom/td nil nil)
+                                                               (dom/td nil "params:")
+                                                               (dom/td nil (om/build synth-param-editor input)))])
                                             [(dom/tr nil
                                                      (dom/td closer "}")
                                                      (dom/td nil nil)
@@ -436,7 +447,6 @@
                                  (clj->js
                                   (conj s {"type" "none"
                                            "beats" (repeat % [0])
-                                           "params" {}
                                            "fx" []}))))
             width-selection (fn [w s]
                               (dom/span #js {:onClick
