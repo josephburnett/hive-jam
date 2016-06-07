@@ -69,9 +69,9 @@ module SonicJam
       _check (not predicate), message
     end
 
-    def _check_int(value, message)
+    def _check_rational(value, message)
       begin
-        Integer(value)
+        Rational(value)
       rescue
         raise InvalidState.new("#{message} (#{value.to_s})")
       end
@@ -100,7 +100,7 @@ module SonicJam
       _check_not grid[:name].nil?, "Grid name must not be nil."
       _check_not grid[:id].nil?, "Grid id must not be nil."
       _check_not grid[:bpc].nil?, "Grid bpc must not be nil."
-      _check_int grid[:bpc], "Grid bpc must be an integer."
+      _check_rational grid[:bpc], "Grid bpc must be a rational."
       _check_not grid[:tracks].nil?, "Grid tracks must not be nil."
       _check_array grid[:tracks], "Grid tracks must be an array."
       _check_keys grid, "Grid keys must be one of.", :name, :id, :bpc, :tracks
