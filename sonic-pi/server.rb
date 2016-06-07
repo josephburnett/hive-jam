@@ -5,7 +5,7 @@ define :res do Rational('1/8') end
 define :verbosity do 1 end
 
 live_loop :main do
-  use_bpm 150
+  use_bpm 120
   use_cue_logging (verbosity > 1) ? true : false
   use_debug (verbosity > 0) ? true : false
   wait res
@@ -49,7 +49,7 @@ end
 # DISPATCH
 
 define :_dispatch do
-  SonicJam::Dispatch.new(_state, "1/32")
+  SonicJam::Dispatch.new(_state, res)
 end
 
 define :apply_fx do |fx_chain, thunk|
