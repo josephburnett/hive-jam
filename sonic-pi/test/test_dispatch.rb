@@ -33,6 +33,15 @@ module SonicJam
       check_on_the_beat(bpc="3", res="1", beats, tick=6, expect_on=true, expect_bound=true)
       check_on_the_beat(bpc="3", res="1", beats, tick=7, expect_on=true, expect_bound=false)
       check_on_the_beat(bpc="3", res="1", beats, tick=8, expect_on=true, expect_bound=false)
+      check_on_the_beat(bpc="1", res="1/8", [[1]], tick=0, expect_on=true, expect_bound=true)
+      check_on_the_beat(bpc="1", res="1/8", [[1]], tick=1, expect_on=true, expect_bound=false)
+      check_on_the_beat(bpc="1", res="1/8", [[1]], tick=2, expect_on=true, expect_bound=false)
+      check_on_the_beat(bpc="1", res="1/8", [[1]], tick=3, expect_on=true, expect_bound=false)
+      check_on_the_beat(bpc="1", res="1/8", [[1]], tick=4, expect_on=true, expect_bound=false)
+      check_on_the_beat(bpc="1", res="1/8", [[1]], tick=5, expect_on=true, expect_bound=false)
+      check_on_the_beat(bpc="1", res="1/8", [[1]], tick=6, expect_on=true, expect_bound=false)
+      check_on_the_beat(bpc="1", res="1/8", [[1]], tick=7, expect_on=true, expect_bound=false)
+      check_on_the_beat(bpc="1", res="1/8", [[1]], tick=8, expect_on=true, expect_bound=true)
     end
 
     def check_on_the_beat(bpc, res, beats, tick, expect_on, expect_bound)
