@@ -15,7 +15,12 @@ live_loop :main do
     next
   end
   t = tick
-  _dispatch.dispatch t
+  begin
+    _dispatch.dispatch t
+  rescue Exception => e
+    errors = [e.to_s]
+    jam_client.send("/errors", JSON.dump(["*", JSON.dump(errors)]))
+  end
 end
 
 # USER STATE FUNCTIONS
@@ -95,11 +100,16 @@ jam_server.add_method("/drop-state") do |args|
 end
 
 jam_server.add_method("/set-state") do |args|
-  assert(args.length == 3)
-  client_id = args[0]
-  ns = args[1].to_sym
-  state = JSON.parse(args[2], symbolize_names: true)
-  set_state ns, state
+  begin
+    assert(args.length == 3)
+    client_id = args[0]
+    ns = args[1].to_sym
+    state = JSON.parse(args[2], symbolize_names: true)
+    set_state ns, state
+  rescue Exception => e
+    errors = [e.to_s]
+    jam_client.send("/errors", JSON.dump([client_id, JSON.dump(errors)]))
+  end
 end
 
 jam_server.add_method("/get-state") do |args|
