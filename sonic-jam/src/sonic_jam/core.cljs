@@ -219,14 +219,14 @@
                                                     (om/transact! cursor (fn [c] (assoc c "type" (:type state))))
                                                     (let [grid-id (new-id)
                                                           grid {"name" ""
-                                                                "id" grid-id
+                                                                "grid-id" grid-id
                                                                 "bpc" 1
                                                                 "tracks" []}]
                                                       (om/transact! cursor (fn [c] (assoc c
                                                                                           "type" (:type state)
                                                                                           "synth-params" {}
                                                                                           "sample-params" {}
-                                                                                          "id" grid-id)))
+                                                                                          "grid-id" grid-id)))
                                                       (om/transact! (om/observe owner (grids))
                                                                     (fn [c] (assoc c (get grid "id") grid)))
                                                       (go (>! set-state-ch grid-id))))
@@ -293,7 +293,7 @@
                                     (dom/td nil (get %1 "fx"))
                                     (dom/td nil (om/build param-editor
                                                           {:cursor %1
-                                                          :id id
+                                                           :id id
                                                            :set-state-ch set-state-ch})))
                            cursor
                            (range))
@@ -488,7 +488,7 @@
                                                 :set-state-ch (:set-state-ch state)}))
                 (dom/td nil
                         (when (= "grid" (get cursor "type"))
-                          (let [id (get cursor "id")
+                          (let [id (get cursor "grid-id")
                                 sub-state {:set-state-ch (:set-state-ch state)
                                            :get-state-ch (:get-state-ch state)}]
                             (om/build grid-view id {:state sub-state})))))))))
