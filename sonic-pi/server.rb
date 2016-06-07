@@ -16,7 +16,14 @@ live_loop :main do
   end
   t = tick
   begin
-    _dispatch.dispatch t
+    dispatches = _dispatch.dispatch t
+    dispatches.each do |d|
+      if d[:sample]
+        apply_fx d[:fx], lambda { sample d[:sample].to_sym, **d[:params] }
+      else
+        apply_fx d[:fx], lambda { synth d[:synth].to_sym, **d[:params] }
+      end
+    end
   rescue Exception => e
     errors = [e.to_s]
     jam_client.send("/errors", JSON.dump(["*", JSON.dump(errors)]))
@@ -42,15 +49,22 @@ end
 # DISPATCH
 
 define :_dispatch do
-  def to_proc(&proc)
-    proc
-  end
-  SonicJam::Dispatch.new(_state, "1/32",
-                         to_proc { |fx, **args| with_fx fx, **args },
-                         to_proc { |s, **args| synth s, **args },
-                         to_proc { |s, **args| sample s, **args })
+  SonicJam::Dispatch.new(_state, "1/32")
 end
 
+define :apply_fx do |fx_chain, thunk|
+  if fx_chain.length == 0
+    thunk.call()
+  else
+    fx = fx_chain[0]
+    fx_chain = fx_chain[1..-1]
+    with_fx fx[:fx], **fx[:params] do
+      apply_fx fx_chain, thunk
+    end
+  end
+end
+
+# MORE STATE
 
 define :set_state do |ns, state|
   if _ns_ok(ns)
