@@ -228,7 +228,7 @@
                                                     "grid"
                                                     (let [grid-id (new-id)
                                                           grid {"name" ""
-                                                                "grid-id" grid-id
+                                                                "id" grid-id
                                                                 "bpc" 1
                                                                 "tracks" []}]
                                                       (om/transact! cursor (fn [c] (assoc c
@@ -271,14 +271,8 @@
 (def synth-editor
   (select-editor-builder "synth" synths))
 
-(def grid-synth-editor
-  (select-editor-builder "grid-synth" synths))
-
 (def sample-editor
   (select-editor-builder "sample" samples))
-
-(def grid-sample-editor
-  (select-editor-builder "grid-sample" samples))
 
 (defn fx-editor [{:keys [cursor id set-state-ch]} owner]
   (reify
@@ -396,7 +390,7 @@
                                                                 (dom/tr nil
                                                                         (dom/td nil nil)
                                                                         (dom/td nil "synth:")
-                                                                        (dom/td nil (om/build grid-synth-editor input)))
+                                                                        (dom/td nil (om/build synth-editor input)))
                                                                 (dom/tr nil
                                                                         (dom/td nil nil)
                                                                         (dom/td nil "params:")
@@ -409,7 +403,7 @@
                                                                  (dom/tr nil
                                                                          (dom/td nil nil)
                                                                          (dom/td nil "sample:")
-                                                                         (dom/td nil (om/build grid-sample-editor input)))
+                                                                         (dom/td nil (om/build sample-editor input)))
                                                                  (dom/tr nil
                                                                          (dom/td nil nil)
                                                                          (dom/td nil "params:")
