@@ -9,11 +9,6 @@ live_loop :main do
   use_cue_logging (verbosity > 1) ? true : false
   use_debug (verbosity > 0) ? true : false
   wait res
-  root = _state.get_state :root
-  if root.nil?
-    puts "[ERROR] no root state"
-    next
-  end
   t = tick
   begin
     dispatches = _dispatch.dispatch t
@@ -30,20 +25,16 @@ live_loop :main do
   end
 end
 
-# USER STATE FUNCTIONS
-
-define :save_state do |filename|
-  _state.save_state filename
-end
-
-define :load_state do |filename|
-  _state.load_state filename
-end
-
 # STATE
 
 defonce :_state do
   SonicJam::State.new
+end
+
+define :_send_state do |client_id, ns|
+  ns = ns.to_sym
+  json = JSON.dump(_state.get_state(ns))
+  jam_client.send("/state", JSON.dump([client_id, ns, json]))
 end
 
 # DISPATCH
@@ -64,38 +55,6 @@ define :apply_fx do |fx_chain, thunk|
   end
 end
 
-# MORE STATE
-
-define :set_state do |ns, state|
-  if _ns_ok(ns)
-    _state.set_state state
-    send_state_json("*", ns)
-  end
-end
-
-define :drop_state do |ns|
-  if _ns_ok(ns)
-    _state.drop_state ns
-    send_state_json("*", ns)
-  end
-end
-
-define :get_state_json do |ns|
-  return JSON.dump(_state.get_state(ns))
-end
-
-define :send_state_json do |client_id, ns|
-  jam_client.send("/state", JSON.dump([client_id, ns, get_state_json(ns)]))
-end
-
-define :_ns_ok do |ns|
-  if not ns or not ns.is_a? Symbol
-    puts "ns #{ns} is not a symbol"
-    return false
-  end
-  return true
-end
-
 # SERVER
 
 defonce :jam_server do
@@ -108,18 +67,22 @@ end
 
 jam_server.add_method("/drop-state") do |args|
   assert(args.length == 2)
-  client_id = args[0]
-  ns = args[1].intern
-  drop_state ns
+  begin
+    client_id = args[0]
+    drop_state args[1]
+  rescue Exception => e
+    errors = [e.to_s]
+    jam_client.send("/errors", JSON.dump([client_id, JSON.dump(errors)]))
+  end
 end
 
 jam_server.add_method("/set-state") do |args|
+  assert(args.length == 3)
   begin
-    assert(args.length == 3)
     client_id = args[0]
     ns = args[1].to_sym
     state = JSON.parse(args[2], symbolize_names: true)
-    set_state ns, state
+    set_state state
   rescue Exception => e
     errors = [e.to_s]
     jam_client.send("/errors", JSON.dump([client_id, JSON.dump(errors)]))
@@ -128,9 +91,14 @@ end
 
 jam_server.add_method("/get-state") do |args|
   assert(args.length == 2)
-  client_id = args[0]
-  ns = args[1].to_sym
-  send_state_json(client_id, ns)
+  begin
+    client_id = args[0]
+    ns = args[1].to_sym
+    _send_state(client_id, ns)
+  rescue Exception => e
+    errors = [e.to_s]
+    jam_client.send("/errors", JSON.dump([client_id, JSON.dump(errors)]))
+  end
 end
 
 jam_server.add_method("/get-samples") do |args|
@@ -167,4 +135,31 @@ jam_server.add_method("/ping") do |args|
   assert(args.length == 1)
   client_id = args[0]
   jam_client.send("/pong", JSON.dump([client_id]))
+end
+
+# USER STATE FUNCTIONS
+
+define :save_state do |filename|
+  _state.save_state filename
+end
+
+define :load_state do |filename|
+  _state.load_state filename
+  # TODO broadcast all state
+end
+
+define :get_state do |ns|
+  ns = ns.to_sym
+  _state.get_state ns
+end
+
+define :set_state do |state|
+  _state.set_state state
+  _send_state("*", state[:id])
+end
+
+define :drop_state do |ns|
+  ns = ns.to_sym
+  _state.drop_state ns
+  _send_state("*", ns)
 end
