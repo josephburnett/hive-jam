@@ -474,7 +474,7 @@
     om/IWillMount
     (will-mount [_]
       (when (= "grid" (get cursor "type"))
-        (go (>! (om/get-state owner :get-state-ch) (get cursor "id")))))
+        (go (>! (om/get-state owner :get-state-ch) (get cursor "grid-id")))))
     om/IRenderState
     (render-state [_ state]
       (if-not (:track-expanded state)
