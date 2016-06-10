@@ -11,18 +11,23 @@ live_loop :main do
   wait res
   t = tick
   begin
-    dispatches = _dispatch.dispatch t
+    dispatches, cursors = _dispatch.dispatch t
+    jam_client.send("/cursors", JSON.dump(["*", JSON.dump(cursors)]))
     dispatches.each do |d|
       if d[:sample]
         apply_fx d[:fx], lambda { sample d[:sample].to_sym, **d[:params] }
-      else
+      elsif d[:synth]
         apply_fx d[:fx], lambda { synth d[:synth].to_sym, **d[:params] }
       end
     end
   rescue Exception => e
-    errors = [e.to_s]
-    jam_client.send("/errors", JSON.dump(["*", JSON.dump(errors)]))
+    _send_error e
   end
+end
+
+define :_send_error do |e|
+  errors = [e.message] + e.backtrace
+  jam_client.send("/errors", JSON.dump(["*", JSON.dump(errors)]))
 end
 
 # STATE
@@ -71,8 +76,7 @@ jam_server.add_method("/drop-state") do |args|
     client_id = args[0]
     drop_state args[1]
   rescue Exception => e
-    errors = [e.to_s]
-    jam_client.send("/errors", JSON.dump([client_id, JSON.dump(errors)]))
+    _send_error e
   end
 end
 
@@ -84,8 +88,7 @@ jam_server.add_method("/set-state") do |args|
     state = JSON.parse(args[2], symbolize_names: true)
     set_state state
   rescue Exception => e
-    errors = [e.to_s]
-    jam_client.send("/errors", JSON.dump([client_id, JSON.dump(errors)]))
+    _send_error e
   end
 end
 
@@ -96,8 +99,7 @@ jam_server.add_method("/get-state") do |args|
     ns = args[1].to_sym
     _send_state(client_id, ns)
   rescue Exception => e
-    errors = [e.to_s]
-    jam_client.send("/errors", JSON.dump([client_id, JSON.dump(errors)]))
+    _send_error e
   end
 end
 

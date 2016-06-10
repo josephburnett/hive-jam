@@ -161,9 +161,52 @@ module SonicJam
     end
     
     def check_dispatch_grid_calls(expected)
-      dispatches = @dispatch.dispatch(0)
+      dispatches, _ = @dispatch.dispatch(0)
       assert_equal expected, dispatches
     end
-    
+
+    def test_dispatch_grid_indices
+      @dispatch = Dispatch.new(@state, "1")
+      @state.set_state({ id: "b", name: "b", bpc: "1",
+                         tracks: [
+                           { type: "synth", synth: "s", beats: [[0]] },
+                         ]
+                       })
+      @state.set_state({ id: "a", name: "a", bpc: "1",
+                         tracks: [
+                           { type: "synth", synth: "s", beats: [[0], [1], [0], [1]] },
+                           { type: "synth", synth: "s", beats: [[0], [1], [0]] },
+                           { type: "grid", :'grid-id' => "b", beats: [[1], [0]] },
+                         ]
+                       })
+      @state.set_state({ id: "root", name: "root", bpc: "1",
+                         tracks: [
+                           { type: "grid", :'grid-id' => "a", beats: [[1]] },
+                         ]
+                       })
+      check_dispatch_grid_indices(tick=0, { :'0' => [0,
+                                                { :'0' => [0, nil],
+                                                  :'1' => [0, nil],
+                                                  :'2' => [0,
+                                                      { :'0' => [0, nil] }]}]})
+      check_dispatch_grid_indices(tick=1, { :'0' => [0,
+                                                { :'0' => [1, nil],
+                                                  :'1' => [1, nil],
+                                                  :'2' => [1, nil]}]})
+      check_dispatch_grid_indices(tick=2, { :'0' => [0,
+                                                { :'0' => [2, nil],
+                                                  :'1' => [2, nil],
+                                                  :'2' => [0,
+                                                      { :'0' => [0, nil] }]}]})
+      check_dispatch_grid_indices(tick=3, { :'0' => [0,
+                                                { :'0' => [3, nil],
+                                                  :'1' => [0, nil],
+                                                  :'2' => [1, nil]}]})
+    end
+
+    def check_dispatch_grid_indices(tick, expected)
+      _, indices = @dispatch.dispatch(tick)
+      assert_equal expected, indices, "tick: #{tick}"
+    end
   end
 end
