@@ -77,8 +77,9 @@ module SonicJam
     tpc = Rational(bpc) / Rational(resolution)
     boundary = (tick % tpc.ceil).zero?
     i = (tick / tpc).floor
-    on = beats[i % beats.length][0] == 1
-    return on, boundary
+    index = i % beats.length
+    on = beats[index][0] == 1
+    return on, boundary, index
   end
   
 end
