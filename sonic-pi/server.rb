@@ -1,6 +1,6 @@
 # TIME
 
-define :res do Rational('1/8') end
+define :res do Rational('1/4') end
 
 define :verbosity do 1 end
 

@@ -1,4 +1,4 @@
- module SonicJam
+module SonicJam
 
   class Dispatch
 
@@ -38,34 +38,31 @@
 
         case type
         when "grid"
-          if not on
+          if not on or not track[:'grid-id']
             cursors.push([beat_index, nil])
-            next
-          end
-          if not track[:'grid-id']
             next
           end
           grid_id = track[:'grid-id'].to_sym
           sub_grid = @state.get_state(grid_id)
           sub_dispatches, sub_cursors = _dispatch_grid sub_grid, tick, {
-                                    :'grid-type' => grid_type,
-                                    synth: synth,
-                                    :'synth-params' => synth_params,
-                                    sample: sample,
-                                    :'sample-params' => sample_params,
-                                    fx: fx
-                                  }
+            :'grid-type' => grid_type,
+            synth: synth,
+            :'synth-params' => synth_params,
+            sample: sample,
+            :'sample-params' => sample_params,
+            fx: fx
+          }
           dispatches += sub_dispatches
           cursors.push([beat_index, sub_cursors])
         when "synth"
           cursors.push([beat_index, nil])
-          if not on and boundary
+          if not (on and boundary)
             next
           end
           dispatches.push({ synth: synth, params: synth_params, fx: fx })
         when "sample"
           cursors.push([beat_index, nil])
-          if not on and boundary
+          if not (on and boundary)
             next
           end
           dispatches.push({ sample: sample, params: sample_params, fx: fx })
@@ -87,5 +84,5 @@
     on = beats[index][0] == 1
     return on, boundary, index
   end
-  
+
 end
