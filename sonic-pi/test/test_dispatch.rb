@@ -184,24 +184,24 @@ module SonicJam
                            { type: "grid", :'grid-id' => "a", beats: [[1]] },
                          ]
                        })
-      check_dispatch_grid_indices(tick=0, { :'0' => [0,
-                                                { :'0' => [0, nil],
-                                                  :'1' => [0, nil],
-                                                  :'2' => [0,
-                                                      { :'0' => [0, nil] }]}]})
-      check_dispatch_grid_indices(tick=1, { :'0' => [0,
-                                                { :'0' => [1, nil],
-                                                  :'1' => [1, nil],
-                                                  :'2' => [1, nil]}]})
-      check_dispatch_grid_indices(tick=2, { :'0' => [0,
-                                                { :'0' => [2, nil],
-                                                  :'1' => [2, nil],
-                                                  :'2' => [0,
-                                                      { :'0' => [0, nil] }]}]})
-      check_dispatch_grid_indices(tick=3, { :'0' => [0,
-                                                { :'0' => [3, nil],
-                                                  :'1' => [0, nil],
-                                                  :'2' => [1, nil]}]})
+      check_dispatch_grid_indices(tick=0, [[0,
+                                            [[0, nil],
+                                             [0, nil],
+                                             [0,
+                                              [[0, nil]]]]]])
+      check_dispatch_grid_indices(tick=1, [[0,
+                                            [[1, nil],
+                                             [1, nil],
+                                             [1, nil]]]])
+      check_dispatch_grid_indices(tick=2, [[0,
+                                            [[2, nil],
+                                             [2, nil],
+                                             [0,
+                                              [[0, nil]]]]]])
+      check_dispatch_grid_indices(tick=3, [[0,
+                                            [[3, nil],
+                                             [0, nil],
+                                             [1, nil]]]])
     end
 
     def check_dispatch_grid_indices(tick, expected)

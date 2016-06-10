@@ -1,4 +1,4 @@
-module SonicJam
+ module SonicJam
 
   class Dispatch
 
@@ -15,7 +15,7 @@ module SonicJam
     def _dispatch_grid(grid, tick, parent_track={})
       bpc = grid[:bpc]
       dispatches = []
-      indices = {}
+      cursors = []
       grid[:tracks].each_index do |index|
         track = grid[:tracks][index]
         beats = track[:beats]
@@ -38,8 +38,8 @@ module SonicJam
 
         case type
         when "grid"
-          indices[index.to_s.to_sym] = [beat_index, nil]
           if not on
+            cursors.push([beat_index, nil])
             next
           end
           if not track[:'grid-id']
@@ -47,34 +47,34 @@ module SonicJam
           end
           grid_id = track[:'grid-id'].to_sym
           sub_grid = @state.get_state(grid_id)
-          sub_dispatches, sub_indices = _dispatch_grid sub_grid, tick, {
-            :'grid-type' => grid_type,
-            synth: synth,
-            :'synth-params' => synth_params,
-            sample: sample,
-            :'sample-params' => sample_params,
-            fx: fx
-          }
+          sub_dispatches, sub_cursors = _dispatch_grid sub_grid, tick, {
+                                    :'grid-type' => grid_type,
+                                    synth: synth,
+                                    :'synth-params' => synth_params,
+                                    sample: sample,
+                                    :'sample-params' => sample_params,
+                                    fx: fx
+                                  }
           dispatches += sub_dispatches
-          indices[index.to_s.to_sym] = [beat_index, sub_indices]
+          cursors.push([beat_index, sub_cursors])
         when "synth"
-          indices[index.to_s.to_sym] = [beat_index, nil]
+          cursors.push([beat_index, nil])
           if not on and boundary
             next
           end
           dispatches.push({ synth: synth, params: synth_params, fx: fx })
         when "sample"
-          indices[index.to_s.to_sym] = [beat_index, nil]
+          cursors.push([beat_index, nil])
           if not on and boundary
             next
           end
           dispatches.push({ sample: sample, params: sample_params, fx: fx })
         else
-          indices[index.to_s.to_sym] = [beat_index, nil]
+          cursors.push([beat_index, nil])
         end
       end
 
-      return dispatches, indices
+      return dispatches, cursors
 
     end
   end
@@ -87,5 +87,5 @@ module SonicJam
     on = beats[index][0] == 1
     return on, boundary, index
   end
-
+  
 end

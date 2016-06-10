@@ -12,7 +12,8 @@
                           :samples []
                           :synths []
                           :grid-types ["synth" "sample"]
-                          :errors []}))
+                          :errors []
+                          :beat-cursors []}))
 
 (defn grids []
   (om/ref-cursor (:grids (om/root-cursor app-state))))
@@ -29,7 +30,7 @@
 (defn handle-change [e owner state key]
   (om/set-state! owner key (.. e -target -value)))
 
-(defn cell-view [{:keys [cursor id]} _]
+(defn cell-view [{:keys [cursor id on]} _]
   (reify
     om/IRenderState
     (render-state [_ state]
@@ -37,7 +38,8 @@
                                (om/update! cursor [(mod (inc (first cursor)) 2)])
                                (go (>! (:set-state-ch state) id)))
                    :style #js {:width "20px"
-                               :fontSize "20px"}}
+                               :fontSize "20px"
+                               :color (if on "#F00" "#000")}}
              (str " " (first cursor))))))
 
 (def style-grey #js {:style #js {:color "#999"}})
@@ -466,7 +468,7 @@
                        (width-selection 16 " 16")
                        (dom/span nil "]")))))))
 
-(defn track-view [{:keys [cursor id delete-ch]} owner]
+(defn track-view [{:keys [cursor id beat-cursors delete-ch]} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -484,9 +486,11 @@
                 (dom/td nil
                  (dom/table nil
                   (apply dom/tr nil
-                         (let [cursors (map #(hash-map :cursor %1 :id %2)
+                         (let [cursors (map #(hash-map :cursor %1 :id %2 :on (= %3 %4))
                                             (get cursor "beats")
-                                            (repeat id))]
+                                            (repeat id)
+                                            (repeat (first beat-cursors))
+                                            (range))]
                            (om/build-all cell-view cursors {:state state})))))
                 (dom/td #js {:style #js {:color "#999" :paddingRight "10px"}}
                         (om/build track-editor {:cursor cursor :id id :delete-ch delete-ch
@@ -496,7 +500,7 @@
                           (let [id (get cursor "grid-id")
                                 sub-state {:set-state-ch (:set-state-ch state)
                                            :get-state-ch (:get-state-ch state)}]
-                            (om/build grid-view id {:state sub-state})))))))))
+                            (om/build grid-view {:id id :beat-cursors (second beat-cursors)} {:state sub-state})))))))))
 
 (defn grid-editor [{:keys [id cursor set-state-ch]} owner]
   (reify
@@ -554,7 +558,7 @@
                                                                (go (>! set-state-ch id)))})
                                  (dom/span nil " }")))))))
 
-(defn grid-view [id owner]
+(defn grid-view [{:keys [id beat-cursors]} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -591,10 +595,11 @@
                                                           :cursor cursor}))
                             (dom/table nil
                                        (apply dom/tbody nil
-                                              (let [cursors (map #(hash-map :cursor %1 :id %2 :delete-ch %3)
+                                              (let [cursors (map #(hash-map :cursor %1 :id %2 :delete-ch %3 :beat-cursors %4)
                                                                  (get cursor "tracks")
                                                                  (repeat id)
-                                                                 (repeat (:delete-ch state)))]
+                                                                 (repeat (:delete-ch state))
+                                                                 (if (nil? beat-cursors) (repeat nil) beat-cursors))]
                                                 (om/build-all track-view cursors {:state state}))))
                             (om/build track-builder {:cursor (get cursor "tracks")
                                                      :id id
@@ -647,7 +652,10 @@
                     (om/transact! cursor :synths #(into % synths)))
                   (= "/errors" (get message "Address"))
                   (let [errors (js->clj (js/JSON.parse (first params)))]
-                    (om/update! cursor :errors errors)))
+                    (om/update! cursor :errors errors))
+                  (= "/cursors" (get message "Address"))
+                  (let [beat-cursors (js->clj (js/JSON.parse (first params)))]
+                    (om/update! cursor :beat-cursors beat-cursors)))
                 (when message
                   (recur))))))
         {:set-state-ch set-state-ch
@@ -656,7 +664,7 @@
     (render-state [_ state]
       (dom/div #js {:style #js {:fontFamily "monospace"}}
                (om/build error-view (:errors cursor))
-               (om/build grid-view "root" {:state state})))))
+               (om/build grid-view {:id "root" :beat-cursors (:beat-cursors cursor)} {:state state})))))
 
 (om/root app-view app-state
   {:target (. js/document (getElementById "app"))})
