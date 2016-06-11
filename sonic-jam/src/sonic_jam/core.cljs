@@ -8,6 +8,28 @@
 
 (enable-console-print!)
 
+;; Solarized Dark
+(def pallette {:yellow "#b58900"
+               :orange "#cb4b16"
+               :red "#dc322f"
+               :magenta "#d33682"
+               :violet "#6c71c4"
+               :blue "#268bd2"
+               :cyan "#2aa198"
+               :green "#859900"
+               :base03 "#002b36"
+               :base02 "#073642"
+               :base01 "#586e75"
+               :base00 "#657b83"
+               :base0 "#839496"
+               :base1 "#93a1a1"
+               :base2 "#eee8d5"
+               :base3 "#fdf6e3"})
+
+(def theme {:background (:base03 pallette)
+            :foreground (:base0 pallette)
+            :cursorColor (:base1 pallette)})
+  
 (defonce app-state (atom {:grids {}
                           :samples []
                           :synths []
@@ -39,10 +61,10 @@
                                (go (>! (:set-state-ch state) id)))
                    :style #js {:width "20px"
                                :fontSize "20px"
-                               :color (if on "#F00" "#000")}}
+                               :color (if on "#F00" (:foreground theme))}}
              (str " " (first cursor))))))
 
-(def style-grey #js {:style #js {:color "#999"}})
+(def style-grey #js {:style #js {:color (:foreground theme)}})
 
 (defn new-id []
   (let [letters (map char (range 97 123))]
@@ -662,7 +684,8 @@
          :get-state-ch get-state-ch}))
     om/IRenderState
     (render-state [_ state]
-      (dom/div #js {:style #js {:fontFamily "monospace"}}
+      (dom/div #js {:style #js {:fontFamily "monospace"
+                                :background (:background theme)}}
                (om/build error-view (:errors cursor))
                (om/build grid-view {:id "root" :beat-cursors (:beat-cursors cursor)} {:state state})))))
 
