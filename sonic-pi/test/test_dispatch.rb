@@ -1,6 +1,7 @@
 require "minitest/autorun"
 
 require_relative "../lib/sonicjam/dispatch"
+require_relative "../lib/sonicjam/state"
 
 module SonicJam
   class TestDispatch < Minitest::Unit::TestCase
