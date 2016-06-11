@@ -36,8 +36,18 @@ module SonicJam
 
     def test_lambda_inheritance
       a = 2
-      params = Params.new({a: "\\ a"}, Params.new({a: "\\ 2 * child"}))
+      params = Params.new({a: "\\ a"}, Params.new({a: "\\ 2 * Integer(child)"}))
       assert_equal({a: 4}, params.materialize(binding))
+    end
+
+    def test_child_agnostic
+      params = Params.new({}, Params.new({a: 1}))
+      assert_equal({a: 1}, params.materialize(binding))
+    end
+
+    def test_child_passthrough
+      params = Params.new({a: 1}, Params.new({}))
+      assert_equal({a: 1}, params.materialize(binding))
     end
     
   end

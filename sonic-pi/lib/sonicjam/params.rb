@@ -44,7 +44,7 @@ module SonicJam
     # TODO: Replace with binding.local_variable_set, available in Ruby 2.2
     def _local_variable_set(bind, variable, value)
       if value
-        bind = bind.eval("#{variable.to_s} = #{value}; binding")
+        bind = bind.eval("#{variable.to_s} = \"#{value}\"; binding")
       end
       return bind
     end

@@ -24,17 +24,19 @@ module SonicJam
         # Apply inheritance from parent track
         type = track.fetch(:type, "none")
         grid_type = track.fetch(:'grid-type', parent_track.fetch(:'grid-type', "none"))
-        synth = track.fetch(:synth, parent_track.fetch(:synth, nil))
-        synth_params = track.fetch(:'synth-params', {})
-        synth_params = parent_track.fetch(:'synth-params', {}).merge(synth_params)
-        sample = track.fetch(:sample, parent_track.fetch(:sample, nil))
-        sample_params = track.fetch(:'sample-params', {})
-        sample_params = parent_track.fetch(:'sample-params', {}).merge(sample_params)
-        fx = track.fetch(:fx, []) + parent_track.fetch(:fx, [])
-
         if type == "none"
           type = grid_type
         end
+
+        synth = track.fetch(:synth, parent_track.fetch(:synth, nil))
+        sample = track.fetch(:sample, parent_track.fetch(:sample, nil))
+
+        fx = track.fetch(:fx, []) + parent_track.fetch(:fx, [])
+
+        parent_synth_params = parent_track.fetch(:'synth-params', nil)
+        synth_params = Params.new(track.fetch(:'synth-params', {}), parent_synth_params)
+        parent_sample_params = parent_track.fetch(:'sample-params', nil)
+        sample_params = Params.new(track.fetch(:'sample-params', {}), parent_sample_params)
 
         case type
         when "grid"
@@ -59,13 +61,15 @@ module SonicJam
           if not (on and boundary)
             next
           end
-          dispatches.push({ synth: synth, params: synth_params, fx: fx })
+          bind = _get_binding(index)
+          dispatches.push({ synth: synth, params: synth_params.materialize(bind), fx: fx })
         when "sample"
           cursors.push([beat_index, nil])
           if not (on and boundary)
             next
           end
-          dispatches.push({ sample: sample, params: sample_params, fx: fx })
+          bind = _get_binding(index)
+          dispatches.push({ sample: sample, params: sample_params.materialize(bind), fx: fx })
         else
           cursors.push([beat_index, nil])
         end
@@ -74,6 +78,11 @@ module SonicJam
       return dispatches, cursors
 
     end
+
+    def _get_binding(index)
+      binding
+    end
+    
   end
 
   def self._on_the_beat?(bpc, resolution, beats, tick)

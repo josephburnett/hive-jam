@@ -73,12 +73,12 @@ module SonicJam
     def test_dispatch_grid_param_inheritance
       @state.set_state({ id: "a", name: "a", bpc: "1",
                          tracks: [
-                           { type: "synth", synth: "synth-1", beats: [[1]] },
-                           { type: "synth", synth: "synth-2", beats: [[1]],
-                             :'synth-params' => { from: "grid-a-1" }},
                            { type: "sample", sample: "sample-1", beats: [[1]] },
                            { type: "sample", sample: "sample-2", beats: [[1]],
-                             :'sample-params' => { from: "grid-a-3" }},
+                             :'sample-params' => { from: "!grid-a-3" }},
+                           { type: "synth", synth: "synth-1", beats: [[1]] },
+                           { type: "synth", synth: "synth-2", beats: [[1]],
+                             :'synth-params' => { from: "!grid-a-1" }},
                          ]
                        })
       @state.set_state({ id: "b", name: "b", bpc: "1",
@@ -94,10 +94,10 @@ module SonicJam
                          ]
                        })
       check_dispatch_grid_calls [
-        { synth: "synth-1", params: { from: "grid-b-0" }, fx: [] },
-        { synth: "synth-2", params: { from: "grid-a-1" }, fx: [] },
         { sample: "sample-1", params: { from: "grid-b-0" }, fx: [] },
         { sample: "sample-2", params: { from: "grid-a-3" }, fx: [] },
+        { synth: "synth-1", params: { from: "grid-b-0" }, fx: [] },
+        { synth: "synth-2", params: { from: "grid-a-1" }, fx: [] },
       ]
     end
 
