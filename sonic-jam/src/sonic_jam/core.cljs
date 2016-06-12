@@ -27,8 +27,13 @@
                :base3 "#fdf6e3"})
 
 (def theme {:background (:base03 pallette)
-            :foreground (:base0 pallette)
-            :cursorColor (:base1 pallette)})
+            :foreground (:base1 pallette)
+            :cursorOn (:red pallette)
+            :cursorOff (:base02 pallette)
+            :on (:green pallette)
+            :off (:base02 pallette)
+            :link (:blue pallette)
+            :bar (:base02 pallette)})
   
 (defonce app-state (atom {:grids {}
                           :samples []
@@ -56,13 +61,22 @@
   (reify
     om/IRenderState
     (render-state [_ state]
-      (dom/td #js {:onClick #(do
-                               (om/update! cursor [(mod (inc (first cursor)) 2)])
-                               (go (>! (:set-state-ch state) id)))
-                   :style #js {:width "20px"
-                               :fontSize "20px"
-                               :color (if on "#F00" (:foreground theme))}}
-             (str " " (first cursor))))))
+      (let [cell-on (not (= 0 (first cursor)))
+            color (if (not on) ; cursor is not on this cell
+                    (if cell-on
+                      (:on theme)
+                      (:off theme))
+                    (if cell-on
+                      (:cursorOn theme)
+                      (:cursorOff theme)))]
+        (dom/td #js {:onClick #(do
+                                 (om/update! cursor [(mod (inc (first cursor)) 2)])
+                                 (go (>! (:set-state-ch state) id)))
+                     :style #js {:width "20px"
+                                 :fontSize "20px"
+                                 :fontWeight (if on "bold" "normal")
+                                 :color color}}
+                (str " " (first cursor)))))))
 
 (def style-grey #js {:style #js {:color (:foreground theme)}})
 
@@ -85,10 +99,13 @@
                           (om/update-state! owner (fn [s] (merge s {:state :open})))
                           (om/transact! cursor (fn [c] (assoc c (:field state) (:text state))))
                           (go (>! set-state-ch id)))
-                closer #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))}
-                canceller #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))}]
+                closer #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))
+                            :style #js {:color (:link theme)}}
+                canceller #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))
+                               :style #js {:color (:link theme)}}]
             (condp = (:state state)
-              :init (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{..}")
+              :init (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))
+                                   :style #js {:color (:link theme)}} "{..}")
               :open (dom/table nil
                                (apply dom/tbody nil
                                       (concat
@@ -102,7 +119,8 @@
                                                               (dom/td #js {:onClick #(om/update-state! owner
                                                                                                        (fn [s] (merge s {:state :editing
                                                                                                                          :text v
-                                                                                                                         :field k})))}
+                                                                                                                         :field k})))
+                                                                           :style #js {:color (:link theme)}}
                                                                       v)))
                                             (keys cursor)
                                             (vals cursor))
@@ -111,7 +129,8 @@
                                                 (dom/td #js {:onClick #(om/update-state! owner
                                                                                          (fn [s] (merge s {:state :adding-field
                                                                                                            :text nil
-                                                                                                           :field ""})))}
+                                                                                                           :field ""})))
+                                                             :style #js {:color (:link theme)}}
                                                         "[+]")
                                                 (dom/td nil nil))
                                         (dom/tr nil
@@ -136,7 +155,8 @@
                                                                    (dom/td #js {:onClick #(om/update-state! owner
                                                                                                             (fn [s] (merge s {:state :editing
                                                                                                                               :text v
-                                                                                                                              :field k})))}
+                                                                                                                              :field k})))
+                                                                                :style #js {:color (:link theme)}}
                                                                            v))))
                                                (keys cursor)
                                                (vals cursor))
@@ -145,7 +165,8 @@
                                                    (dom/td #js {:onClick #(om/update-state! owner
                                                                                             (fn [s] (merge s {:state :adding-field
                                                                                                               :text nil
-                                                                                                              :field ""})))}
+                                                                                                              :field ""})))
+                                                                :style #js {:color (:link theme)}}
                                                            "[+]")
                                                    (dom/td nil nil))
                                            (dom/tr nil
@@ -164,7 +185,8 @@
                                                                (dom/td #js {:onClick #(om/update-state! owner
                                                                                                         (fn [s] (merge s {:state :editing
                                                                                                                           :text v
-                                                                                                                          :field k})))}
+                                                                                                                          :field k})))
+                                                                            :style #js {:color (:link theme)}}
                                                                        v)))
                                              (keys cursor)
                                              (vals cursor))
@@ -195,7 +217,8 @@
                                                                (dom/td #js {:onClick #(om/update-state! owner
                                                                                                         (fn [s] (merge s {:state :editing
                                                                                                                           :text v
-                                                                                                                          :field k})))}
+                                                                                                                          :field k})))
+                                                                            :style #js {:color (:link theme)}}
                                                                        v)))
                                              (keys cursor)
                                              (vals cursor))
@@ -238,6 +261,7 @@
         :selecting (dom/select #js {:value (:type state)
                                     :onChange #(handle-change % owner state :type)
                                     :onClick #(handle-change % owner state :type)
+                                    :style #js {:color (:link theme)}
                                     :onKeyDown #(when (= 13 (.-which %))
                                                   (om/update-state! owner (fn [s] (merge s {:state :immutable})))
                                                   (condp = (:type state)
@@ -279,10 +303,13 @@
       (render-state [_ state]
         (if (and (= :init (:state state))
                  (contains? cursor key))
-          (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :selecting})))} (get cursor key))
+          (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :selecting})))
+                         :style #js {:color (:link theme)}}
+                    (get cursor key))
           (apply dom/select #js {:value ((keyword key) state)
                                  :onChange #(handle-change % owner state (keyword key))
                                  :onClick #(handle-change % owner state (keyword key))
+                                 :style #js {:color (:link theme)}
                                  :onKeyDown #(when (= 13 (.-which %))
                                                (om/update-state! owner (fn [s] (merge s {:state :init})))
                                                (om/transact! cursor (fn [c] (assoc c key ((keyword key) state))))
@@ -307,7 +334,8 @@
     (render-state [_ state]
       (let [transition #(om/update-state! owner (fn [s] (merge {:state %})))
             closing-row #(dom/tr nil
-                                 (dom/td #js {:onClick (fn [] (transition :init))} %)
+                                 (dom/td #js {:onClick (fn [] (transition :init))
+                                              :style #js {:color (:link theme)}} %)
                                  (dom/td nil nil)
                                  (dom/td nil nil))
             remove #(do
@@ -315,7 +343,8 @@
                                                               (subvec c (+ 1 %))))))
                       (go (>! set-state-ch id)))
             body-rows (map #(dom/tr nil
-                                    (dom/td #js {:onClick (fn [] (remove %2))} "X")
+                                    (dom/td #js {:onClick (fn [] (remove %2))
+                                                 :style #js {:color (:link theme)}} "X")
                                     (dom/td nil (get %1 "fx"))
                                     (dom/td nil (om/build param-editor
                                                           {:cursor %1
@@ -329,7 +358,8 @@
                       (om/transact! cursor (fn [c] (clj->js (into c [new-fx]))))
                       (go (>! set-state-ch id)))]
         (condp = (:state state)
-          :init (dom/span #js {:onClick #(transition :open)}
+          :init (dom/span #js {:onClick #(transition :open)
+                               :style #js {:color (:link theme)}}
                           "{..}")
           :open (dom/table nil
                            (apply dom/tbody nil
@@ -338,7 +368,8 @@
                                    body-rows
                                    [(dom/tr nil
                                             (dom/td nil nil)
-                                            (dom/td #js {:onClick #(transition :adding)} "[+]")
+                                            (dom/td #js {:onClick #(transition :adding)
+                                                         :style #js {:color (:link theme)}} "[+]")
                                             (dom/td nil nil))
                                     (closing-row "}")])))
           :adding (dom/table nil
@@ -363,10 +394,12 @@
       {:state :init})
     om/IRenderState
     (render-state [this state]
-      (let [closer #js {:onClick  #(om/update-state! owner (fn [s] (merge s {:state :init})))}]
+      (let [closer #js {:onClick  #(om/update-state! owner (fn [s] (merge s {:state :init})))
+                        :style #js {:color (:link theme)}}]
         (condp = (:state state)
           :init (dom/p style-grey
-                       (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))} "{..}"))
+                       (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))
+                                      :style #js {:color (:link theme)}} "{..}"))
           :open (let [fx-row (dom/tr nil
                                      (dom/td nil nil)
                                      (dom/td nil "fx:")
@@ -381,7 +414,8 @@
                                                      (dom/td nil nil)
                                                      (dom/td nil nil)
                                                      (dom/td nil (dom/span #js {:onClick #(go (>! delete-ch cursor))
-                                                                                :style #js {:float "right"}} "X")))
+                                                                                :style #js {:color (:link theme)
+                                                                                            :float "right"}} "X")))
                                              (dom/tr nil
                                                      (dom/td closer "{")
                                                      (dom/td nil nil)
@@ -471,18 +505,22 @@
                                              #(do
                                                 (set-width w)
                                                 (transition {:state :init})
-                                                (go (>! set-state-ch id)))} s))]
+                                                (go (>! set-state-ch id)))
+                                             :style #js {:color (:link theme)}} s))]
         (condp = (:state state)
           :init (let [width (apply max (map #(count (get % "beats")) cursor))]
                   (if (= 0 (count cursor))
                     (dom/p style-grey
-                           (dom/span #js {:onClick #(transition {:state :open})} "[+]"))
+                           (dom/span #js {:onClick #(transition {:state :open})
+                                          :style #js {:color (:link theme)}} "[+]"))
                     (dom/p style-grey
-                           (dom/span #js {:onClick #(transition {:state :open})} "[+")
+                           (dom/span #js {:onClick #(transition {:state :open})
+                                          :style #js {:color (:link theme)}} "[+")
                            (width-selection width (str " " width))
                            (dom/span nil "]"))))
           :open (dom/p style-grey
-                       (dom/span #js {:onClick #(transition {:state :init})} "[- ")
+                       (dom/span #js {:onClick #(transition {:state :init})
+                                      :style #js {:color (:link theme)}} "[- ")
                        (width-selection 1 " 1")
                        (width-selection 2 " 2")
                        (width-selection 4 " 4")
@@ -503,7 +541,7 @@
     (render-state [_ state]
       (if-not (:track-expanded state)
         (dom/tr nil (dom/td #js {:onClick #(om/set-state! owner :track-expanded true)
-                                 :style #js {:color "#999"}} ">"))
+                                 :style #js {:color (:link theme)}} ">"))
         (dom/tr nil
                 (dom/td nil
                  (dom/table nil
@@ -533,7 +571,8 @@
     om/IRenderState
     (render-state [_ state]
       (let [transition #(om/update-state! owner (fn [s] (merge s %)))
-            closer #(dom/span #js {:onClick (fn [] (transition {:state :init}))} %)
+            closer #(dom/span #js {:onClick (fn [] (transition {:state :init}))
+                                   :style #js {:color (:link theme)}} %)
             double-width #(let [tracks (get cursor "tracks")
                                 doubled-tracks (map (fn [t]
                                                       (let [beats (get t "beats")]
@@ -554,19 +593,23 @@
                           (om/transact! cursor (fn [c] (assoc cursor "tracks" (clj->js halved-tracks))))
                           (go (>! set-state-ch id)))]
         (condp = (:state state)
-          :init (dom/span #js {:onClick #(transition {:state :open})}
+          :init (dom/span #js {:onClick #(transition {:state :open})
+                               :style #js {:color (:link theme)}}
                           "{..}")
           :open (dom/span nil
                           (closer "{")
                           (dom/span nil
                                     (dom/span nil " bpc: ")
-                                    (dom/span #js {:onClick #(transition {:state :editing-bpc})}
+                                    (dom/span #js {:onClick #(transition {:state :editing-bpc})
+                                                   :style #js {:color (:link theme)}}
                                               (str (get cursor "bpc"))))
                           (dom/span nil
                                     (dom/span nil " width: ")
-                                    (dom/span #js {:onClick double-width} "+")
+                                    (dom/span #js {:onClick double-width
+                                                   :style #js {:color (:link theme)}} "+")
                                     (dom/span nil "/")
-                                    (dom/span #js {:onClick half-width} "-"))
+                                    (dom/span #js {:onClick half-width
+                                                   :style #js {:color (:link theme)}} "-"))
                           (dom/span nil " }"))
           :editing-bpc (dom/span nil
                                  (closer "{ ")
@@ -601,15 +644,17 @@
     (render-state [_ state]
       (let [cursor (get (om/observe owner (grids)) id)
             name (get cursor "name")]
-        (dom/div #js {:style #js {:borderLeft "solid 3px #ccc"
+        (dom/div #js {:style #js {:borderLeft (str "solid 12px " (:bar theme))
                                   :paddingLeft "10px"}}
                  (if-not (:grid-expanded state)
                    (dom/div nil 
                             (dom/p style-grey
-                                   (dom/span #js {:onClick #(om/set-state! owner :grid-expanded true)} "+")))
+                                   (dom/span #js {:onClick #(om/set-state! owner :grid-expanded true)
+                                                  :style #js {:color (:link theme)}} "+")))
                    (dom/div nil 
                             (dom/p style-grey
-                                   (dom/span #js {:onClick #(om/set-state! owner :grid-expanded false)}
+                                   (dom/span #js {:onClick #(om/set-state! owner :grid-expanded false)
+                                                  :style #js {:color (:link theme)}}
                                              (str "- "))
                                    (dom/span nil (str name " "))
                                    (om/build grid-editor {:id id
@@ -681,7 +726,8 @@
                 (when message
                   (recur))))))
         {:set-state-ch set-state-ch
-         :get-state-ch get-state-ch}))
+         :get-state-ch get-state-ch
+         :grid-expanded true}))
     om/IRenderState
     (render-state [_ state]
       (dom/div #js {:style #js {:fontFamily "monospace"
