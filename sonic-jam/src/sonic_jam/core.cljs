@@ -19,6 +19,7 @@
                :green "#859900"
                :base03 "#002b36"
                :base02 "#073642"
+               :base0102 "#1B444E" ; between base01 and base02
                :base01 "#586e75"
                :base00 "#657b83"
                :base0 "#839496"
@@ -29,7 +30,7 @@
 (def theme {:background (:base03 pallette)
             :foreground (:base1 pallette)
             :cursorOn (:red pallette)
-            :cursorOff (:base02 pallette)
+            :cursorOff (:base0102 pallette)
             :on (:green pallette)
             :off (:base02 pallette)
             :link (:blue pallette)
@@ -74,7 +75,8 @@
                                  (go (>! (:set-state-ch state) id)))
                      :style #js {:width "20px"
                                  :fontSize "20px"
-                                 :fontWeight (if on "bold" "normal")
+                                 :fontWeight (if (and on cell-on)
+                                               "bold" "normal")
                                  :color color}}
                 (str " " (first cursor)))))))
 
