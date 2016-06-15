@@ -72,8 +72,12 @@
                       (:cursorOn theme)
                       (:cursorOff theme)))]
         (dom/td #js {:onClick #(do
-                                 (om/update! cursor [(mod (inc (first cursor)) 2)])
+                                 (om/update! cursor [(if (= 0 (first cursor)) 1 0)])
                                  (go (>! (:set-state-ch state) id)))
+                     :onContextMenu #(do
+                                       (om/update! cursor [(inc (first cursor))])
+                                       (go (>! (:set-state-ch state) id))
+                                       false)
                      :style #js {:width "20px"
                                  :fontSize "20px"
                                  :fontWeight (if (and on cell-on)

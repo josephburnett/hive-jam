@@ -63,7 +63,7 @@ module SonicJam
           end
           bind = _get_binding(index, beat_index)
           params = synth_params.materialize(bind)
-          sustain = SonicJam::_calculate_sustain(beats[beat_index][0], params, default=0)
+          sustain = SonicJam::_calculate_sustain(beats[beat_index][0], params, default=0, bpc=bpc)
           params[:sustain] = sustain
           dispatches.push({ synth: synth, params: params, fx: fx })
         when "sample"
@@ -73,7 +73,7 @@ module SonicJam
           end
           bind = _get_binding(index, beat_index)
           params = sample_params.materialize(bind)
-          sustain = SonicJam::_calculate_sustain(beats[beat_index][0], params, default=-1)
+          sustain = SonicJam::_calculate_sustain(beats[beat_index][0], params, default=-1, bpc=bpc)
           params[:sustain] = sustain
           dispatches.push({ sample: sample, params: params, fx: fx })
         else
@@ -88,17 +88,17 @@ module SonicJam
     def _get_binding(row_index, beat_index)
       binding
     end
-    
+
   end
 
-  def self._calculate_sustain(width, params, default=0)
+  def self._calculate_sustain(width, params, default=0, bpc=1)
     sustain = Rational(params.fetch(:sustain, default))
     if sustain == -1
       # Unlimited sustain overrides cell width
       return sustain
     end
     sustain += width - 1
-    return sustain
+    return sustain * Rational(bpc)
   end
 
   def self._on_the_beat?(bpc, resolution, beats, tick)
@@ -106,7 +106,7 @@ module SonicJam
     boundary = (tick % tpc.ceil).zero?
     i = (tick / tpc).floor
     index = i % beats.length
-    on = beats[index][0] == 1
+    on = beats[index][0] > 0
     return on, boundary, index
   end
 

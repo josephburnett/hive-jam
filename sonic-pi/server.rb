@@ -14,6 +14,9 @@ live_loop :main do
     dispatches, cursors = _dispatch.dispatch t
     jam_client.send("/cursors", JSON.dump(["*", JSON.dump(cursors)]))
     dispatches.each do |d|
+      if verbosity > 1
+        _send_console JSON.dump(d)
+      end
       if d[:sample]
         apply_fx d[:fx], lambda { sample d[:sample].to_sym, **d[:params] }
       elsif d[:synth]
