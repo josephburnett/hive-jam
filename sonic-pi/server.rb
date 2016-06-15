@@ -30,6 +30,10 @@ define :_send_error do |e|
   jam_client.send("/errors", JSON.dump(["*", JSON.dump(errors)]))
 end
 
+define :_send_console do |msg|
+  jam_client.send("/console", JSON.dump(["*", JSON.dump([msg])]))
+end
+
 # STATE
 
 defonce :_state do

@@ -41,6 +41,7 @@
                           :synths []
                           :grid-types ["synth" "sample"]
                           :errors []
+                          :console []
                           :beat-cursors []}))
 
 (defn grids []
@@ -682,6 +683,14 @@
                (apply dom/ul nil
                       (map (partial dom/li nil) cursor))))))
 
+(defn console-view [cursor]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {:style #js {:color (:foreground theme)}}
+               (apply dom/ul nil
+                      (map (partial dom/li nil) cursor))))))
+
 (defn app-view [cursor _]
   (reify
     om/IInitState
@@ -722,6 +731,9 @@
                   (= "/errors" (get message "Address"))
                   (let [errors (js->clj (js/JSON.parse (first params)))]
                     (om/update! cursor :errors errors))
+                  (= "/console" (get message "Address"))
+                  (let [console (js->clj (js/JSON.parse (first params)))]
+                    (om/transact! cursor :console #(concat % console)))
                   (= "/cursors" (get message "Address"))
                   (let [beat-cursors (js->clj (js/JSON.parse (first params)))]
                     (om/update! cursor :beat-cursors beat-cursors)))
@@ -735,7 +747,8 @@
       (dom/div #js {:style #js {:fontFamily "monospace"
                                 :background (:background theme)}}
                (om/build error-view (:errors cursor))
-               (om/build grid-view {:id "root" :beat-cursors (:beat-cursors cursor)} {:state state})))))
+               (om/build grid-view {:id "root" :beat-cursors (:beat-cursors cursor)} {:state state})
+               (om/build console-view (:console cursor))))))
 
 (om/root app-view app-state
   {:target (. js/document (getElementById "app"))})
