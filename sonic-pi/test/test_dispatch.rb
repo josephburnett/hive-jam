@@ -9,6 +9,8 @@ module SonicJam
     def setup
       @state = State.new
       @dispatch = Dispatch.new(@state, "1/32")
+      @sustain_zero = {sustain: Rational(0)}
+      @sustain_indef = {sustain: Rational(-1)}
     end
 
     def test_on_the_beat
@@ -66,7 +68,7 @@ module SonicJam
                          ]
                        })
       check_dispatch_grid_calls [
-        { synth: "synth", params: {}, fx: [] }
+        { synth: "synth", params: @sustain_zero, fx: [] }
       ]
     end
 
@@ -94,10 +96,10 @@ module SonicJam
                          ]
                        })
       check_dispatch_grid_calls [
-        { sample: "sample-1", params: { from: "grid-b-0" }, fx: [] },
-        { sample: "sample-2", params: { from: "grid-a-3" }, fx: [] },
-        { synth: "synth-1", params: { from: "grid-b-0" }, fx: [] },
-        { synth: "synth-2", params: { from: "grid-a-1" }, fx: [] },
+        { sample: "sample-1", params: { from: "grid-b-0" }.merge(@sustain_indef), fx: [] },
+        { sample: "sample-2", params: { from: "grid-a-3" }.merge(@sustain_indef), fx: [] },
+        { synth: "synth-1", params: { from: "grid-b-0" }.merge(@sustain_zero), fx: [] },
+        { synth: "synth-2", params: { from: "grid-a-1" }.merge(@sustain_zero), fx: [] },
       ]
     end
 
@@ -118,12 +120,12 @@ module SonicJam
                          ]
                        })
       check_dispatch_grid_calls [
-        { synth: "synth-1", params: {}, fx: [] },
-        { sample: "sample-1", params: {}, fx: [] },
-        { synth: "synth-2", params: {}, fx: [] },
-        { synth: "synth-1", params: {}, fx: [] },
-        { sample: "sample-1", params: {}, fx: [] },
-        { sample: "sample-2", params: {}, fx: [] },
+        { synth: "synth-1", params: @sustain_zero, fx: [] },
+        { sample: "sample-1", params: @sustain_indef, fx: [] },
+        { synth: "synth-2", params: @sustain_zero, fx: [] },
+        { synth: "synth-1", params: @sustain_zero, fx: [] },
+        { sample: "sample-1", params: @sustain_indef, fx: [] },
+        { sample: "sample-2", params: @sustain_indef, fx: [] },
       ]
     end
 
@@ -132,22 +134,22 @@ module SonicJam
                          tracks: [
                            { type: "synth", synth: "synth-1", beats: [[1]] },
                            { type: "synth", synth: "synth-2", beats: [[1]],
-                             fx: [{ fx: "fx-1", params: {} }]},
+                             fx: [{ fx: "fx-1", params: {}}]},
                          ]
                        })
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
                            { type: "grid", :'grid-id' => "a", beats: [[1]],
-                             fx: [{ fx: "fx-2", params: {} }]},
+                             fx: [{ fx: "fx-2", params: {}}]},
                          ]
                        })
       check_dispatch_grid_calls [
-        { synth: "synth-1", params: {}, fx: [
+        { synth: "synth-1", params: @sustain_zero, fx: [
             { fx: "fx-2", params: {}}
           ]},
-        { synth: "synth-2", params: {}, fx: [
-            { fx: "fx-1", params: {} },
-            { fx: "fx-2", params: {} },
+        { synth: "synth-2", params: @sustain_zero, fx: [
+            { fx: "fx-1", params: {}},
+            { fx: "fx-2", params: {}},
           ]},
       ]
     end
@@ -209,5 +211,25 @@ module SonicJam
       _, indices = @dispatch.dispatch(tick)
       assert_equal expected, indices, "tick: #{tick}"
     end
+
+    def test_calculate_sustain
+      check_calculate_sustain 0, width=1, default=0
+      check_calculate_sustain 1, width=2, default=0
+      check_calculate_sustain -1, width=1, default=0, {sustain: -1}
+      check_calculate_sustain -1, width=2, default=0, {sustain: -1}
+      check_calculate_sustain 1.5, width=2, default=0, {sustain: 0.5}
+      check_calculate_sustain 1.5, width=2, default=0, {sustain: "0.5"}
+      check_calculate_sustain -1, width=1, default=-1
+      check_calculate_sustain -1, width=2, default=-1
+      check_calculate_sustain -1, width=1, default=-1, {sustain: -1}
+      check_calculate_sustain -1, width=2, default=-1, {sustain: -1}
+      check_calculate_sustain 1.5, width=2, default=-1, {sustain: 0.5}
+      check_calculate_sustain 1.5, width=2, default=-1, {sustain: "0.5"}
+    end
+
+    def check_calculate_sustain(expect, width=1, default=0, params={})
+      assert_equal Rational(expect), SonicJam._calculate_sustain(width, params, default)
+    end
+    
   end
 end
