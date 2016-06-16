@@ -36,5 +36,5 @@ build/
 .rvmrc
 
 *~
-/osc-bridge/server
+/osc-bridge/server/server
 *.DS_Store

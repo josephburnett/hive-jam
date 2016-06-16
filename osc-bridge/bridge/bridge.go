@@ -1,4 +1,4 @@
-package main
+package bridge
 
 import "golang.org/x/net/websocket"
 import "log"
@@ -7,14 +7,27 @@ import "encoding/json"
 import "time"
 import "math/rand"
 import "github.com/scgolang/osc"
-import "net"
 import "io"
+import "github.com/josephburnett/sonic-jam/osc-bridge/common"
 
 type Params []string
 
 type Message struct {
 	Address string
 	Params  Params
+}
+
+func Serve() {
+	go sendToClient()
+	go sendToServer()
+	log.Print("Starting OSC server.")
+	go serveOSC()
+	log.Print("Starting websocket server.")
+	http.Handle("/oscbridge", websocket.Handler(websocketHandler))
+	err := http.ListenAndServe("127.0.0.1:4550", nil)
+	if err != nil {
+		panic("ListenAndServe: " + err.Error())
+	}
 }
 
 func (m *Message) Clone() *Message {
@@ -33,34 +46,9 @@ var toClient = make(chan *Message, 10)
 
 var clients = make(map[string]*websocket.Conn)
 
-var oscClient = connect("127.0.0.1", 4559)
-var oscServer = listen("127.0.0.1", 4560)
+var oscClient = common.Connect("127.0.0.1", 4559)
+var oscServer = common.Listen("127.0.0.1", 4560)
 
-func connect(address string, port int) *osc.UDPConn {
-	ip := net.ParseIP(address)
-	if ip == nil {
-		panic("Unable to parse IP.")
-	}
-	addr := &net.UDPAddr{ip, port, ""}
-	conn, err := osc.DialUDP("udp", nil, addr)
-	if err != nil {
-		panic(err)
-	}
-	return conn
-}
-
-func listen(address string, port int) *osc.UDPConn {
-	ip := net.ParseIP(address)
-	if ip == nil {
-		panic("Unable to parse IP.")
-	}
-	addr := &net.UDPAddr{ip, port, ""}
-	conn, err := osc.ListenUDP("udp", addr)
-	if err != nil {
-		panic(err)
-	}
-	return conn
-}
 
 func sendToClient() {
 	for {
@@ -203,20 +191,6 @@ func serveOSC() {
 		if err != nil {
 			panic(err)
 		}
-		log.Print("OSC server stopped. Restarting. I think something's wrong.")
-	}
-}
-
-func main() {
-	go sendToClient()
-	go sendToServer()
-	log.Print("Starting OSC server.")
-	go serveOSC()
-	log.Print("Starting websocket server.")
-	http.Handle("/oscbridge", websocket.Handler(websocketHandler))
-	err := http.ListenAndServe("127.0.0.1:4550", nil)
-	if err != nil {
-		panic("ListenAndServe: " + err.Error())
 	}
 }
 
