@@ -37,4 +37,5 @@ build/
 
 *~
 /osc-bridge/server/server
+/osc-bridge/data
 *.DS_Store
