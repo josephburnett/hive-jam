@@ -17,7 +17,7 @@ type Message struct {
 	Params  Params
 }
 
-func Serve() {
+func Serve(done chan bool) {
 	go sendToClient()
 	go sendToServer()
 	log.Print("Starting OSC server.")
@@ -28,6 +28,11 @@ func Serve() {
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}
+	done <- true
+}
+
+func Shutdown() {
+	log.Print("Shutting down OSC bridge.")
 }
 
 func (m *Message) Clone() *Message {
