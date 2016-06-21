@@ -1,8 +1,16 @@
 {
 	"ImportPath": "github.com/josephburnett/sonic-jam/osc-bridge",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v62",
+	"GodepVersion": "v60",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
+		{
+			"ImportPath": "github.com/jteeuwen/go-bindata",
+			"Comment": "v3.0.7-72-ga0ff256",
+			"Rev": "a0ff2567cfb70903282db057e799fd826784d41d"
+		},
 		{
 			"ImportPath": "github.com/scgolang/osc",
 			"Rev": "d62addf23feb9dca8723e915e76ad19dfdf01fda"

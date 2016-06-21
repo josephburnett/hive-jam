@@ -2,6 +2,7 @@ package bootstrap
 
 import "github.com/josephburnett/sonic-jam/osc-bridge/common"
 import "github.com/josephburnett/sonic-jam/osc-bridge/data"
+import _ "github.com/jteeuwen/go-bindata"
 import "github.com/scgolang/osc"
 import "log"
 
