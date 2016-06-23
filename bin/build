@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
 
 mkdir -p osc-bridge/data
-go-bindata -debug -o osc-bridge/data/data.go -pkg data sonic-pi/lib/... sonic-pi/server.rb
+go-bindata -debug -o osc-bridge/data/data.go -pkg data \
+	   sonic-pi/lib/... \
+	   sonic-pi/server.rb \
+	   sonic-jam/resources/public/...
