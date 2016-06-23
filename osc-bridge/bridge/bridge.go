@@ -122,6 +122,7 @@ func websocketHandler(ws *websocket.Conn) {
 		if err != nil {
 			if err == io.EOF {
 				log.Print("Disconnected client: " + clientId)
+				delete(clients, clientId)
 				return
 			}
 			log.Print("Error reading from client websocket.")
