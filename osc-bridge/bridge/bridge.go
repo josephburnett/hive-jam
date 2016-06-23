@@ -128,7 +128,6 @@ func websocketHandler(ws *websocket.Conn) {
 			log.Print(err)
 			continue
 		}
-		log.Print("Received from client: ", string(msgJson[:n]))
 		msg := &Message{}
 		err = json.Unmarshal(msgJson[:n], msg)
 		if err != nil {
@@ -143,12 +142,10 @@ func websocketHandler(ws *websocket.Conn) {
 		}
 		msg.Params = params
 		toServer <- msg
-		log.Print("Forwarded to server: ", msg)
 	}
 }
 
 func oscHandler(oscMsg *osc.Message) error {
-	log.Print("Received from server: ", oscMsg)
 	msg := &Message{
 		Address: oscMsg.Address(),
 	}
@@ -169,14 +166,12 @@ func oscHandler(oscMsg *osc.Message) error {
 		}
 	}
 	if msg.Params[0] == "*" {
-		log.Print("Broadcasted message: ", msg)
 		for key := range clients {
 			m := msg.Clone()
 			m.Params[0] = key
 			toClient <- m
 		}
 	} else {
-		log.Print("Forwarded to single client: ", msg)
 		toClient <- msg
 	}
 	return nil

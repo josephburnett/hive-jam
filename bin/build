@@ -1,7 +1,22 @@
 #!/usr/bin/env bash
 
+set -e
+
+echo "Compiling UI..."
+( cd sonic-jam ; lein cljsbuild once min )
+
+echo "Packaging UI and Sonic Pi server files as data..."
 mkdir -p osc-bridge/data
 go-bindata -debug -o osc-bridge/data/data.go -pkg data \
 	   sonic-pi/lib/... \
 	   sonic-pi/server.rb \
 	   sonic-jam/resources/public/...
+
+echo "Building the Sonic Jam binary..."
+mkdir -p build
+go build -o build/sonic-jam \
+   osc-bridge/server/server.go
+
+echo "Done."
+echo "Start Sonic Pi and then run ./build/sonic-jam"
+
