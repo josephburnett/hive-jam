@@ -89,7 +89,7 @@
 
 (defn new-id []
   (let [letters (map char (range 97 123))]
-    (apply str (take 32 (repeatedly #(rand-nth letters))))))
+    (apply str (take 8 (repeatedly #(rand-nth letters))))))
 
 (declare grid-view)
 
@@ -505,6 +505,7 @@
                         cursor (fn [s]
                                  (clj->js
                                   (conj s {"type" "none"
+                                           "id" (new-id)
                                            "beats" (repeat % [0])
                                            "fx" []}))))
             width-selection (fn [w s]
@@ -547,8 +548,9 @@
     om/IRenderState
     (render-state [_ state]
       (if-not (:track-expanded state)
-        (dom/tr nil (dom/td #js {:onClick #(om/set-state! owner :track-expanded true)
-                                 :style #js {:color (:link theme)}} ">"))
+        (dom/tr nil
+                (dom/td #js {:onClick #(om/set-state! owner :track-expanded true)
+                             :style #js {:color (:link theme)}} ">"))
         (dom/tr nil
                 (dom/td nil
                  (dom/table nil
@@ -669,12 +671,13 @@
                                                           :cursor cursor}))
                             (dom/table nil
                                        (apply dom/tbody nil
-                                              (let [cursors (map #(hash-map :cursor %1 :id %2 :delete-ch %3 :beat-cursors %4)
+                                              (let [cursors (map #(hash-map :cursor %1 :track-id (get %1 "id")
+                                                                            :id %2 :delete-ch %3 :beat-cursors %4)
                                                                  (get cursor "tracks")
                                                                  (repeat id)
                                                                  (repeat (:delete-ch state))
                                                                  (if (nil? beat-cursors) (repeat nil) beat-cursors))]
-                                                (om/build-all track-view cursors {:state state}))))
+                                                (om/build-all track-view cursors {:state state :key :track-id}))))
                             (om/build track-builder {:cursor (get cursor "tracks")
                                                      :id id
                                                      :set-state-ch (:set-state-ch state)}))))))))
