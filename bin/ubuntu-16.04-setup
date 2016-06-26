@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -e
+
+sudo apt-get install \
+     default-jre \
+     go-bindata \
+     golang-go \
+     sonic-pi
