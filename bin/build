@@ -6,7 +6,7 @@ ROOT=`git rev-parse --show-toplevel`
 cd $ROOT
 
 echo "Compiling UI..."
-( cd sonic-jam ; lein cljsbuild once min )
+( cd sonic-jam ; $ROOT/bin/vendor/lein cljsbuild once min )
 
 echo "Packaging UI and Sonic Pi server files as data..."
 mkdir -p osc-bridge/data
