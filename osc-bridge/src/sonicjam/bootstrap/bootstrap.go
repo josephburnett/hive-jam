@@ -1,10 +1,12 @@
 package bootstrap
 
-import "github.com/josephburnett/sonic-jam/osc-bridge/common"
-import "github.com/josephburnett/sonic-jam/osc-bridge/data"
+import "sonicjam/common"
+import "sonicjam/data"
+
+import "log"
+
 import _ "github.com/jteeuwen/go-bindata"
 import "github.com/scgolang/osc"
-import "log"
 
 var oscClient = common.Connect("127.0.0.1", 4557)
 

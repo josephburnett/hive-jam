@@ -10,15 +10,15 @@ echo "Compiling UI..."
 
 echo "Packaging UI and Sonic Pi server files as data..."
 mkdir -p osc-bridge/data
-go-bindata -o osc-bridge/data/data.go -pkg data \
-	   sonic-pi/lib/... \
-	   sonic-pi/server.rb \
+go-bindata -o osc-bridge/src/sonicjam/data/data.go -pkg data \
+	   sonic-pi/... \
 	   sonic-jam/resources/public/...
 
 echo "Building the Sonic Jam binary..."
 mkdir -p build
-go build -o build/sonic-jam \
-   osc-bridge/server/server.go
+( cd osc-bridge; GOPATH=$ROOT/osc-bridge/ \
+		       go build -o $ROOT/build/sonic-jam \
+		       src/sonicjam/server/server.go )
 
 echo "Done."
 echo "Start Sonic Pi and then run ./build/sonic-jam"

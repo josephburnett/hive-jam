@@ -36,6 +36,5 @@ build/
 .rvmrc
 
 *~
-/osc-bridge/server/server
-/osc-bridge/data
+/osc-bridge/src/sonicjam/data
 *.DS_Store

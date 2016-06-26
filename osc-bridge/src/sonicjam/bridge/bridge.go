@@ -1,14 +1,16 @@
 package bridge
 
-import "golang.org/x/net/websocket"
-import "log"
-import "net/http"
+import "sonicjam/common"
+
 import "encoding/json"
-import "time"
-import "math/rand"
-import "github.com/scgolang/osc"
 import "io"
-import "github.com/josephburnett/sonic-jam/osc-bridge/common"
+import "log"
+import "math/rand"
+import "net/http"
+import "time"
+
+import "golang.org/x/net/websocket"
+import "github.com/scgolang/osc"
 
 type Params []string
 

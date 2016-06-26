@@ -1,10 +1,11 @@
 package ui
 
-import "github.com/josephburnett/sonic-jam/osc-bridge/data"
-import _ "github.com/jteeuwen/go-bindata"
-
-import "net/http"
 import "log"
+import "net/http"
+
+import "sonicjam/data"
+
+import _ "github.com/jteeuwen/go-bindata"
 
 func jsHandler(w http.ResponseWriter, r *http.Request) {
 	resource, err := data.Asset("sonic-jam/resources/public/js/compiled/sonic_jam.js")

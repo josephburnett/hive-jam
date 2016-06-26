@@ -1,7 +1,8 @@
 package common
 
-import "github.com/scgolang/osc"
 import "net"
+
+import "github.com/scgolang/osc"
 
 func Connect(address string, port int) *osc.UDPConn {
 	ip := net.ParseIP(address)
