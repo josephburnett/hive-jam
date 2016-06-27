@@ -59,16 +59,16 @@
 (defn handle-change [e owner state key]
   (om/set-state! owner key (.. e -target -value)))
 
-(defn cell-view [{:keys [cursor id on]} _]
+(defn cell-view [{:keys [cursor id cursor-on track-on]} _]
   (reify
     om/IRenderState
     (render-state [_ state]
       (let [cell-on (not (= 0 (first cursor)))
-            color (if (not on) ; cursor is not on this cell
-                    (if cell-on
+            color (if (not cursor-on) ; cursor is not on this cell
+                    (if (and cell-on track-on)
                       (:on theme)
                       (:off theme))
-                    (if cell-on
+                    (if (and cell-on track-on)
                       (:cursorOn theme)
                       (:cursorOff theme)))]
         (dom/td #js {:onClick #(do
@@ -80,7 +80,7 @@
                                        false)
                      :style #js {:width "20px"
                                  :fontSize "20px"
-                                 :fontWeight (if (and on cell-on)
+                                 :fontWeight (if (and cursor-on cell-on)
                                                "bold" "normal")
                                  :color color}}
                 (str " " (first cursor)))))))
@@ -402,7 +402,13 @@
     om/IRenderState
     (render-state [this state]
       (let [closer #js {:onClick  #(om/update-state! owner (fn [s] (merge s {:state :init})))
-                        :style #js {:color (:link theme)}}]
+                        :style #js {:color (:link theme)}}
+            turn-on #(do
+                       (om/transact! cursor (fn [c] (assoc c "on" true)))
+                       (go (>! set-state-ch id)))
+            turn-off #(do
+                        (om/transact! cursor (fn [c] (assoc c "on" false)))
+                        (go (>! set-state-ch id)))]
         (condp = (:state state)
           :init (dom/p style-grey
                        (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))
@@ -427,6 +433,14 @@
                                                      (dom/td closer "{")
                                                      (dom/td nil nil)
                                                      (dom/td nil nil))
+                                             (dom/tr nil
+                                                     (dom/td nil nil)
+                                                     (dom/td nil "track:")
+                                                     (dom/td nil (if (get cursor "on")
+                                                                   (dom/span #js {:onClick turn-off
+                                                                                  :style #js {:color (:link theme)}} "on")
+                                                                   (dom/span #js {:onClick turn-on
+                                                                                  :style #js {:color (:link theme)}} "off"))))
                                              (dom/tr nil
                                                      (dom/td nil nil)
                                                      (dom/td nil "type:")
@@ -506,6 +520,7 @@
                                  (clj->js
                                   (conj s {"type" "none"
                                            "id" (new-id)
+                                           "on" true
                                            "beats" (repeat % [0])
                                            "fx" []}))))
             width-selection (fn [w s]
@@ -555,11 +570,12 @@
                 (dom/td nil
                  (dom/table nil
                   (apply dom/tr nil
-                         (let [cursors (map #(hash-map :cursor %1 :id %2 :on (= %3 %4))
+                         (let [cursors (map #(hash-map :cursor %1 :id %2 :cursor-on (= %3 %4) :track-on %5)
                                             (get cursor "beats")
                                             (repeat id)
                                             (repeat (first beat-cursors))
-                                            (range))]
+                                            (range)
+                                            (repeat (get cursor "on")))]
                            (om/build-all cell-view cursors {:state state})))))
                 (dom/td #js {:style #js {:color "#999" :paddingRight "10px"}}
                         (om/build track-editor {:cursor cursor :id id :delete-ch delete-ch

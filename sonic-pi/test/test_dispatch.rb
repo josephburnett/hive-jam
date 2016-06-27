@@ -59,12 +59,12 @@ module SonicJam
     def test_dispatch_grid_simple
       @state.set_state({ id: "a", name: "a", bpc: "1",
                          tracks: [
-                           { type: "synth", synth: "synth", beats: [[1]] }
+                           { on: true, type: "synth", synth: "synth", beats: [[1]] }
                          ]
                        })
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
-                           { type: "grid", :'grid-id' => "a", beats: [[1]] }
+                           { on: true, type: "grid", :'grid-id' => "a", beats: [[1]] }
                          ]
                        })
       check_dispatch_grid_calls [
@@ -75,24 +75,24 @@ module SonicJam
     def test_dispatch_grid_param_inheritance
       @state.set_state({ id: "a", name: "a", bpc: "1",
                          tracks: [
-                           { type: "sample", sample: "sample-1", beats: [[1]] },
-                           { type: "sample", sample: "sample-2", beats: [[1]],
+                           { on: true, type: "sample", sample: "sample-1", beats: [[1]] },
+                           { on: true, type: "sample", sample: "sample-2", beats: [[1]],
                              :'sample-params' => { from: "!grid-a-3" }},
-                           { type: "synth", synth: "synth-1", beats: [[1]] },
-                           { type: "synth", synth: "synth-2", beats: [[1]],
+                           { on: true, type: "synth", synth: "synth-1", beats: [[1]] },
+                           { on: true, type: "synth", synth: "synth-2", beats: [[1]],
                              :'synth-params' => { from: "!grid-a-1" }},
                          ]
                        })
       @state.set_state({ id: "b", name: "b", bpc: "1",
                          tracks: [
-                           { type: "grid", :'grid-id' => "a", beats: [[1]],
+                           { on: true, type: "grid", :'grid-id' => "a", beats: [[1]],
                              :'synth-params' => { from: "grid-b-0" },
                              :'sample-params' => { from: "grid-b-0" },}
                          ]
                        })
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
-                           { type: "grid", :'grid-id' => "b", beats: [[1]] }
+                           { on: true, type: "grid", :'grid-id' => "b", beats: [[1]] }
                          ]
                        })
       check_dispatch_grid_calls [
@@ -106,16 +106,16 @@ module SonicJam
     def test_dispatch_grid_type_inheritance
       @state.set_state({ id: "a", name: "a", bpc: "1",
                          tracks: [
-                           { type: "synth", synth: "synth-1", beats: [[1]] },
-                           { type: "sample", sample: "sample-1", beats: [[1]] },
-                           { type: "none", beats: [[1]] },
+                           { on: true, type: "synth", synth: "synth-1", beats: [[1]] },
+                           { on: true, type: "sample", sample: "sample-1", beats: [[1]] },
+                           { on: true, type: "none", beats: [[1]] },
                          ]
                        })
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
-                           { type: "grid", :'grid-id' => "a", beats: [[1]],
+                           { on: true, type: "grid", :'grid-id' => "a", beats: [[1]],
                              :'grid-type' => "synth", :'synth' => "synth-2" },
-                           { type: "grid", :'grid-id' => "a", beats: [[1]],
+                           { on: true, type: "grid", :'grid-id' => "a", beats: [[1]],
                              :'grid-type' => "sample", :'sample' => "sample-2" },
                          ]
                        })
@@ -132,14 +132,14 @@ module SonicJam
     def test_dispatch_grid_fx_inheritance
       @state.set_state({ id: "a", name: "a", bpc: "1",
                          tracks: [
-                           { type: "synth", synth: "synth-1", beats: [[1]] },
-                           { type: "synth", synth: "synth-2", beats: [[1]],
+                           { on: true, type: "synth", synth: "synth-1", beats: [[1]] },
+                           { on: true, type: "synth", synth: "synth-2", beats: [[1]],
                              fx: [{ fx: "fx-1", params: {}}]},
                          ]
                        })
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
-                           { type: "grid", :'grid-id' => "a", beats: [[1]],
+                           { on: true, type: "grid", :'grid-id' => "a", beats: [[1]],
                              fx: [{ fx: "fx-2", params: {}}]},
                          ]
                        })
@@ -157,7 +157,7 @@ module SonicJam
     def test_dispatch_grid_silence
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
-                           { type: "synth", synth: "synth-1", beats: [[0]] }
+                           { on: true, type: "synth", synth: "synth-1", beats: [[0]] }
                          ]
                        })
       check_dispatch_grid_calls []
@@ -172,19 +172,19 @@ module SonicJam
       @dispatch = Dispatch.new(@state, "1")
       @state.set_state({ id: "b", name: "b", bpc: "1",
                          tracks: [
-                           { type: "synth", synth: "s", beats: [[0]] },
+                           { on: true, type: "synth", synth: "s", beats: [[0]] },
                          ]
                        })
       @state.set_state({ id: "a", name: "a", bpc: "1",
                          tracks: [
-                           { type: "synth", synth: "s", beats: [[0], [1], [0], [1]] },
-                           { type: "synth", synth: "s", beats: [[0], [1], [0]] },
-                           { type: "grid", :'grid-id' => "b", beats: [[1], [0]] },
+                           { on: true, type: "synth", synth: "s", beats: [[0], [1], [0], [1]] },
+                           { on: true, type: "synth", synth: "s", beats: [[0], [1], [0]] },
+                           { on: true, type: "grid", :'grid-id' => "b", beats: [[1], [0]] },
                          ]
                        })
       @state.set_state({ id: "root", name: "root", bpc: "1",
                          tracks: [
-                           { type: "grid", :'grid-id' => "a", beats: [[1]] },
+                           { on: true, type: "grid", :'grid-id' => "a", beats: [[1]] },
                          ]
                        })
       check_dispatch_grid_indices(tick=0, [[0,
@@ -229,6 +229,18 @@ module SonicJam
 
     def check_calculate_sustain(expect, width=1, default=0, params={})
       assert_equal Rational(expect), SonicJam._calculate_sustain(width, params, default)
+    end
+
+    def test_track_off
+      @state.set_state({ id: "root", name: "root", bpc: "1",
+                         tracks: [
+                           { on: false, type: "sample", sample: "sample-1", beats: [[1]] },
+                           { on: true, type: "sample", sample: "sample-2", beats: [[1]] },
+                         ]
+                       })
+      check_dispatch_grid_calls [
+        { sample: "sample-2", params: @sustain_indef, fx: [] },
+      ]
     end
     
   end

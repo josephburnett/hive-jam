@@ -18,6 +18,7 @@ module SonicJam
       cursors = []
       grid[:tracks].each_index do |index|
         track = grid[:tracks][index]
+        track_on = track[:on]
         beats = track[:beats]
         on, boundary, beat_index = SonicJam::_on_the_beat?(bpc, @resolution, beats, tick)
 
@@ -40,7 +41,7 @@ module SonicJam
 
         case type
         when "grid"
-          if not on or not track[:'grid-id']
+          if not track_on or not on or not track[:'grid-id']
             cursors.push([beat_index, nil])
             next
           end
@@ -58,7 +59,7 @@ module SonicJam
           cursors.push([beat_index, sub_cursors])
         when "synth"
           cursors.push([beat_index, nil])
-          if not (on and boundary)
+          if not track_on or not (on and boundary)
             next
           end
           bind = _get_binding(index, beat_index)
@@ -68,7 +69,7 @@ module SonicJam
           dispatches.push({ synth: synth, params: params, fx: fx })
         when "sample"
           cursors.push([beat_index, nil])
-          if not (on and boundary)
+          if not track_on or not (on and boundary)
             next
           end
           bind = _get_binding(index, beat_index)
