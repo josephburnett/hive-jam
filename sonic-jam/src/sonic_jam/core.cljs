@@ -757,10 +757,10 @@
                     (om/transact! cursor :grids #(assoc % (first params) grid)))
                   (= "/samples" (get message "Address"))
                   (let [samples (js->clj (js/JSON.parse (first params)))]
-                    (om/transact! cursor :samples #(into % samples)))
+                    (om/transact! cursor :samples #(sort (into % samples))))
                   (= "/synths" (get message "Address"))
                   (let [synths (js->clj (js/JSON.parse (first params)))]
-                    (om/transact! cursor :synths #(into % synths)))
+                    (om/transact! cursor :synths #(sort (into % synths))))
                   (= "/errors" (get message "Address"))
                   (let [errors (js->clj (js/JSON.parse (first params)))]
                     (om/update! cursor :errors errors))
