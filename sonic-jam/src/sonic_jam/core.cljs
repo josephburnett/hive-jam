@@ -623,10 +623,8 @@
                               halved-tracks (map (fn [t]
                                                    (let [beats (get t "beats")]
                                                      (assoc t "beats"
-                                                            (take (int (/ (count beats) 2)) beats))))
+                                                            (take (max (int (/ (count beats) 2)) 1) beats))))
                                                  tracks)]
-                          (print tracks)
-                          (print halved-tracks)
                           (om/transact! cursor (fn [c] (assoc cursor "tracks" (clj->js halved-tracks))))
                           (go (>! set-state-ch id)))]
         (condp = (:state state)
@@ -688,7 +686,6 @@
                                            :style #js {:background (:link-bar theme)
                                                        :color (:link theme)}}
                                       (if (:grid-expanded state) " - " " + "))
-
                               (dom/td #js {:style #js {:padding "0 0 0 10px"}}
                                       (if-not (:grid-expanded state)
                                         (dom/div nil " ")
