@@ -356,10 +356,12 @@
                                     (dom/td nil (om/build param-editor
                                                           {:cursor %1
                                                            :id id
-                                                           :set-state-ch set-state-ch})))
+                                                           :set-state-ch set-state-ch}
+                                                          {:key :id})))
                            cursor
                            (range))
             commit #(let [new-fx {:fx (:fx state)
+                                  :id (new-id)
                                   :params {}}]
                       (transition :open)
                       (om/transact! cursor (fn [c] (clj->js (into c [new-fx]))))
