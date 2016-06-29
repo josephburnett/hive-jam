@@ -150,17 +150,17 @@ module SonicJam
         return
       end
       current_grid[:tracks].each do |t|
-        if not t[:id]
+        if not t[:'grid-id']
           next
         end
         if t[:type] == "grid"
-          if t[:id] == candidate_grid[:id]
+          if t[:'grid-id'] == candidate_grid[:id]
             # Check the state as it would be with the candidate grid.
             next_grid = candidate_grid
           else
-            next_grid = state[t[:id].to_sym]
+            next_grid = state[t[:'grid-id'].to_sym]
           end
-          _check_not next_grid.nil?, "Missing grid #{t[:id]} when validating acyclic."
+          _check_not next_grid.nil?, "Missing grid #{t[:'grid-id']} when validating acyclic."
           _validate_acyclic(candidate_grid, state, next_grid, path)
         end
       end

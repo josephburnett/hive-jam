@@ -61,10 +61,10 @@ module SonicJam
     def test_validate_acyclic_tree
       state = {
         a: {id: "a",
-            tracks: [{type: "grid", id: "b"},
-                     {type: "grid", id: "c"}]},
+            tracks: [{type: "grid", :'grid-id' => "b"},
+                     {type: "grid", :'grid-id' => "c"}]},
         b: {id: "b",
-            tracks: [{type: "grid", id: "d"}]},
+            tracks: [{type: "grid", :'grid-id' => "d"}]},
         c: {id: "c"},
         d: {id: "d"},
       }
@@ -75,15 +75,15 @@ module SonicJam
       assert_raises(InvalidState) {
         state = {
           a: {id: "a",
-              tracks: [{type: "grid", id: "b"},
-                       {type: "grid", id: "c"}]},
+              tracks: [{type: "grid", :'grid-id' => "b"},
+                       {type: "grid", :'grid-id' => "c"}]},
           b: {id: "b",
-              tracks: [{type: "grid", id: "d"}]},
+              tracks: [{type: "grid", :'grid-id' => "d"}]},
           c: {id: "c"},
           d: {id: "d"},
         }
         bad_grid = {id: "d",
-                    tracks: [{type: "grid", id: "a"}]}
+                    tracks: [{type: "grid", :'grid-id' => "a"}]}
         @state._validate_acyclic(bad_grid, state=state)
       }
     end
@@ -92,7 +92,7 @@ module SonicJam
       assert_raises(InvalidState) {
         @state.set_state({ id: "root", name: "root", bpc: "1",
                            tracks: [
-                             { type: "grid", id: "nonexistent", beats: [[1]] },
+                             { type: "grid", :'grid-id' => "nonexistent", beats: [[1]] },
                            ]
                          })
       }
