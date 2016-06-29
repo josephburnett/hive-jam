@@ -15,11 +15,12 @@
                :magenta "#d33682"
                :violet "#6c71c4"
                :blue "#268bd2"
+               :faded-blue "#134569" ; custom color
                :cyan "#2aa198"
                :green "#859900"
                :base03 "#002b36"
                :base02 "#073642"
-               :base0102 "#1B444E" ; between base01 and base02
+               :base0102 "#1B444E" ; custom color: between base01 and base02
                :base01 "#586e75"
                :base00 "#657b83"
                :base0 "#839496"
@@ -34,6 +35,7 @@
             :on (:green pallette)
             :off (:base02 pallette)
             :link (:blue pallette)
+            :link-bar (:faded-blue pallette)
             :bar (:base02 pallette)})
   
 (defonce app-state (atom {:grids {}
@@ -679,34 +681,35 @@
     (render-state [_ state]
       (let [cursor (get (om/observe owner (grids)) id)
             name (get cursor "name")]
-        (dom/div #js {:style #js {:borderLeft (str "solid 12px " (:bar theme))
-                                  :paddingLeft "10px"}}
-                 (if-not (:grid-expanded state)
-                   (dom/div nil 
-                            (dom/p style-grey
-                                   (dom/span #js {:onClick #(om/set-state! owner :grid-expanded true)
-                                                  :style #js {:color (:link theme)}} "+")))
-                   (dom/div nil 
-                            (dom/p style-grey
-                                   (dom/span #js {:onClick #(om/set-state! owner :grid-expanded false)
-                                                  :style #js {:color (:link theme)}}
-                                             (str "- "))
-                                   (dom/span nil (str name " "))
-                                   (om/build grid-editor {:id id
-                                                          :set-state-ch (:set-state-ch state)
-                                                          :cursor cursor}))
-                            (dom/table nil
-                                       (apply dom/tbody nil
-                                              (let [cursors (map #(hash-map :cursor %1 :track-id (get %1 "id")
-                                                                            :id %2 :delete-ch %3 :beat-cursors %4)
-                                                                 (get cursor "tracks")
-                                                                 (repeat id)
-                                                                 (repeat (:delete-ch state))
-                                                                 (if (nil? beat-cursors) (repeat nil) beat-cursors))]
-                                                (om/build-all track-view cursors {:state state :key :track-id}))))
-                            (om/build track-builder {:cursor (get cursor "tracks")
-                                                     :id id
-                                                     :set-state-ch (:set-state-ch state)}))))))))
+        (dom/table nil
+                   (dom/tbody nil
+                              (dom/td #js {:onClick #(om/set-state! owner :grid-expanded
+                                                                    (not (:grid-expanded state)))
+                                           :style #js {:background (:link-bar theme)
+                                                       :color (:link theme)}}
+                                      (if (:grid-expanded state) " - " " + "))
+
+                              (dom/td #js {:style #js {:padding "0 0 0 10px"}}
+                                      (if-not (:grid-expanded state)
+                                        (dom/div nil " ")
+                                        (dom/div nil 
+                                                 (dom/p style-grey
+                                                        (dom/span nil (str name " "))
+                                                        (om/build grid-editor {:id id
+                                                                               :set-state-ch (:set-state-ch state)
+                                                                               :cursor cursor}))
+                                                 (dom/table nil
+                                                            (apply dom/tbody nil
+                                                                   (let [cursors (map #(hash-map :cursor %1 :track-id (get %1 "id")
+                                                                                                 :id %2 :delete-ch %3 :beat-cursors %4)
+                                                                                      (get cursor "tracks")
+                                                                                      (repeat id)
+                                                                                      (repeat (:delete-ch state))
+                                                                                      (if (nil? beat-cursors) (repeat nil) beat-cursors))]
+                                                                     (om/build-all track-view cursors {:state state :key :track-id}))))
+                                                 (om/build track-builder {:cursor (get cursor "tracks")
+                                                                          :id id
+                                                                          :set-state-ch (:set-state-ch state)}))))))))))
 
 (defn error-view [cursor]
   (reify
