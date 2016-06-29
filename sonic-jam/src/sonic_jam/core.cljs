@@ -109,7 +109,10 @@
                 closer #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :init})))
                             :style #js {:color (:link theme)}}
                 canceller #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))
-                               :style #js {:color (:link theme)}}]
+                               :style #js {:color (:link theme)}}
+                delete #(do
+                          (om/transact! cursor (fn [c] (dissoc c %)))
+                          (go (>! set-state-ch id)))]
             (condp = (:state state)
               :init (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :open})))
                                    :style #js {:color (:link theme)}} "{..}")
@@ -121,7 +124,8 @@
                                                 (dom/td nil nil)
                                                 (dom/td nil nil))]
                                        (map (fn [k v] (dom/tr nil
-                                                              (dom/td nil nil)
+                                                              (dom/td #js {:onClick #(delete k)
+                                                                           :style #js {:color (:link theme)}} "X")
                                                               (dom/td nil (str k ":"))
                                                               (dom/td #js {:onClick #(om/update-state! owner
                                                                                                        (fn [s] (merge s {:state :editing
@@ -152,6 +156,8 @@
                                                    (dom/td nil nil)
                                                    (dom/td nil nil))]
                                           (map (fn [k v] (dom/tr nil
+                                                                 (dom/td #js {:onClick #(delete k)
+                                                                              :style #js {:color (:link theme)}} "X")
                                                                  (dom/td nil (str k ":"))
                                                                  (if (= k (:field state))
                                                                    (dom/td nil
@@ -187,7 +193,8 @@
                                                  (dom/td nil nil)
                                                  (dom/td nil nil))]
                                         (map (fn [k v] (dom/tr nil
-                                                               (dom/td nil nil)
+                                                               (dom/td #js {:onClick #(delete k)
+                                                                            :style #js {:color (:link theme)}} "X")
                                                                (dom/td nil (str k ":"))
                                                                (dom/td #js {:onClick #(om/update-state! owner
                                                                                                         (fn [s] (merge s {:state :editing
@@ -219,7 +226,8 @@
                                                  (dom/td nil nil)
                                                  (dom/td nil nil))]
                                         (map (fn [k v] (dom/tr nil
-                                                               (dom/td nil nil)
+                                                               (dom/td #js {:onClick #(delete k)
+                                                                            :style #js {:color (:link theme)}} "X")
                                                                (dom/td nil (str k ":"))
                                                                (dom/td #js {:onClick #(om/update-state! owner
                                                                                                         (fn [s] (merge s {:state :editing
