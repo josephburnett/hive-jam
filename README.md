@@ -11,7 +11,7 @@ Tracks can also represent sub-grids which contain their own tracks and parameter
 # Quick Start
 
 1. Start [Sonic Pi](http://sonic-pi.net/).
-2. Download and run Sonic Jam  ([osx](https://github.com/josephburnett/sonic-jam/blob/v0.1/release/sonic-jam-osx)).
+2. Download and run Sonic Jam  ([osx](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-osx)).
 3. Open [http://localhost:8080](http://localhost:8080)
 
 # How to Jam
