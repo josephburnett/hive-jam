@@ -182,7 +182,7 @@ The [Jam Server](https://github.com/josephburnett/sonic-jam/tree/master/sonic-pi
 
 The [OSC Bridge](https://github.com/josephburnett/sonic-jam/tree/master/osc-bridge/src/sonicjam) starts an OSC server on port 4559 and a websocket server on 4550.  It multiplexes messages from multiple clients to the Jam Server.
 
-The [UI](https://github.com/josephburnett/sonic-jam/tree/master/sonic-jam) communicates with the OSC Bridge over a websocket connection.  It requests synth and sample lists, and transmits and receives state changes.
+The [UI](https://github.com/josephburnett/sonic-jam/tree/master/sonic-jam) communicates with the OSC Bridge over a websocket connection.  It requests synth and sample lists, transmits and receives state changes, and receives a stream of cursor updates (current location of the beat).
 
 ## Building from head
 
