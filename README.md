@@ -132,7 +132,7 @@ Server state is kept in the Sonic Pi variable `_state` which is a [`SonicJam::St
 }
 ```
 
-In the main live-loop a `SonicJam::Dispatch` instance traverses the state, generating a list of materialized dispatch structures.  Dispatch is responsible for determining which tracks and sub-grids are on/off, implementing sub-grid inheritance and running lambdas to generate scalar parameter values.
+In the main live-loop a [`SonicJam::Dispatch`](https://github.com/josephburnett/sonic-jam/blob/master/sonic-pi/lib/sonicjam/dispatch.rb) instance traverses the state, generating a list of materialized dispatch structures.  Dispatch is responsible for determining which tracks and sub-grids are on/off, implementing sub-grid inheritance and running lambdas to generate scalar parameter values.
 
 #### Beat 0
 
