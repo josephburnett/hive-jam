@@ -186,12 +186,19 @@ The [UI](https://github.com/josephburnett/sonic-jam/tree/master/sonic-jam) commu
 
 ## Building from head
 
+1. Install dependencies
+2. `$ ./bin/build`
+3. `$ ./build/sonic-jam`
+
+#### Ubuntu 16.04 dependencies
+
 ```
-./bin/build
+$ ./bin/ubuntu-16.04-setup
 ```
 
-#### Installing dependencies
+#### OS X dependencies
 
-```
-./bin/ubuntu-16.04-setup
-```
+1. Install Sonic Pi (http://sonic-pi.net)
+2. Install git (type `git` and follow instructions)
+3. Install java (type `java` and follow instructions)
+4. Install golang (https://golang.org/dl/)
