@@ -1,12 +1,18 @@
-Sonic Jam is a loop-oriented, multi-player framework for making music with [Sonic Pi](http://sonic-pi.net/).
+# Sonic Jam
+
+Sonic Jam is a loop-oriented, multi-player framework for making music with [Sonic Pi](http://sonic-pi.net/).  Players turn on and off grid cells representing synths or samples.  A cursor sweeps with the beat across the grid, playing any cells that are on.  Rows (tracks) can be parameterized to change the sound of a synth or sample.
+
+Tracks can also represent sub-grids which contain their own tracks and parameters.  A sub-grid will be activated when the parent track is on.  Sub-grids have contain their own sub-grids and so forth.
+
+#### This is what it looks like
 
 ![Sonic Jam](doc/sonic-jam.png)
 
 # Quick Start
 
 1. Start [Sonic Pi](http://sonic-pi.net/).
-2. Download and run Sonic Jam ([linux](https://github.com/josephburnett/sonic-jam/blob/v0.1/release/sonic-jam-linux)) ([osx](https://github.com/josephburnett/sonic-jam/blob/v0.1/release/sonic-jam-osx)).
-3. Open http://localhost:8080
+2. Download and run Sonic Jam  ([osx](https://github.com/josephburnett/sonic-jam/blob/v0.1/release/sonic-jam-osx)).
+3. Open [http://localhost:8080](http://localhost:8080)
 
 # How to Jam
 
