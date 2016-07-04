@@ -11,7 +11,10 @@ Tracks can also represent sub-grids which contain their own tracks and parameter
 # Quick Start
 
 1. Start [Sonic Pi](http://sonic-pi.net/).
-2. Download and run Sonic Jam  ([osx](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-osx)) ([linux](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-linux)).
+2. Download and run Sonic Jam:
+   * [osx](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-osx)
+   * [linux](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-linux)
+   * [raspberry pi 2](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-raspberry-pi-2) (requires Firefox)
 3. Open [http://localhost:8080](http://localhost:8080)
 
 # How to Jam
@@ -196,9 +199,26 @@ The [UI](https://github.com/josephburnett/sonic-jam/tree/master/sonic-jam) commu
 $ ./bin/ubuntu-16.04-setup
 ```
 
+#### Raspberry Pi 2 dependencies
+
+```
+$ ./bin/raspberry-pi-setup
+```
+
 #### OS X dependencies
 
 1. Install Sonic Pi (http://sonic-pi.net)
 2. Install git (type `git` and follow instructions)
 3. Install java (type `java` and follow instructions)
 4. Install golang (https://golang.org/dl/)
+
+### Bugs
+
+Encountering any problems?  Please report an issue: https://github.com/josephburnett/sonic-jam/issues
+
+If possible, please include:
+1. What you were doing
+2. Any error messages
+3. Operating system
+4. Sonic Pi version
+5. Sonic Jam version or commit
