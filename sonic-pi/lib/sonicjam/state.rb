@@ -13,8 +13,38 @@ module SonicJam
         root: {
           name: "root",
           id: "root",
-          bpc: "1",
-          tracks: [],
+          bpc: "1/2",
+          tracks: [
+            {
+              type: "sample",
+              id: "iclaluhr",
+              on: true,
+              beats: [[0], [0], [0], [0], [0], [0], [0], [0]],
+              fx: [],
+              :'sample-params' => {},
+              sample: "drum_bass_hard"
+            },
+            {
+              type: "sample",
+              id: "ipktxsez",
+              on: true,
+              beats: [[0], [0], [0], [0], [0], [0], [0], [0]],
+              fx: [],
+              :'sample-params' => {},
+              sample: "drum_cymbal_closed"
+            },
+            {
+              type: "synth",
+              id: "tzpvhhnb",
+              on: true,
+              beats: [[0], [0], [0], [0], [0], [0], [0], [0]],
+              fx: [],
+              :'synth-params' => {
+                pitch: "\\ beat_index % 4 + 12"
+              },
+              synth: "fm"
+            }
+          ],
         }
       }
       _validate_grid @state[:root]
