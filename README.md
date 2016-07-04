@@ -11,7 +11,7 @@ Tracks can also represent sub-grids which contain their own tracks and parameter
 # Quick Start
 
 1. Start [Sonic Pi](http://sonic-pi.net/).
-2. Download and run Sonic Jam  ([osx](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-osx)).
+2. Download and run Sonic Jam  ([osx](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-osx)) ([linux](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-linux)).
 3. Open [http://localhost:8080](http://localhost:8080)
 
 # How to Jam
@@ -94,6 +94,111 @@ Sub-grids can be used to give each player their own space to work in.  The playe
 
 # Architecture
 
+Sonic Jam is a framework for controlling Sonic Pi.  It uses a single live-loop to sweep through a data structure, dispatching parameterized calls to the Sonic Pi functions `synth` and `sample` on the beat.
+
 ## Data model and state
 
+Server state is kept in the Sonic Pi variable `_state` which is a [`SonicJam::State`](https://github.com/josephburnett/sonic-jam/blob/master/sonic-pi/lib/sonicjam/state.rb) instance.  The granularity of state manipulation is a single grid through the `set_state` and `get_state` methods.
+
+```
+{
+  root: {
+    bpc: 1,
+    tracks: [
+      {
+        type: "sample",
+        sample: "bass_drop_c",
+        beats: [[1], [1], [1], [1]]
+      },
+      {
+        type: "grid",
+        grid-id: "abcd",
+        beats: [[1]]
+    ]
+  },
+  abcd: {
+    bpc: 1,
+    tracks: [
+      {
+        type: "synth",
+        synth: "fm",
+        synth-params: {
+          pitch: 20,
+        }
+        beats: [[1], [0], [0], [0]]
+      }
+    ]
+  }
+}
+```
+
+In the main live-loop a [`SonicJam::Dispatch`](https://github.com/josephburnett/sonic-jam/blob/master/sonic-pi/lib/sonicjam/dispatch.rb) instance traverses the state, generating a list of materialized dispatch structures.  Dispatch is responsible for determining which tracks and sub-grids are on/off, implementing sub-grid inheritance and running lambdas to generate scalar parameter values.
+
+#### Beat 0
+
+```
+[
+  { sample: "base_drop_c" },
+  { synth: "fm", params: { pitch: 20 }}
+]
+```
+
+#### Beat 1
+
+```
+[
+  { sample: "base_drop_c" }
+]
+```
+
+#### Beat 4
+
+```
+[
+  { sample: "base_drop_c" },
+  { synth: "fm", params: { pitch: 20 }}
+]
+```
+
 ## Components
+
+```
+
++----+
+| UI |
++----+
+   ^
+   |
+   V
++--------+    +-------------------+
+| OSC    |    | +--------+        |
+| Bridge |<---->| Jam    |  Sonic |
++--------+    | | Server |  Pi    |
+              | +--------+        |
+              +-------------------+
+```
+
+The [Jam Server](https://github.com/josephburnett/sonic-jam/tree/master/sonic-pi) is bootstrapped into Sonic Pi through a series OSC messages to `/run-code` on port 4557.  It starts an OSC server on port 4560.
+
+The [OSC Bridge](https://github.com/josephburnett/sonic-jam/tree/master/osc-bridge/src/sonicjam) starts an OSC server on port 4559 and a websocket server on 4550.  It multiplexes messages from multiple clients to the Jam Server.
+
+The [UI](https://github.com/josephburnett/sonic-jam/tree/master/sonic-jam) communicates with the OSC Bridge over a websocket connection.  It requests synth and sample lists, transmits and receives state changes, and receives a stream of cursor updates (current location of the beat).
+
+## Building from head
+
+1. Install dependencies
+2. `$ ./bin/build`
+3. `$ ./build/sonic-jam`
+
+#### Ubuntu 16.04 dependencies
+
+```
+$ ./bin/ubuntu-16.04-setup
+```
+
+#### OS X dependencies
+
+1. Install Sonic Pi (http://sonic-pi.net)
+2. Install git (type `git` and follow instructions)
+3. Install java (type `java` and follow instructions)
+4. Install golang (https://golang.org/dl/)
