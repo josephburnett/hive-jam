@@ -4,7 +4,10 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [chan put! <! >!]]
-            [chord.client :refer [ws-ch]]))
+            [chord.client :refer [ws-ch]]
+            [goog.dom :as gdom]
+            [goog.events :as gevents])
+  (:import [goog.ui Select Component FlatMenuButtonRenderer]))
 
 (enable-console-print!)
 
@@ -312,26 +315,38 @@
 
 (defn select-editor-builder [key options-ref]
   (fn [{:keys [cursor id set-state-ch]} owner]
-    (reify
-      om/IInitState
-      (init-state [_]
-        {:state :init})
-      om/IRenderState
-      (render-state [_ state]
-        (if (and (= :init (:state state))
-                 (contains? cursor key))
-          (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :selecting})))
-                         :style #js {:color (:link theme)}}
-                    (get cursor key))
-          (apply dom/select #js {:value ((keyword key) state)
-                                 :onChange #(handle-change % owner state (keyword key))
-                                 :onClick #(handle-change % owner state (keyword key))
-                                 :style #js {:color (:link theme)}
-                                 :onKeyDown #(when (= 13 (.-which %))
-                                               (om/update-state! owner (fn [s] (merge s {:state :init})))
-                                               (om/transact! cursor (fn [c] (assoc c key ((keyword key) state))))
-                                               (go (>! set-state-ch id)))}
-                 (map #(dom/option nil %) (om/observe owner (options-ref)))))))))
+    (let [decorate #(let [state (om/get-state owner)]
+                      (when-not (and (= :init (:state state))
+                                     (contains? cursor key))
+                        (let [select (Select. nil nil (.getInstance FlatMenuButtonRenderer))
+                              element (gdom/getElement (om/get-state owner :id))]
+                          (.decorate select element)
+                          (gevents/listenOnce select Component.EventType.ACTION
+                                              (fn [e] (let [value (.getValue e.target)]
+                                                        (om/update-state! owner (fn [s] (merge s {:state :init})))
+                                                        (om/transact! cursor (fn [c] (assoc c key value)))
+                                                        (go (>! set-state-ch id))))))))]
+      (reify
+        om/IInitState
+        (init-state [_]
+          {:state :init
+           :id (new-id)})
+        om/IDidMount
+        (did-mount [_] (decorate))
+        om/IDidUpdate
+        (did-update [_ _ _] (decorate))
+        om/IRenderState
+        (render-state [_ state]
+          (if (and (= :init (:state state))
+                   (contains? cursor key))
+            (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :selecting})))
+                           :style #js {:color (:link theme)}}
+                      (get cursor key))
+            (dom/div #js {:id (om/get-state owner :id)
+                          :className "goog-flat-menu-button"}
+                     "Make your choice ..."
+                     (apply dom/ul #js {:className "goog-menu"}
+                            (map #(dom/li #js {:className "goog-menuitem"} %) (om/observe owner (options-ref)))))))))))
 
 (def grid-type-editor
   (select-editor-builder "grid-type" grid-types))
