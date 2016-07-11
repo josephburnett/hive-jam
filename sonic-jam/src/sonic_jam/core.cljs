@@ -44,10 +44,14 @@
 (defonce app-state (atom {:grids {}
                           :samples []
                           :synths []
+                          :types ["synth" "sample" "grid"]
                           :grid-types ["synth" "sample"]
                           :errors []
                           :console []
                           :beat-cursors []}))
+
+(defn types []
+  (om/ref-cursor (:types (om/root-cursor app-state))))
 
 (defn grids []
   (om/ref-cursor (:grids (om/root-cursor app-state))))
@@ -267,86 +271,52 @@
 (def sample-param-editor
   (param-editor-builder "sample-params"))
 
-(defn type-editor [{:keys [cursor id set-state-ch]} owner]
-  (reify
-    om/IInitState
-    (init-state [_]
-      {:state (if (= "none" (get cursor "type"))
-                :selecting
-                :immutable)
-       :type (get cursor "type")})
-    om/IRenderState
-    (render-state [this state]
-      (condp = (:state state)
-        :selecting (dom/select #js {:value (:type state)
-                                    :onChange #(handle-change % owner state :type)
-                                    :onClick #(handle-change % owner state :type)
-                                    :style #js {:color (:link theme)}
-                                    :onKeyDown #(when (= 13 (.-which %))
-                                                  (om/update-state! owner (fn [s] (merge s {:state :immutable})))
-                                                  (condp = (:type state)
-                                                    "synth"
-                                                    (om/transact! cursor (fn [c] (assoc c
-                                                                                        "type" (:type state)
-                                                                                        "synth-params" {})))
-                                                    "sample"
-                                                    (om/transact! cursor (fn [c] (assoc c
-                                                                                        "type" (:type state)
-                                                                                        "sample-params" {})))
-                                                    "grid"
-                                                    (let [grid-id (new-id)
-                                                          grid {"name" ""
-                                                                "id" grid-id
-                                                                "bpc" 1
-                                                                "tracks" []}]
-                                                      (om/transact! cursor (fn [c] (assoc c
-                                                                                          "type" (:type state)
-                                                                                          "synth-params" {}
-                                                                                          "sample-params" {}
-                                                                                          "grid-id" grid-id)))
-                                                      (om/transact! (om/observe owner (grids))
-                                                                    (fn [c] (assoc c (get grid "id") grid)))
-                                                      (go (>! set-state-ch grid-id))))
-                                                  (go (>! set-state-ch id)))}
-                               (dom/option nil "synth")
-                               (dom/option nil "sample")
-                               (dom/option nil "grid"))
-        :immutable (dom/span nil (get cursor "type"))))))
-
-(defn select-editor-builder [key options-ref]
-  (fn [{:keys [cursor id set-state-ch]} owner]
-    (let [decorate #(let [state (om/get-state owner)]
-                      (when-not (and (= :init (:state state))
-                                     (contains? cursor key))
-                        (let [select (Select. nil nil (.getInstance FlatMenuButtonRenderer))
-                              element (gdom/getElement (om/get-state owner :id))]
-                          (.decorate select element)
-                          (gevents/listenOnce select Component.EventType.ACTION
-                                              (fn [e] (let [value (.getValue e.target)]
-                                                        (om/update-state! owner (fn [s] (merge s {:state :init})))
-                                                        (om/transact! cursor (fn [c] (assoc c key value)))
-                                                        (go (>! set-state-ch id))))))))]
-      (reify
-        om/IInitState
-        (init-state [_]
-          {:state :init
-           :id (new-id)})
-        om/IDidMount
-        (did-mount [_] (decorate))
-        om/IDidUpdate
-        (did-update [_ _ _] (decorate))
-        om/IRenderState
-        (render-state [_ state]
-          (if (and (= :init (:state state))
-                   (contains? cursor key))
-            (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :selecting})))
-                           :style #js {:color (:link theme)}}
-                      (get cursor key))
-            (dom/div #js {:id (om/get-state owner :id)
-                          :className "goog-flat-menu-button"}
-                     "Make your choice ..."
-                     (apply dom/ul #js {:className "goog-menu"}
-                            (map #(dom/li #js {:className "goog-menuitem"} %) (om/observe owner (options-ref)))))))))))
+(defn select-editor-builder
+  ([key options-ref]
+   (let [default-commit-fn (fn [{:keys [cursor id set-state-ch key value]}]
+                             (om/transact! cursor #(assoc % key value))
+                             (go (>! set-state-ch id)))]
+     (select-editor-builder key options-ref default-commit-fn)))
+  ([key options-ref commit-fn]
+   (fn [{:keys [cursor id set-state-ch]} owner]
+     (let [listen #(let [state (om/get-state owner)]
+                     (when-not (and (= :init (:state state))
+                                    (contains? cursor key)
+                                    (not (= "none" (get cursor key))))
+                       (let [select (Select. nil nil (.getInstance FlatMenuButtonRenderer))
+                             element (gdom/getElement (om/get-state owner :id))]
+                         (.decorate select element)
+                         (gevents/listenOnce select Component.EventType.ACTION
+                                             (fn [e] (let [value (.getValue e.target)]
+                                                       (om/update-state! owner (fn [s] (merge s {:state :init})))
+                                                       (commit-fn {:key key
+                                                                   :value value
+                                                                   :cursor cursor
+                                                                   :id id
+                                                                   :set-state-ch set-state-ch
+                                                                   :owner owner})))))))]
+       (reify
+         om/IInitState
+         (init-state [_]
+           {:state :init
+            :id (new-id)})
+         om/IDidMount
+         (did-mount [_] (listen))
+         om/IDidUpdate
+         (did-update [_ _ _] (listen))
+         om/IRenderState
+         (render-state [_ state]
+           (if (and (= :init (:state state))
+                    (contains? cursor key)
+                    (not (= "none" (get cursor key))))
+             (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :selecting})))
+                            :style #js {:color (:link theme)}}
+                       (get cursor key))
+             (dom/div #js {:id (om/get-state owner :id)
+                           :className "goog-flat-menu-button"}
+                      (str "Choose a " key)
+                      (apply dom/ul #js {:className "goog-menu"}
+                             (map #(dom/li #js {:className "goog-menuitem"} %) (om/observe owner (options-ref))))))))))))
 
 (def grid-type-editor
   (select-editor-builder "grid-type" grid-types))
@@ -356,6 +326,29 @@
 
 (def sample-editor
   (select-editor-builder "sample" samples))
+
+(def type-editor
+  (select-editor-builder "type" types
+                         (fn [{:keys [cursor id set-state-ch key value owner]}]
+                           (condp = value
+                             "grid"
+                             (let [grid-id (new-id)
+                                   grid {"name" ""
+                                         "id" grid-id
+                                         "bpc" 1
+                                         "tracks" []}]
+                               (om/transact! cursor (fn [c] (assoc c
+                                                                   "type" value
+                                                                   "synth-params" {}
+                                                                   "sample-params" {}
+                                                                   "grid-id" grid-id)))
+                               (om/transact! (om/observe owner (grids))
+                                             (fn [c] (assoc c (get grid "id") grid)))
+                               (go (>! set-state-ch grid-id)))
+                             (om/transact! cursor (fn [c] (assoc c
+                                                                 "type" value
+                                                                 "synth-params" {}))))
+                           (go (>! set-state-ch id)))))
 
 (defn fx-editor [{:keys [cursor id set-state-ch]} owner]
   (reify
