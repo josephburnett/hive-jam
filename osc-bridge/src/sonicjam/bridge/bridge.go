@@ -1,5 +1,6 @@
 package bridge
 
+import "sonicjam/bootstrap"
 import "sonicjam/common"
 
 import "encoding/json"
@@ -180,6 +181,11 @@ func oscHandler(oscMsg *osc.Message) error {
 	return nil
 }
 
+func bootHandler(oscMsg *osc.Message) error {
+	bootstrap.BootComplete <- true
+	return nil
+}
+
 func serveOSC() {
 	dispatcher := make(map[string]osc.Method)
 	dispatcher["/pong"] = oscHandler
@@ -189,6 +195,7 @@ func serveOSC() {
 	dispatcher["/errors"] = oscHandler
 	dispatcher["/cursors"] = oscHandler
 	dispatcher["/console"] = oscHandler
+	dispatcher["/boot-complete"] = bootHandler
 	for {
 		err := oscServer.Serve(dispatcher)
 		if err != nil {

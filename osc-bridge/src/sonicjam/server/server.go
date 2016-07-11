@@ -5,12 +5,13 @@ import "sonicjam/bridge"
 import "sonicjam/ui"
 
 func main() {
-	bootstrap.Boot()
 	
 	done := make(chan bool)
 
 	go bridge.Serve(done)
 	defer bridge.Shutdown()
+
+	bootstrap.Boot()
 
 	go ui.Serve(done)
 	defer ui.Shutdown()

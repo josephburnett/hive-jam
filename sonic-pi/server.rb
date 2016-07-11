@@ -1,3 +1,13 @@
+# SERVER
+
+defonce :jam_server do
+  SonicPi::OSC::UDPServer.new(4559, use_decoder_cache: true)
+end
+
+defonce :jam_client do
+  SonicPi::OSC::UDPClient.new("127.0.0.1", 4560, use_encoder_cache: true)
+end
+
 # TIME
 
 define :res do Rational('1/4') end
@@ -67,15 +77,7 @@ define :apply_fx do |fx_chain, thunk|
   end
 end
 
-# SERVER
-
-defonce :jam_server do
-  SonicPi::OSC::UDPServer.new(4559, use_decoder_cache: true)
-end
-
-defonce :jam_client do
-  SonicPi::OSC::UDPClient.new("127.0.0.1", 4560, use_encoder_cache: true)
-end
+# SERVER METHODS
 
 jam_server.add_method("/drop-state") do |args|
   assert(args.length == 2)
@@ -172,3 +174,7 @@ define :drop_state do |ns|
   _state.drop_state ns
   _send_state("*", ns)
 end
+
+sleep(2)
+jam_client.send("/boot-complete", "true")
+
