@@ -8,7 +8,10 @@ cd $ROOT
 
 ( cd sonic-jam ; $ROOT/bin/vendor/lein clean )
 
-if [ -f /tmp/foo.txt ]; then
+if [ -f build/sonic-jam ]; then
     rm build/sonic-jam
 fi
 
+if [ -f osc-bridge/src/sonicjam/data/data.go ]; then
+    rm osc-bridge/src/sonicjam/data/data.go
+fi
