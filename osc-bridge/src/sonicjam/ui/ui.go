@@ -28,7 +28,8 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func cssHandler(w http.ResponseWriter, r *http.Request) {
-	resource, err := data.Asset("sonic-jam/resources/public/css/style.css")
+	resourceId := r.URL.Path[len("/css/"):]
+	resource, err := data.Asset("sonic-jam/resources/public/css/"+resourceId)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -40,7 +41,7 @@ func cssHandler(w http.ResponseWriter, r *http.Request) {
 func Serve(done chan bool) {
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/js/compiled/sonic_jam.js", jsHandler)
-	http.HandleFunc("/css/style.css", cssHandler)
+	http.HandleFunc("/css/", cssHandler)
 	log.Print("Starting the UI webserver.")
 	http.ListenAndServe(":8080", nil)
 }
