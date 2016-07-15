@@ -50,6 +50,9 @@
                           :console []
                           :beat-cursors []}))
 
+(defn config [key]
+  (get (js->clj js/SJ_CONFIG) key))
+
 (defn types []
   (om/ref-cursor (:types (om/root-cursor app-state))))
 
@@ -739,8 +742,8 @@
       (let [set-state-ch (chan)
             get-state-ch (chan)]
         (go
-          (let [{:keys [ws-channel error]} (<! (ws-ch "ws://127.0.0.1:4550/oscbridge"
-                                                      {:format :json}))]
+          (let [addr (str "ws://" (config "UiIp") ":" (config "UiBridgePort") "/oscbridge")
+                {:keys [ws-channel error]} (<! (ws-ch addr {:format :json}))]
             (>! ws-channel {:Address "/get-state" :Params ["root"]})
             (>! ws-channel {:Address "/get-samples" :Params []})
             (>! ws-channel {:Address "/get-synths" :Params []})

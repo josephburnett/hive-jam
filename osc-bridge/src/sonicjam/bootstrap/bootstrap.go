@@ -1,6 +1,7 @@
 package bootstrap
 
 import "sonicjam/common"
+import "sonicjam/config"
 import "sonicjam/data"
 
 import "log"
@@ -9,7 +10,7 @@ import "os"
 import _ "github.com/jteeuwen/go-bindata"
 import "github.com/scgolang/osc"
 
-var oscClient = common.Connect("127.0.0.1", 4557)
+var oscClient = common.Connect(*config.Flags.SpIp, *config.Flags.SpPort)
 var BootComplete = make(chan bool)
 
 func send(address, message string) error {
@@ -59,6 +60,14 @@ func Boot() {
 		if err != nil {
 			fail(err.Error(), "Have you started Sonic Pi?")
 		}
+	}
+	rubyConfig, err := config.RubyConfig()
+	if err != nil {
+		fail(err.Error(), "Error generating Ruby config")
+	}
+	err = send("/run-code", string(rubyConfig))
+	if err != nil {
+		fail(err.Error(), "Error uploading Ruby config")
 	}
 	for _, file := range files {
 		err := upload(file)

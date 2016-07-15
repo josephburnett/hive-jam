@@ -4,7 +4,11 @@ import "sonicjam/bootstrap"
 import "sonicjam/bridge"
 import "sonicjam/ui"
 
+import "flag"
+
 func main() {
+
+	flag.Parse()
 	
 	done := make(chan bool)
 

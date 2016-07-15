@@ -2,12 +2,14 @@ package bridge
 
 import "sonicjam/bootstrap"
 import "sonicjam/common"
+import "sonicjam/config"
 
 import "encoding/json"
 import "io"
 import "log"
 import "math/rand"
 import "net/http"
+import "strconv"
 import "time"
 
 import "golang.org/x/net/websocket"
@@ -25,9 +27,10 @@ func Serve(done chan bool) {
 	go sendToServer()
 	log.Print("Starting OSC server.")
 	go serveOSC()
-	log.Print("Starting websocket server.")
 	http.Handle("/oscbridge", websocket.Handler(websocketHandler))
-	err := http.ListenAndServe("127.0.0.1:4550", nil)
+	endpoint := *config.Flags.UiIp+":"+strconv.Itoa(*config.Flags.UiBridgePort)
+	log.Print("Starting websocket server on "+endpoint)
+	err := http.ListenAndServe(endpoint, nil)
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}
@@ -54,9 +57,8 @@ var toClient = make(chan *Message, 10)
 
 var clients = make(map[string]*websocket.Conn)
 
-var oscClient = common.Connect("127.0.0.1", 4559)
-var oscServer = common.Listen("127.0.0.1", 4560)
-
+var oscClient = common.Connect(*config.Flags.SpBridgeIp, *config.Flags.SpBridgePortClient)
+var oscServer = common.Listen(*config.Flags.SpBridgeIp, *config.Flags.SpBridgePortServer)
 
 func sendToClient() {
 	for {

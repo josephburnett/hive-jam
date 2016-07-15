@@ -1,18 +1,26 @@
 # SERVER
 
 defonce :jam_server do
-  SonicPi::OSC::UDPServer.new(4559, use_decoder_cache: true)
+  SonicPi::OSC::UDPServer.new(_sj_config[:SpBridgePortClient], use_decoder_cache: true)
 end
 
 defonce :jam_client do
-  SonicPi::OSC::UDPClient.new("127.0.0.1", 4560, use_encoder_cache: true)
+  SonicPi::OSC::UDPClient.new(_sj_config[:SpBridgePortIp], _sj_config[:SpBridgePortServer], use_encoder_cache: true)
 end
 
 # TIME
 
-define :res do Rational('1/4') end
+define :res do Rational(_sj_config[:Resolution]) end
 
-define :verbosity do 1 end
+define :verbosity do
+  if _sj_config[:Debug]
+    return 2
+  elsif _sj_config[:Verbose]
+    return 1
+  else
+    return 0
+  end
+end
 
 live_loop :main do
   use_bpm 120
