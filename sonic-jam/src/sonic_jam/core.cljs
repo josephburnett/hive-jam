@@ -348,6 +348,11 @@
                                (om/transact! (om/observe owner (grids))
                                              (fn [c] (assoc c (get grid "id") grid)))
                                (go (>! set-state-ch grid-id)))
+                             "sample"
+                             (om/transact! cursor (fn [c] (assoc c
+                                                                 "type" value
+                                                                 "sample-params" {})))
+                             "synth"
                              (om/transact! cursor (fn [c] (assoc c
                                                                  "type" value
                                                                  "synth-params" {}))))
