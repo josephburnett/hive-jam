@@ -103,6 +103,10 @@ module SonicJam
       end
     end
 
+    def _check_integer(value, message)
+      _check value.is_a?(Integer), message
+    end
+    
     def _check_array(value, message)
       _check value.kind_of?(Array), message
     end
@@ -144,6 +148,9 @@ module SonicJam
         "none", "grid", "synth", "sample"
       _check_not track[:beats].nil?, "Track beats must not be nil."
       _check_array track[:beats], "Track beats must be an array."
+      track[:beats].each do |t|
+        _check_array t, "Individual beats must be in an array."
+      end
       _check_keys track, "Track keys must be one of.", :type, :beats,
         :fx, :synth, :'synth-params', :sample, :'sample-params',
         :'grid-type', :'grid-id', :id, :on

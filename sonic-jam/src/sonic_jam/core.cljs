@@ -643,7 +643,26 @@
                                                             (take (max (int (/ (count beats) 2)) 1) beats))))
                                                  tracks)]
                           (om/transact! cursor (fn [c] (assoc cursor "tracks" (clj->js halved-tracks))))
-                          (go (>! set-state-ch id)))]
+                          (go (>! set-state-ch id)))
+            double-res #(let [tracks (get cursor "tracks")
+                              doubled-tracks (map (fn [t]
+                                                    (let [beats (get t "beats")
+                                                          doubled-beats (interleave (map (fn [b] (vector (* 2 (first b)))) beats)
+                                                                                    (repeat [0]))]
+                                                      (assoc t "beats" doubled-beats)))
+                                                  tracks)]
+                          (om/transact! cursor (fn [c] (assoc c "tracks" (clj->js doubled-tracks))))
+                          (go (>! set-state-ch id)))
+            half-res #(let [tracks (get cursor "tracks")
+                            halved-tracks (map (fn [t]
+                                                 (let [beats (get t "beats")
+                                                       halved-beats (filter some?
+                                                                            (map-indexed (fn [i b] (if (even? i) (vector (/ (first b) 2)) nil))
+                                                                                         beats))]
+                                                   (assoc t "beats" halved-beats)))
+                                               tracks)]
+                        (om/transact! cursor (fn [c] (assoc c "tracks" (clj->js halved-tracks))))
+                        (go (>! set-state-ch id)))]
         (condp = (:state state)
           :init (dom/span #js {:onClick #(transition {:state :open})
                                :style #js {:color (:link theme)}}
@@ -661,6 +680,13 @@
                                                    :style #js {:color (:link theme)}} "+")
                                     (dom/span nil "/")
                                     (dom/span #js {:onClick half-width
+                                                   :style #js {:color (:link theme)}} "-"))
+                          (dom/span nil
+                                    (dom/span nil " res ")
+                                    (dom/span #js {:onClick double-res
+                                                   :style #js {:color (:link theme)}} "+")
+                                    (dom/span nil "/")
+                                    (dom/span #js {:onClick half-res
                                                    :style #js {:color (:link theme)}} "-"))
                           (dom/span nil " }"))
           :editing-bpc (dom/span nil
