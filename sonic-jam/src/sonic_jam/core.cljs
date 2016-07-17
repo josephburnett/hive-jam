@@ -529,7 +529,8 @@
                                               "synth" [(dom/tr nil
                                                                (dom/td nil nil)
                                                                (dom/td nil "params:")
-                                                               (dom/td nil (om/build synth-param-editor input)))])
+                                                               (dom/td nil (om/build synth-param-editor input)))
+                                                       fx-row])
                                             [(dom/tr nil
                                                      (dom/td closer "}")
                                                      (dom/td nil nil)
