@@ -60,10 +60,6 @@ module SonicJam
 
     def load_state(filename)
       state = JSON.parse(File.read(filename), symbolize_names: true)
-      state.each do |key, value|
-        _validate_grid value
-        _check key.equal?(value[:id].to_sym), "Grid must be registered under its id."
-      end
       @mutex.synchronize {
         @state = state
       }
