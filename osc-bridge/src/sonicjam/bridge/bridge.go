@@ -169,12 +169,14 @@ func oscHandler(oscMsg *osc.Message) error {
 	for i := 0; i < oscMsg.CountArguments(); i++ {
 		paramsJson, err := oscMsg.ReadString()
 		if err != nil {
+			common.LogError("Error reading string from OSC message.")
 			common.LogError(err)
 			return err
 		}
 		params := &Params{}
 		err = json.Unmarshal([]byte(paramsJson), params)
 		if err != nil {
+			common.LogError("Error parsing OSC message as JSON.")
 			common.LogError(err)
 			return err
 		}

@@ -33,17 +33,17 @@ func Listen(address string, port int) *osc.UDPConn {
 	return conn
 }
 
-func LogError(v ...interface{}) {
+func LogError(v interface{}) {
 	log.Print(v)
 }
 
-func LogInfo(v ...interface{}) {
+func LogInfo(v interface{}) {
 	if *config.Flags.Verbose || *config.Flags.Debug {
 		log.Print(v)
 	}
 }
 
-func LogDebug(v ...interface{}) {
+func LogDebug(v interface{}) {
 	if *config.Flags.Debug {
 		log.Print(v)
 	}
