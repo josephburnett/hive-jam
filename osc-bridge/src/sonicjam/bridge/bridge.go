@@ -4,6 +4,7 @@ import "sonicjam/bootstrap"
 import "sonicjam/common"
 import "sonicjam/config"
 
+import "bytes"
 import "encoding/json"
 import "io"
 import "log"
@@ -64,29 +65,29 @@ func sendToClient() {
 	for {
 		msg := <-toClient
 		if msg.Address == "" {
-			log.Print("Dropping message. No address.")
+			common.LogError("Dropping message. No address.")
 			continue
 		}
 		if len(msg.Params) == 0 {
-			log.Print("Dropping message. No client id.")
+			common.LogError("Dropping message. No client id.")
 			continue
 		}
 		clientId := msg.Params[0]
 		ws, ok := clients[clientId]
 		if !ok {
-			log.Print("Dropping message. Unknown client id: " + clientId)
+			common.LogError("Dropping message. Unknown client id: " + clientId)
 			continue
 		}
 		msg.Params = msg.Params[1:]
 		msgJson, err := json.Marshal(msg)
 		if err != nil {
-			log.Print("Error marshalling message to client.")
-			log.Print(err)
+			common.LogError("Error marshalling message to client.")
+			common.LogError(err)
 			continue
 		}
 		if _, err = ws.Write([]byte(msgJson)); err != nil {
-			log.Print("Error writing message to client websocket.")
-			log.Print(err)
+			common.LogError("Error writing message to client websocket.")
+			common.LogError(err)
 			continue
 		}
 	}
@@ -96,13 +97,13 @@ func sendToServer() {
 	for {
 		msg := <-toServer
 		if msg.Address == "" {
-			log.Print("Dropping message. No address.")
+			common.LogError("Dropping message. No address.")
 			continue
 		}
 		oscMessage, err := osc.NewMessage(msg.Address)
 		if err != nil {
-			log.Print("Error create new OSC message to server.")
-			log.Print(err)
+			common.LogError("Error create new OSC message to server.")
+			common.LogError(err)
 			continue
 		}
 		for _, p := range msg.Params {
@@ -110,8 +111,8 @@ func sendToServer() {
 		}
 		err = oscClient.Send(oscMessage)
 		if err != nil {
-			log.Print("Error sending OSC message to server.")
-			log.Print(err)
+			common.LogError("Error sending OSC message to server.")
+			common.LogError(err)
 			continue
 		}
 	}
@@ -119,26 +120,30 @@ func sendToServer() {
 
 func websocketHandler(ws *websocket.Conn) {
 	clientId := randStringRunes(16)
-	log.Print("Connected client: " + clientId)
+	common.LogInfo("Connected client: " + clientId)
 	clients[clientId] = ws
 	for {
-		msgJson := make([]byte, 2000)
+		msgJson := make([]byte, *config.Flags.WsBufferByteSize)
 		n, err := ws.Read(msgJson)
 		if err != nil {
 			if err == io.EOF {
-				log.Print("Disconnected client: " + clientId)
+				common.LogInfo("Disconnected client: " + clientId)
 				delete(clients, clientId)
 				return
 			}
-			log.Print("Error reading from client websocket.")
-			log.Print(err)
+			common.LogError("Error reading from client websocket.")
+			common.LogError(err)
 			continue
 		}
+		if n > *config.Flags.WsBufferByteSize-1 {
+			common.LogError("Message from UI exceeded the websocket buffer size.")
+		}
+		common.LogInfo("Received from client " + clientId + ": " + string(msgJson[:n]))
 		msg := &Message{}
 		err = json.Unmarshal(msgJson[:n], msg)
 		if err != nil {
-			log.Print("Error unmarshalling message from client.")
-			log.Print(err)
+			common.LogError("Error unmarshalling message from client.")
+			common.LogError(err)
 			continue
 		}
 		params := make([]string, 1)
@@ -152,19 +157,25 @@ func websocketHandler(ws *websocket.Conn) {
 }
 
 func oscHandler(oscMsg *osc.Message) error {
+	if *config.Flags.Debug {
+		// Check the debug flag value before pretty printing message
+		buf := new(bytes.Buffer)
+		oscMsg.Print(buf)
+		common.LogDebug("Received from server: " + buf.String())
+	}
 	msg := &Message{
 		Address: oscMsg.Address(),
 	}
 	for i := 0; i < oscMsg.CountArguments(); i++ {
 		paramsJson, err := oscMsg.ReadString()
 		if err != nil {
-			log.Print(err)
+			common.LogError(err)
 			return err
 		}
 		params := &Params{}
 		err = json.Unmarshal([]byte(paramsJson), params)
 		if err != nil {
-			log.Print(err)
+			common.LogError(err)
 			return err
 		}
 		for _, param := range *params {

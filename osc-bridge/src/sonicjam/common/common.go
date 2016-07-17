@@ -1,5 +1,8 @@
 package common
 
+import "sonicjam/config"
+
+import "log"
 import "net"
 
 import "github.com/scgolang/osc"
@@ -28,4 +31,20 @@ func Listen(address string, port int) *osc.UDPConn {
 		panic(err)
 	}
 	return conn
+}
+
+func LogError(v ...interface{}) {
+	log.Print(v)
+}
+
+func LogInfo(v ...interface{}) {
+	if *config.Flags.Verbose || *config.Flags.Debug {
+		log.Print(v)
+	}
+}
+
+func LogDebug(v ...interface{}) {
+	if *config.Flags.Debug {
+		log.Print(v)
+	}
 }

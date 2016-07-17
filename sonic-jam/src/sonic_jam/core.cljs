@@ -783,7 +783,7 @@
                     (om/update! cursor :errors errors))
                   (= "/console" (get message "Address"))
                   (let [console (js->clj (js/JSON.parse (first params)))]
-                    (om/transact! cursor :console #(concat % console)))
+                    (om/update! cursor :console console))
                   (= "/cursors" (get message "Address"))
                   (let [beat-cursors (js->clj (js/JSON.parse (first params)))]
                     (om/update! cursor :beat-cursors beat-cursors)))
