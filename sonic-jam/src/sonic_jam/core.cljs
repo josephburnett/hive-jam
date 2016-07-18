@@ -652,17 +652,26 @@
                                                  tracks)]
                           (om/transact! cursor (fn [c] (assoc cursor "tracks" (clj->js halved-tracks))))
                           (go (>! set-state-ch id)))
-            double-res #(let [tracks (get cursor "tracks")
-                              doubled-tracks (map (fn [t]
-                                                    (let [beats (get t "beats")
-                                                          doubled-beats (interleave (map (fn [b] (vector (* 2 (first b)))) beats)
-                                                                                    (repeat [0]))]
-                                                      (assoc t "beats" doubled-beats)))
-                                                  tracks)]
-                          (om/transact! cursor (fn [c] (assoc c "tracks" (clj->js doubled-tracks))))
-                          (go (>! set-state-ch id)))
-            half-res #(let [tracks (get cursor "tracks")
-                            halved-tracks (map (fn [t]
+            bpc-list (om/observe owner (bpc-values))
+            double-res #(when-not (= (first bpc-list) (get cursor "bpc"))
+                          (let [current-bpc (get cursor "bpc")
+                                bpc (last (take-while (fn [v] (not (= current-bpc v))) bpc-list))
+                                tracks (get cursor "tracks")
+                                doubled-tracks (map (fn [t]
+                                                      (let [beats (get t "beats")
+                                                            doubled-beats (interleave (map (fn [b] (vector (* 2 (first b)))) beats)
+                                                                                      (repeat [0]))]
+                                                        (assoc t "beats" doubled-beats)))
+                                                    tracks)]
+                            (om/transact! cursor (fn [c] (assoc c
+                                                                "tracks" (clj->js doubled-tracks)
+                                                                "bpc" bpc)))
+                            (go (>! set-state-ch id))))
+            half-res #(when-not (= (last bpc-list) (get cursor "bpc"))
+                        (let [current-bpc (get cursor "bpc")
+                              bpc (second (drop-while (fn [v] (not (= current-bpc v))) bpc-list))
+                              tracks (get cursor "tracks")
+                              halved-tracks (map (fn [t]
                                                  (let [beats (get t "beats")
                                                        halved-beats (filter some?
                                                                             (map-indexed (fn [i b] (if (even? i) (vector (if (= 0 (first b)) 0
@@ -670,8 +679,10 @@
                                                                                          beats))]
                                                    (assoc t "beats" halved-beats)))
                                                tracks)]
-                        (om/transact! cursor (fn [c] (assoc c "tracks" (clj->js halved-tracks))))
-                        (go (>! set-state-ch id)))]
+                          (om/transact! cursor (fn [c] (assoc c
+                                                              "tracks" (clj->js halved-tracks)
+                                                              "bpc" bpc)))
+                          (go (>! set-state-ch id))))]
         (condp = (:state state)
           :init (dom/table nil
                            (dom/tbody nil
