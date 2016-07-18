@@ -665,7 +665,8 @@
                             halved-tracks (map (fn [t]
                                                  (let [beats (get t "beats")
                                                        halved-beats (filter some?
-                                                                            (map-indexed (fn [i b] (if (even? i) (vector (/ (first b) 2)) nil))
+                                                                            (map-indexed (fn [i b] (if (even? i) (vector (if (= 0 (first b)) 0
+                                                                                                                             (max (/ (first b) 2) 1))) nil))
                                                                                          beats))]
                                                    (assoc t "beats" halved-beats)))
                                                tracks)]
