@@ -46,6 +46,8 @@
                           :synths []
                           :types ["synth" "sample" "grid"]
                           :grid-types ["synth" "sample"]
+                          :bpc-values ["1/32" "1/16" "1/8" "1/4" "1/2"
+                                       "1" "2" "4" "8" "16" "32"]
                           :errors []
                           :console []
                           :beat-cursors []}))
@@ -67,6 +69,9 @@
 
 (defn synths []
   (om/ref-cursor (:synths (om/root-cursor app-state))))
+
+(defn bpc-values []
+  (om/ref-cursor (:bpc-values (om/root-cursor app-state))))
 
 (defn handle-change [e owner state key]
   (om/set-state! owner key (.. e -target -value)))
@@ -330,6 +335,9 @@
 (def sample-editor
   (select-editor-builder "sample" samples))
 
+(def bpc-editor
+  (select-editor-builder "bpc" bpc-values))
+
 (def type-editor
   (select-editor-builder "type" types
                          (fn [{:keys [cursor id set-state-ch key value owner]}]
@@ -338,7 +346,7 @@
                              (let [grid-id (new-id)
                                    grid {"name" ""
                                          "id" grid-id
-                                         "bpc" 1
+                                         "bpc" "1"
                                          "tracks" []}]
                                (om/transact! cursor (fn [c] (assoc c
                                                                    "type" value
@@ -616,7 +624,7 @@
                                            :get-state-ch (:get-state-ch state)}]
                             (om/build grid-view {:id id :beat-cursors (second beat-cursors)} {:state sub-state})))))))))
 
-(defn grid-editor [{:keys [id cursor set-state-ch]} owner]
+(defn grid-editor [{:keys [name id cursor set-state-ch], :as inputs} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -664,42 +672,35 @@
                         (om/transact! cursor (fn [c] (assoc c "tracks" (clj->js halved-tracks))))
                         (go (>! set-state-ch id)))]
         (condp = (:state state)
-          :init (dom/span #js {:onClick #(transition {:state :open})
-                               :style #js {:color (:link theme)}}
-                          "{..}")
-          :open (dom/span nil
-                          (closer "{")
-                          (dom/span nil
-                                    (dom/span nil " bpc: ")
-                                    (dom/span #js {:onClick #(transition {:state :editing-bpc})
-                                                   :style #js {:color (:link theme)}}
-                                              (str (get cursor "bpc"))))
-                          (dom/span nil
-                                    (dom/span nil " width: ")
-                                    (dom/span #js {:onClick double-width
-                                                   :style #js {:color (:link theme)}} "+")
-                                    (dom/span nil "/")
-                                    (dom/span #js {:onClick half-width
-                                                   :style #js {:color (:link theme)}} "-"))
-                          (dom/span nil
-                                    (dom/span nil " res ")
-                                    (dom/span #js {:onClick double-res
-                                                   :style #js {:color (:link theme)}} "+")
-                                    (dom/span nil "/")
-                                    (dom/span #js {:onClick half-res
-                                                   :style #js {:color (:link theme)}} "-"))
-                          (dom/span nil " }"))
-          :editing-bpc (dom/span nil
-                                 (closer "{ ")
-                                 (dom/span nil
-                                           (dom/span nil "bpc: "))
-                                 (dom/input #js {:type "text" :value (:bpc state)
-                                                 :onChange #(handle-change % owner state :bpc)
-                                                 :onKeyDown #(when (= 13 (.-which %))
-                                                               (transition {:state :open})
-                                                               (om/transact! cursor (fn [c] (assoc c "bpc"(:bpc state))))
-                                                               (go (>! set-state-ch id)))})
-                                 (dom/span nil " }")))))))
+          :init (dom/table nil
+                           (dom/tbody nil
+                                      (dom/tr nil
+                                              (dom/td nil (str name " "))
+                                              (dom/td #js {:onClick #(transition {:state :open})
+                                                           :style #js {:color (:link theme)}}
+                                                      "{..}"))))
+          :open (dom/table nil
+                           (dom/tbody nil
+                                      (dom/tr nil
+                                              (dom/td nil (str name " "))
+                                              (dom/td nil (closer "{"))
+                                              (dom/td nil " bpc: ")
+                                              (dom/td nil (om/build bpc-editor inputs))
+                                              (dom/td nil " ")
+                                              (dom/td nil " width: ")
+                                              (dom/td #js {:onClick double-width
+                                                           :style #js {:color (:link theme)}} "+")
+                                              (dom/td nil "/")
+                                              (dom/td #js {:onClick half-width
+                                                           :style #js {:color (:link theme)}} "-")
+                                              (dom/td nil " ")
+                                              (dom/td nil " res ")
+                                              (dom/td #js {:onClick double-res
+                                                           :style #js {:color (:link theme)}} "+")
+                                              (dom/td nil "/")
+                                              (dom/td #js {:onClick half-res
+                                                           :style #js {:color (:link theme)}} "-")
+                                              (dom/td nil " }")))))))))
 
 (defn grid-view [{:keys [id beat-cursors]} owner]
   (reify
@@ -733,9 +734,9 @@
                                       (if-not (:grid-expanded state)
                                         (dom/div nil " ")
                                         (dom/div nil 
-                                                 (dom/p style-grey
-                                                        (dom/span nil (str name " "))
-                                                        (om/build grid-editor {:id id
+                                                 (dom/div style-grey
+                                                        (om/build grid-editor {:name name
+                                                                               :id id
                                                                                :set-state-ch (:set-state-ch state)
                                                                                :cursor cursor}))
                                                  (dom/table nil
