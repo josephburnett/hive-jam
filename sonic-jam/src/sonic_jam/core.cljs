@@ -706,7 +706,7 @@
                                               (dom/td #js {:onClick half-width
                                                            :style #js {:color (:link theme)}} "-")
                                               (dom/td nil " ")
-                                              (dom/td nil " res ")
+                                              (dom/td nil " resolution: ")
                                               (dom/td #js {:onClick double-res
                                                            :style #js {:color (:link theme)}} "+")
                                               (dom/td nil "/")
