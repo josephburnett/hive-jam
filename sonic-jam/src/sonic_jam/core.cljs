@@ -279,6 +279,33 @@
 (def sample-param-editor
   (param-editor-builder "sample-params"))
 
+(defn text-editor-builder [key]
+  (fn [{:keys [cursor id set-state-ch]} owner]
+    (reify
+      om/IInitState
+      (init-state [_]
+        {:state (if (and (contains? cursor key)
+                         (not (= "" (get cursor key))))
+                  :init :editing)
+         :value (get cursor key)})
+      om/IRenderState
+      (render-state [_ state]
+        (condp = (:state state)
+          :init
+          (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :editing})))
+                         :style #js {:color (:link theme)}}
+                    (get cursor key))
+          :editing
+          (dom/input #js {:type "text" :value (:value state)
+                          :onChange #(handle-change % owner state :value)
+                          :onKeyDown #(when (= 13 (.-which %))
+                                        (om/update-state! owner (fn [s] (merge s {:state :init})))
+                                        (om/transact! cursor (fn [c] (assoc c key (:value state))))
+                                        (go (>! set-state-ch id)))}))))))
+
+(def name-editor
+  (text-editor-builder "name"))
+
 (defn select-editor-builder
   ([key options-ref]
    (let [default-commit-fn (fn [{:keys [cursor id set-state-ch key value]}]
@@ -694,8 +721,10 @@
           :open (dom/table nil
                            (dom/tbody nil
                                       (dom/tr nil
-                                              (dom/td nil (str name " "))
                                               (dom/td nil (closer "{"))
+                                              (dom/td nil " name: ")
+                                              (dom/td nil (om/build name-editor inputs))
+                                              (dom/td nil " ")
                                               (dom/td nil " bpc: ")
                                               (dom/td nil (om/build bpc-editor inputs))
                                               (dom/td nil " ")
