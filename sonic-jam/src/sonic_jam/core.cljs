@@ -714,17 +714,17 @@
           :init (dom/table nil
                            (dom/tbody nil
                                       (dom/tr nil
-                                              (dom/td nil (str name " "))
+                                              (dom/td nil (om/build name-editor inputs))
+                                              (dom/td nil " ")
                                               (dom/td #js {:onClick #(transition {:state :open})
                                                            :style #js {:color (:link theme)}}
                                                       "{..}"))))
           :open (dom/table nil
                            (dom/tbody nil
                                       (dom/tr nil
-                                              (dom/td nil (closer "{"))
-                                              (dom/td nil " name: ")
                                               (dom/td nil (om/build name-editor inputs))
                                               (dom/td nil " ")
+                                              (dom/td nil (closer "{"))
                                               (dom/td nil " bpc: ")
                                               (dom/td nil (om/build bpc-editor inputs))
                                               (dom/td nil " ")
