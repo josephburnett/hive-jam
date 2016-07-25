@@ -38,7 +38,9 @@ build/
 /osc-bridge/src/sonicjam/data
 *.DS_Store
 
-/osc-bridge/bin/	
-/osc-bridge/pkg/
-/osc-bridge/src/github.com/
-/osc-bridge/src/golang.org/
+osc-bridge/bin/
+osc-bridge/pkg/
+osc-bridge/src/github.com/
+osc-bridge/src/golang.org/
+sonic-jam/resources/public/config/
+sonic-jam/resources/public/js/
