@@ -359,32 +359,55 @@
 (def bpc-editor
   (select-editor-builder "bpc" bpc-values))
 
+(defn deep-copy [grids-cursor copy-id set-state-ch]
+  (let [grid (get grids-cursor copy-id)
+        copy-id (new-id)
+        copy (assoc grid
+                    "tracks" (clj->js (map #(if (= "grid" (get % "type"))
+                                              (let [grid-id (get % "grid-id")]
+                                                (assoc % "grid-id" (deep-copy grids-cursor grid-id set-state-ch)))
+                                              %)
+                                           (get grid "tracks")))
+                    "id" copy-id)]
+    (om/transact! grids-cursor #(assoc % copy-id copy))
+    (go (>! set-state-ch copy-id))
+    copy-id))
+
 (defn type-editor [{:keys [cursor id set-state-ch]} owner]
-  (let [commit-fn (fn [{:keys [cursor id set-state-ch value owner]}]
-                          (condp = value
-                            "grid"
-                            (let [grid-id (new-id)
-                                  grid {"name" ""
-                                        "id" grid-id
-                                        "bpc" "1"
-                                        "tracks" []}]
-                              (om/transact! cursor (fn [c] (assoc c
-                                                                  "type" value
-                                                                  "synth-params" {}
-                                                                  "sample-params" {}
-                                                                  "grid-id" grid-id)))
-                              (om/transact! (om/observe owner (grids))
-                                            (fn [c] (assoc c (get grid "id") grid)))
-                              (go (>! set-state-ch grid-id)))
-                            "sample"
-                            (om/transact! cursor (fn [c] (assoc c
-                                                                "type" value
-                                                                "sample-params" {})))
-                            "synth"
-                            (om/transact! cursor (fn [c] (assoc c
-                                                                "type" value
-                                                                "synth-params" {}))))
-                          (go (>! set-state-ch id)))
+  (let [menu-id-map {"copy of bar" "prlimuhi"}
+        commit-fn (fn [{:keys [cursor id set-state-ch value owner]}]
+                    (cond
+                      (contains? menu-id-map value)
+                      (let [grid-id (get menu-id-map value)
+                            copy-id (deep-copy (om/observe owner (grids)) grid-id set-state-ch)]
+                        (om/transact! cursor (fn [c] (assoc c
+                                                            "type" "grid"
+                                                            "synth-params" {}
+                                                            "sample-params" {}
+                                                            "grid-id" copy-id))))
+                      (= "new" value)
+                      (let [grid-id (new-id)
+                            grid {"name" ""
+                                  "id" grid-id
+                                  "bpc" "1"
+                                  "tracks" []}]
+                        (om/transact! cursor (fn [c] (assoc c
+                                                            "type" "grid"
+                                                            "synth-params" {}
+                                                            "sample-params" {}
+                                                            "grid-id" grid-id)))
+                        (om/transact! (om/observe owner (grids))
+                                      (fn [c] (assoc c (get grid "id") grid)))
+                        (go (>! set-state-ch grid-id)))
+                      (= "sample" value)
+                      (om/transact! cursor (fn [c] (assoc c
+                                                          "type" value
+                                                          "sample-params" {})))
+                      (= "synth" value)
+                      (om/transact! cursor (fn [c] (assoc c
+                                                          "type" value
+                                                          "synth-params" {}))))
+                    (go (>! set-state-ch id)))
         listen #(let [state (om/get-state owner)]
                   (when-not (and (= :init (:state state))
                                  (contains? cursor "type")
@@ -426,7 +449,7 @@
                             (dom/div #js {:className "goog-submenu"} "grid"
                                      (dom/div #js {:className "goog-menu"}
                                               (dom/div #js {:className "goog-menuitem"} "new")
-                                              (dom/div #js {:className "goog-menuitem"} "copy of foo")
+                                              (dom/div #js {:className "goog-menuitem"} "copy of root")
                                               (dom/div #js {:className "goog-menuitem"} "copy of bar"))))))))))
 
 (defn fx-editor [{:keys [cursor id set-state-ch]} owner]
