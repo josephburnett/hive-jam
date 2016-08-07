@@ -7,7 +7,8 @@
             [chord.client :refer [ws-ch]]
             [goog.dom :as gdom]
             [goog.events :as gevents])
-  (:import [goog.ui Menu SubMenu Component FlatMenuButtonRenderer]))
+  (:import [goog.ui Menu MenuItem PopupMenu SubMenu Component FlatMenuButtonRenderer]
+           [goog.positioning Corner]))
 
 (enable-console-print!)
 
@@ -374,93 +375,82 @@
     copy-id))
 
 (defn type-editor [{:keys [cursor id set-state-ch]} owner]
-  (let [menu-item-fn (fn [owner] (apply hash-map
-                                        (apply concat (map #(let [id (first %)
-                                                                  grid (second %)]
-                                                              (if (and (contains? grid "name")
-                                                                       (not (= "" (get grid "name"))))
-                                                                [(str "copy of " (get grid "name") " (" id ")") id]
-                                                                [(str "copy of " id) id]))
-                                                           (om/observe owner (grids))))))
-        commit-fn (fn [{:keys [cursor id set-state-ch value owner]}]
-                    (let [menu-id-map (menu-item-fn owner)]
-                      (cond
-                        (contains? menu-id-map value)
-                        (let [grid-id (get menu-id-map value)
-                              copy-id (deep-copy (om/observe owner (grids)) grid-id set-state-ch)]
-                          (om/transact! cursor (fn [c] (assoc c
-                                                              "type" "grid"
-                                                              "synth-params" {}
-                                                              "sample-params" {}
-                                                              "grid-id" copy-id))))
-                        (= "new" value)
-                        (let [grid-id (new-id)
-                              grid {"name" ""
-                                    "id" grid-id
-                                    "bpc" "1"
-                                    "tracks" []}]
-                          (om/transact! cursor (fn [c] (assoc c
-                                                              "type" "grid"
-                                                              "synth-params" {}
-                                                              "sample-params" {}
-                                                              "grid-id" grid-id)))
-                          (om/transact! (om/observe owner (grids))
-                                        (fn [c] (assoc c (get grid "id") grid)))
-                          (go (>! set-state-ch grid-id)))
-                        (= "sample" value)
-                        (om/transact! cursor (fn [c] (assoc c
-                                                            "type" value
-                                                            "sample-params" {})))
-                        (= "synth" value)
-                        (om/transact! cursor (fn [c] (assoc c
-                                                            "type" value
-                                                            "synth-params" {})))
-                        :else (print (str "Could not find: " value ". Was it renamed?")))
-                      (go (>! set-state-ch id))))
-        listen #(let [state (om/get-state owner)]
-                  (when-not (and (= :init (:state state))
-                                 (contains? cursor "type")
-                                 (not (= "none" (get cursor "type"))))
-                    (let [select (Menu.)
-                          element (gdom/getElement (om/get-state owner :id))]
-                      (.decorate select element)
-                      (gevents/listenOnce select Component.EventType.ACTION
-                                          (fn [e] (let [value (.getValue e.target)]
-                                                    (om/update-state! owner (fn [s] (merge s {:state :init})))
-                                                    (commit-fn {:value value
-                                                                :cursor cursor
-                                                                :id id
-                                                                :set-state-ch set-state-ch
-                                                                :owner owner})))))))]
-    (reify
-      om/IInitState
-      (init-state [_]
-        {:state :init
-         :id (new-id)})
-      om/IDidMount
-      (did-mount [_] (listen))
-      om/IDidUpdate
-      (did-update [_ _ _] (listen))
-      om/IRenderState
-      (render-state [_ state]
-        (if (and (= :init (:state state))
-                 (contains? cursor "type")
-                 (not (= "none" (get cursor "type"))))
-          (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :selecting})))
-                         :style #js {:color (:link theme)}}
-                    (get cursor "type"))
-          (dom/div #js {:className "goog-flat-menu-button"}
-                   (str "Choose a type")
-                   (dom/div #js {:id (om/get-state owner :id)
-                                 :className "goog-menu"}
-                            (dom/div #js {:className "goog-menuitem"} "synth")
-                            (dom/div #js {:className "goog-menuitem"} "sample")
-                            (dom/div #js {:className "goog-submenu"} "grid"
-                                     (apply dom/div #js {:className "goog-menu"}
-                                            (cons
-                                             (dom/div #js {:className "goog-menuitem"} "new")
-                                             (map #(dom/div #js {:className "goog-menuitem"} %)
-                                                  (keys (menu-item-fn owner)))))))))))))
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:state :init
+       :id (new-id)
+       :grid-copy-menu {}})
+    om/IDidMount
+    (did-mount [_]
+      (let [node (om/get-node owner)
+            grid-copy-menu (:grid-copy-menu (om/get-state owner))
+            menu (PopupMenu.)
+            sub-menu (SubMenu. "grid")
+            click-fn (fn [value]
+                       (cond
+                         (contains? grid-copy-menu value)
+                         (let [grid-id (get grid-copy-menu value)
+                               copy-id (deep-copy (om/observe owner (grids)) grid-id set-state-ch)]
+                           (om/transact! cursor (fn [c] (assoc c
+                                                               "type" "grid"
+                                                               "synth-params" {}
+                                                               "sample-params" {}
+                                                               "grid-id" copy-id))))
+                         (= "new" value)
+                         (let [grid-id (new-id)
+                               grid {"name" ""
+                                     "id" grid-id
+                                     "bpc" "1"
+                                     "tracks" []}]
+                           (om/transact! cursor (fn [c] (assoc c
+                                                               "type" "grid"
+                                                               "synth-params" {}
+                                                               "sample-params" {}
+                                                               "grid-id" grid-id)))
+                           (om/transact! (om/observe owner (grids))
+                                         (fn [c] (assoc c (get grid "id") grid)))
+                           (go (>! set-state-ch grid-id)))
+                         (= "sample" value)
+                         (om/transact! cursor (fn [c] (assoc c
+                                                             "type" value
+                                                             "sample-params" {})))
+                         (= "synth" value)
+                         (om/transact! cursor (fn [c] (assoc c
+                                                             "type" value
+                                                             "synth-params" {})))
+                         :else (print (str "Could not find: " value ". Was it renamed?")))
+                       (go (>! set-state-ch id)))]
+        (.attach menu node Corner.BOTTOM_START)
+        (.addItem menu (MenuItem. "synth"))
+        (.addItem menu (MenuItem. "sample"))
+        (.addItem menu sub-menu)
+        (.addItem sub-menu (MenuItem. "new"))
+        (doall (map #(.addItem sub-menu (MenuItem. %)) (keys grid-copy-menu)))
+        (.render menu)
+        (gevents/listen menu Component.EventType.ACTION
+                        (fn [e] (let [value (.getValue e.target)]
+                                  (om/update-state! owner (fn [s] (merge s {:state :init})))
+                                  (click-fn value))))))
+    om/IRenderState
+    (render-state [_ state]
+      (let [grid-copy-menu (apply hash-map
+                                  (apply concat (map #(let [id (first %)
+                                                            grid (second %)]
+                                                        (if (and (contains? grid "name")
+                                                                 (not (= "" (get grid "name"))))
+                                                          [(str "copy of " (get grid "name") " (" id ")") id]
+                                                          [(str "copy of " id) id]))
+                                                     (om/observe owner (grids)))))]
+        (om/set-state! owner :grid-copy-menu grid-copy-menu))
+      (if (and (= :init (:state state))
+               (contains? cursor "type")
+               (not (= "none" (get cursor "type"))))
+        (dom/span #js {:onClick #(om/update-state! owner (fn [s] (merge s {:state :selecting})))
+                       :style #js {:color (:link theme)}}
+                  (get cursor "type"))
+        (dom/div #js {:className "goog-flat-menu-button"}
+                 (str "Choose a type"))))))
 
 (defn fx-editor [{:keys [cursor id set-state-ch]} owner]
   (reify
