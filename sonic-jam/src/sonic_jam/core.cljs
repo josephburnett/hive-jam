@@ -377,9 +377,9 @@
   (let [menu-item-fn (fn [owner] (apply hash-map
                                         (apply concat (map #(let [id (first %)
                                                                   grid (second %)]
-                                                              (if (and (contains? % "name")
-                                                                       (not (= "" (get % "name"))))
-                                                                [(str "copy of " (get % "name") "(" (get % "id") ")") id]
+                                                              (if (and (contains? grid "name")
+                                                                       (not (= "" (get grid "name"))))
+                                                                [(str "copy of " (get grid "name") " (" id ")") id]
                                                                 [(str "copy of " id) id]))
                                                            (om/observe owner (grids))))))
         commit-fn (fn [{:keys [cursor id set-state-ch value owner]}]
@@ -793,6 +793,7 @@
                                               (dom/td nil (closer "{"))
                                               (dom/td nil " name: ")
                                               (dom/td nil (om/build name-editor inputs))
+                                              (dom/td nil (str " (" id ")"))
                                               (dom/td nil " ")
                                               (dom/td nil " bpc: ")
                                               (dom/td nil (om/build bpc-editor inputs))
