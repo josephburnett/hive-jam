@@ -8,5 +8,7 @@
 
 Full list of issues: [Milestone v0.2](https://github.com/josephburnett/sonic-jam/issues?q=is%3Aissue+milestone%3Av0.2+is%3Aclosed)
 
+Tested with Sonic Pi v2.10
+
 ## v0.1
 - The first thing that barely worked.
