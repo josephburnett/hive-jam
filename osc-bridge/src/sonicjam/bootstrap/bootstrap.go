@@ -6,6 +6,7 @@ import "sonicjam/data"
 
 import "log"
 import "os"
+import "time"
 
 import _ "github.com/jteeuwen/go-bindata"
 import "github.com/scgolang/osc"
@@ -42,7 +43,9 @@ func upload(filename string) error {
 }
 
 func fail(err, msg string) {
-	log.Print(err)
+	if err != "" {
+		log.Print(err)
+	}
 	log.Print(msg)
 	os.Exit(1)
 }
@@ -55,6 +58,11 @@ var files = [...]string{
 }
 
 func Boot() {
+	timeout := make(chan bool, 1)
+	go func() {
+		time.Sleep(time.Duration(*config.Flags.BootstrapTimeoutSeconds) * time.Second)
+		timeout <- true
+	}()
 	for i := 0; i < 10; i++ {
 		err := ping()
 		if err != nil {
@@ -70,11 +78,17 @@ func Boot() {
 		fail(err.Error(), "Error uploading Ruby config")
 	}
 	for _, file := range files {
+		// Give the files a moment to be interpretted.
+		time.Sleep(100 * time.Millisecond)
 		err := upload(file)
 		if err != nil {
 			fail(err.Error(), "Error uploading file "+file)
 		}
 	}
-	<- BootComplete
+	select {
+	case <- BootComplete:
+	case <- timeout:
+		fail("", "Timeout while waiting for Sonic Jam to bootstrap. Check Sonic Pi UI for errors.")
+	}
 	log.Print("Bootstrapping complete.")
 }

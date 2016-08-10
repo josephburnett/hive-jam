@@ -21,6 +21,7 @@ var Flags = struct {
 	Verbose *bool
 	Debug *bool
 	MaxTrackCount *int
+	BootstrapTimeoutSeconds *int
 }{
 	flag.String("ui_ip", "127.0.0.1", "IP address for the UI server to bind to"),
 	flag.Int("ui_port", 8080, "port number for the UI server to bind to"),
@@ -36,6 +37,7 @@ var Flags = struct {
 	flag.Bool("verbose", false, "verbose output logging"),
 	flag.Bool("debug", false, "debug level output logging (overrides --verbose)"),
 	flag.Int("max_flag_count", 6, "maximum number of tracks allowed per grid"),
+	flag.Int("bootstrap_timeout_millis", 1000, "timeout in milliseconds for bootstrapping files into Sonic Pi"),
 }
 
 type flagType int

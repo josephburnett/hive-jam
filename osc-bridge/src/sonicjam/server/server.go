@@ -5,6 +5,7 @@ import "sonicjam/bridge"
 import "sonicjam/ui"
 
 import "flag"
+import "log"
 
 func main() {
 
@@ -19,6 +20,8 @@ func main() {
 
 	go ui.Serve(done)
 	defer ui.Shutdown()
+
+	log.Print("Sonic Jam is up and running!")
 	
 	<- done
 }
