@@ -4,7 +4,6 @@ import "sonicjam/bootstrap"
 import "sonicjam/common"
 import "sonicjam/config"
 
-import "bytes"
 import "encoding/json"
 import "io"
 import "log"
@@ -157,12 +156,15 @@ func websocketHandler(ws *websocket.Conn) {
 }
 
 func oscHandler(oscMsg *osc.Message) error {
-	if *config.Flags.Debug {
-		// Check the debug flag value before pretty printing message
-		buf := new(bytes.Buffer)
-		oscMsg.Print(buf)
-		common.LogDebug("Received from server: " + buf.String())
-	}
+	// https://github.com/josephburnett/sonic-jam/issues/28
+	// "Debug flag causes panic"
+	//
+	// if *config.Flags.Debug {
+	// 	// Check the debug flag value before pretty printing message
+	// 	buf := new(bytes.Buffer)
+	// 	oscMsg.Print(buf)
+	// 	common.LogDebug("Received from server: " + buf.String())
+	// }
 	msg := &Message{
 		Address: oscMsg.Address(),
 	}
