@@ -826,7 +826,7 @@
                                       (if (:grid-expanded state) " - " " + "))
                               (dom/td #js {:style #js {:padding "0 0 0 10px"}}
                                       (if-not (:grid-expanded state)
-                                        (dom/div nil " ")
+                                        (dom/div style-grey name)
                                         (dom/div nil 
                                                  (dom/div style-grey
                                                         (om/build grid-editor {:name name
