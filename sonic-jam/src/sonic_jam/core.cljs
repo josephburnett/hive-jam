@@ -842,9 +842,10 @@
                                                                                       (repeat (:delete-ch state))
                                                                                       (if (nil? beat-cursors) (repeat nil) beat-cursors))]
                                                                      (om/build-all track-view cursors {:state state :key :track-id}))))
-                                                 (om/build track-builder {:cursor (get cursor "tracks")
-                                                                          :id id
-                                                                          :set-state-ch (:set-state-ch state)}))))))))))
+                                                 (when (> (config "MaxTrackCount") (count (get cursor "tracks")))
+                                                   (om/build track-builder {:cursor (get cursor "tracks")
+                                                                            :id id
+                                                                            :set-state-ch (:set-state-ch state)})))))))))))
 
 (defn error-view [cursor]
   (reify

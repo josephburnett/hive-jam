@@ -20,6 +20,7 @@ var Flags = struct {
 	StateFile *string
 	Verbose *bool
 	Debug *bool
+	MaxTrackCount *int
 }{
 	flag.String("ui_ip", "127.0.0.1", "IP address for the UI server to bind to"),
 	flag.Int("ui_port", 8080, "port number for the UI server to bind to"),
@@ -34,6 +35,7 @@ var Flags = struct {
 	flag.String("state_file", "", "path to file in which to persist Sonic Jam server state"),
 	flag.Bool("verbose", false, "verbose output logging"),
 	flag.Bool("debug", false, "debug level output logging (overrides --verbose)"),
+	flag.Int("max_flag_count", 6, "maximum number of tracks allowed per grid"),
 }
 
 type flagType int
