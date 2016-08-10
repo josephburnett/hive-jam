@@ -13,7 +13,7 @@ Tracks can also represent sub-grids which contain their own tracks and parameter
 1. Start [Sonic Pi](http://sonic-pi.net/).
 2. Download and run Sonic Jam:
    * [osx](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-osx)
-   * [linux](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-linux)
+   * [linux](https://github.com/josephburnett/sonic-jam/raw/v0.2/release/sonic-jam-linux)
    * [raspberry pi 2](https://github.com/josephburnett/sonic-jam/raw/v0.1/release/sonic-jam-raspberry-pi-2) (requires Firefox)
 3. Open [http://localhost:8080](http://localhost:8080)
 
