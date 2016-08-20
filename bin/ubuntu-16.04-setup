@@ -2,7 +2,10 @@
 
 set -e
 
-sudo apt-get install \
+sudo apt install \
      default-jre \
      golang-go \
-     sonic-pi
+     sonic-pi \
+     icecast2 \
+     darkice \
+     jackd -qq

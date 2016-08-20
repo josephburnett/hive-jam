@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+set -e
+
+ADMIN_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+
+sudo cat > ~/darkice.cfg <<EOF
+[general]
+duration      = 0
+bufferSecs    = 5
+
+[input]
+device        = jack
+sampleRate    = 48000
+bitsPerSample = 16
+channel       = 2
+
+[icecast2-0]
+bitrateMode   = cbr
+format        = mp3
+bitrate       = 128
+server        = ${UI_IP?}
+port          = 8000
+password      = ${ADMIN_PASSWORD?}
+mountPoint    = sonicjam
+name          = Sonic Jam
+description   = A loop-oriented, multi-player framework for making music with Sonic Pi.
+url           = http://${UI_IP?}
+genre         = edm
+public        = no
+EOF
+
+sudo cat > /etc/icecast2/icecast.xml <<EOF
+<icecast>
+    <location>Earth</location>
+    <admin>icemaster@localhost</admin>
+    <limits>
+        <clients>100</clients>
+        <sources>2</sources>
+        <queue-size>524288</queue-size>
+        <client-timeout>30</client-timeout>
+        <header-timeout>15</header-timeout>
+        <source-timeout>10</source-timeout>
+        <burst-on-connect>0</burst-on-connect>
+        <burst-size>65535</burst-size>
+    </limits>
+    <authentication>
+        <source-password>${ADMIN_PASSWORD?}</source-password>
+        <relay-password>${ADMIN_PASSWORD?}</relay-password>
+        <admin-user>admin</admin-user>
+        <admin-password>${ADMIN_PASSWORD?}</admin-password>
+    </authentication>
+    <hostname>${UI_EXTERNAL_IP?}</hostname>
+    <listen-socket>
+        <port>8000</port>
+        <bind-address>${UI_IP?}</bind-address>
+    </listen-socket>
+    <http-headers>
+        <header name="Access-Control-Allow-Origin" value="*" />
+    </http-headers>
+    <fileserve>1</fileserve>
+    <paths>
+        <basedir>/usr/share/icecast2</basedir>
+        <logdir>/var/log/icecast2</logdir>
+        <webroot>/usr/share/icecast2/web</webroot>
+        <adminroot>/usr/share/icecast2/admin</adminroot>
+        <alias source="/" destination="/status.xsl"/>
+    </paths>
+    <logging>
+        <accesslog>access.log</accesslog>
+        <errorlog>error.log</errorlog>
+        <loglevel>3</loglevel> <!-- 4 Debug, 3 Info, 2 Warn, 1 Error -->
+        <logsize>10000</logsize> <!-- Max size of a logfile -->
+    </logging>
+    <security>
+        <chroot>0</chroot>
+    </security>
+</icecast>
+EOF
+
+sudo jackd -d dummy &
+sleep 1
+
+sudo /etc/init.d/icecast2 restart
+sleep 1
+
+sudo darkice -c ~/darkice.cfg &
+sleep 1
+
+sudo ruby /usr/lib/sonic-pi/server/bin/sonic-pi-server.rb &
+sleep 5
+
+build/sonic-jam --ui_ip ${UI_IP?} --ui_external_ip ${UI_EXTERNAL_IP}
