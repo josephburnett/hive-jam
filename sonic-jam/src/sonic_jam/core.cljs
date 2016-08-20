@@ -870,7 +870,7 @@
       (let [set-state-ch (chan)
             get-state-ch (chan)]
         (go
-          (let [addr (str "ws://" (config "UiIp") ":" (config "UiBridgePort") "/oscbridge")
+          (let [addr (str "ws://" (config "UiExternalIp") ":" (config "UiBridgePort") "/oscbridge")
                 {:keys [ws-channel error]} (<! (ws-ch addr {:format :json}))]
             (>! ws-channel {:Address "/get-state" :Params ["root"]})
             (>! ws-channel {:Address "/get-samples" :Params []})

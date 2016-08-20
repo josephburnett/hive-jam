@@ -8,6 +8,7 @@ import "text/template"
 
 var Flags = struct {
 	UiIp *string
+	UiExternalIp *string
 	UiPort *int
 	UiBridgePort *int
 	SpBridgeIp *string
@@ -24,6 +25,7 @@ var Flags = struct {
 	BootstrapTimeoutSeconds *int
 }{
 	flag.String("ui_ip", "127.0.0.1", "IP address for the UI server to bind to"),
+	flag.String("ui_external_ip", "127.0.0.1", "IP address for the UI client to connect the websocket to"),
 	flag.Int("ui_port", 8080, "port number for the UI server to bind to"),
 	flag.Int("ui_bridge_port", 4550, "port number for the UI end of the OSC bridge to bind to"),
 	flag.String("sp_bridge_ip", "127.0.0.1", "IP address for the Sonic Pi end of the OSC bridge to bind to"),
