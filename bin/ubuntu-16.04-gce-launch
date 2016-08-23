@@ -2,6 +2,8 @@
 
 set -e
 
+EXTERNAL_IP=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip" -H "Metadata-Flavor: Google")
+INTERNAL_IP=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip" -H "Metadata-Flavor: Google")
 ADMIN_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
 sudo cat > ~/darkice.cfg <<EOF
@@ -14,18 +16,19 @@ device        = jack
 sampleRate    = 48000
 bitsPerSample = 16
 channel       = 2
+jackClientName = sonicjam
 
 [icecast2-0]
 bitrateMode   = cbr
 format        = mp3
 bitrate       = 128
-server        = ${UI_IP?}
+server        = ${INTERNAL_IP?}
 port          = 8000
 password      = ${ADMIN_PASSWORD?}
 mountPoint    = sonicjam
 name          = Sonic Jam
 description   = A loop-oriented, multi-player framework for making music with Sonic Pi.
-url           = http://${UI_IP?}
+url           = http://${INTERNAL_IP?}
 genre         = edm
 public        = no
 EOF
@@ -41,7 +44,7 @@ sudo cat > /etc/icecast2/icecast.xml <<EOF
         <client-timeout>30</client-timeout>
         <header-timeout>15</header-timeout>
         <source-timeout>10</source-timeout>
-        <burst-on-connect>0</burst-on-connect>
+        <burst-on-connect>1</burst-on-connect>
         <burst-size>65535</burst-size>
     </limits>
     <authentication>
@@ -50,10 +53,10 @@ sudo cat > /etc/icecast2/icecast.xml <<EOF
         <admin-user>admin</admin-user>
         <admin-password>${ADMIN_PASSWORD?}</admin-password>
     </authentication>
-    <hostname>${UI_EXTERNAL_IP?}</hostname>
+    <hostname>${EXTERNAL_IP?}</hostname>
     <listen-socket>
         <port>8000</port>
-        <bind-address>${UI_IP?}</bind-address>
+        <bind-address>${INTERNAL_IP?}</bind-address>
     </listen-socket>
     <http-headers>
         <header name="Access-Control-Allow-Origin" value="*" />
@@ -69,7 +72,7 @@ sudo cat > /etc/icecast2/icecast.xml <<EOF
     <logging>
         <accesslog>access.log</accesslog>
         <errorlog>error.log</errorlog>
-        <loglevel>3</loglevel> <!-- 4 Debug, 3 Info, 2 Warn, 1 Error -->
+        <loglevel>4</loglevel> <!-- 4 Debug, 3 Info, 2 Warn, 1 Error -->
         <logsize>10000</logsize> <!-- Max size of a logfile -->
     </logging>
     <security>
@@ -90,4 +93,7 @@ sleep 1
 sudo ruby /usr/lib/sonic-pi/server/bin/sonic-pi-server.rb &
 sleep 5
 
-build/sonic-jam --ui_ip ${UI_IP?} --ui_external_ip ${UI_EXTERNAL_IP}
+sudo jack_connect SuperCollider:out_1 sonicjam:left
+sudo jack_connect SuperCollider:out_2 sonicjam:right
+
+build/sonic-jam --ui_ip ${INTERNAL_IP?} --ui_external_ip ${EXTERNAL_IP}
