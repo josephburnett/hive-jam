@@ -2,14 +2,19 @@
 
 set -e
 
+if [ "$(whoami)" != "root" ]; then
+    echo "Please run as root (sudo)."
+    exit 1
+fi
+
 EXTERNAL_IP=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip" -H "Metadata-Flavor: Google")
 INTERNAL_IP=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip" -H "Metadata-Flavor: Google")
 ADMIN_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
-sudo cat > ~/darkice.cfg <<EOF
+cat > ~/darkice.cfg <<EOF
 [general]
 duration      = 0
-bufferSecs    = 5
+bufferSecs    = 1
 
 [input]
 device        = jack
@@ -33,7 +38,7 @@ genre         = edm
 public        = no
 EOF
 
-sudo cat > /etc/icecast2/icecast.xml <<EOF
+cat > /etc/icecast2/icecast.xml <<EOF
 <icecast>
     <location>Earth</location>
     <admin>icemaster@localhost</admin>
@@ -44,7 +49,7 @@ sudo cat > /etc/icecast2/icecast.xml <<EOF
         <client-timeout>30</client-timeout>
         <header-timeout>15</header-timeout>
         <source-timeout>10</source-timeout>
-        <burst-on-connect>1</burst-on-connect>
+        <burst-on-connect>0</burst-on-connect>
         <burst-size>65535</burst-size>
     </limits>
     <authentication>
@@ -81,19 +86,21 @@ sudo cat > /etc/icecast2/icecast.xml <<EOF
 </icecast>
 EOF
 
-sudo jackd -d dummy &
+trap "tac /tmp/sonicjam.pid | xargs -L 1 kill" SIGINT SIGTERM
+
+jackd -d dummy & echo $! > /tmp/sonicjam.pid
 sleep 1
 
-sudo /etc/init.d/icecast2 restart
+/etc/init.d/icecast2 restart
 sleep 1
 
-sudo darkice -c ~/darkice.cfg &
+darkice -c ~/darkice.cfg & echo $! >> /tmp/sonicjam.pid
 sleep 1
 
-sudo ruby /usr/lib/sonic-pi/server/bin/sonic-pi-server.rb &
+ruby /usr/lib/sonic-pi/server/bin/sonic-pi-server.rb & echo $! >> /tmp/sonicjam.pid
 sleep 5
 
-sudo jack_connect SuperCollider:out_1 sonicjam:left
-sudo jack_connect SuperCollider:out_2 sonicjam:right
+jack_connect SuperCollider:out_1 sonicjam:left
+jack_connect SuperCollider:out_2 sonicjam:right
 
 build/sonic-jam --ui_ip ${INTERNAL_IP?} --ui_external_ip ${EXTERNAL_IP}
