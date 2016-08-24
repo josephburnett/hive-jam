@@ -59,7 +59,8 @@ func Serve(done chan bool) {
 	http.HandleFunc("/js/compiled/sonic_jam.js", jsHandler)
 	http.HandleFunc("/css/", cssHandler)
 	endpoint := *config.Flags.UiIp+":"+strconv.Itoa(*config.Flags.UiPort)
-	log.Print("Starting the UI webserver on "+endpoint)
+	externalEndpoint := *config.Flags.UiExternalIp+":"+strconv.Itoa(*config.Flags.UiPort)
+	log.Print("Starting the UI webserver on "+externalEndpoint)
 	http.ListenAndServe(endpoint, nil)
 }
 

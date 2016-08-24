@@ -14,7 +14,7 @@ ADMIN_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 cat > ~/darkice.cfg <<EOF
 [general]
 duration      = 0
-bufferSecs    = 1
+bufferSecs    = 1 # This doesn't seem to be effective !?
 
 [input]
 device        = jack
@@ -66,7 +66,7 @@ cat > /etc/icecast2/icecast.xml <<EOF
     <http-headers>
         <header name="Access-Control-Allow-Origin" value="*" />
     </http-headers>
-    <fileserve>1</fileserve>
+    <fileserve>0</fileserve>
     <paths>
         <basedir>/usr/share/icecast2</basedir>
         <logdir>/var/log/icecast2</logdir>
@@ -81,7 +81,11 @@ cat > /etc/icecast2/icecast.xml <<EOF
         <logsize>10000</logsize> <!-- Max size of a logfile -->
     </logging>
     <security>
-        <chroot>0</chroot>
+        <chroot>1</chroot>
+        <changeowner>
+            <user>nobody</user>
+            <group>nogroup</group>
+        </changeowner>
     </security>
 </icecast>
 EOF
