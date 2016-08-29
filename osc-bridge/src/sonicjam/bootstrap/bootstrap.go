@@ -9,10 +9,36 @@ import "os"
 import "time"
 
 import _ "github.com/jteeuwen/go-bindata"
-import "github.com/scgolang/osc"
+import "github.com/josephburnett/osc"
 
 var oscClient = common.Connect(*config.Flags.SpIp, *config.Flags.SpPort)
+var oscServer = common.Listen(*config.Flags.SpIp, *config.Flags.SpUiPort)
+
 var BootComplete = make(chan bool)
+
+func serveOSC() {
+	dispatcher := make(map[string]osc.Method)
+	dispatcher["/*"] = logHandler
+	for {
+		err := oscServer.Serve(dispatcher)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func logHandler(oscMsg *osc.Message) error {
+	common.LogInfo(oscMsg.Address())
+	for i := 0; i < oscMsg.CountArguments(); i++ {
+		arg, err := oscMsg.ReadString()
+		if err != nil {
+			common.LogError("Error reading string from Sonic Pi OSC message.")
+		} else {
+			common.LogInfo(arg)
+		}
+	}
+	return nil
+}
 
 func send(address, message string) error {
 	oscMessage, err := osc.NewMessage(address)
@@ -63,6 +89,8 @@ func Boot() {
 		time.Sleep(time.Duration(*config.Flags.BootstrapTimeoutSeconds) * time.Second)
 		timeout <- true
 	}()
+	go serveOSC()
+	time.Sleep(100 * time.Millisecond)
 	for i := 0; i < 10; i++ {
 		err := ping()
 		if err != nil {

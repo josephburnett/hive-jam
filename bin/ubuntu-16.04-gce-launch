@@ -107,4 +107,4 @@ sleep 5
 jack_connect SuperCollider:out_1 sonicjam:left
 jack_connect SuperCollider:out_2 sonicjam:right
 
-build/sonic-jam --ui_ip ${INTERNAL_IP?} --ui_external_ip ${EXTERNAL_IP}
+build/sonic-jam --ui_ip ${INTERNAL_IP?} --ui_external_ip ${EXTERNAL_IP} --verbose

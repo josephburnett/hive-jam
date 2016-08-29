@@ -5,7 +5,7 @@ import "sonicjam/config"
 import "log"
 import "net"
 
-import "github.com/scgolang/osc"
+import "github.com/josephburnett/osc"
 
 func Connect(address string, port int) *osc.UDPConn {
 	ip := net.ParseIP(address)

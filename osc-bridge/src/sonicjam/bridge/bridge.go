@@ -13,7 +13,7 @@ import "strconv"
 import "time"
 
 import "golang.org/x/net/websocket"
-import "github.com/scgolang/osc"
+import "github.com/josephburnett/osc"
 
 type Params []string
 

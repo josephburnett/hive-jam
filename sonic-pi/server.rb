@@ -87,6 +87,17 @@ end
 
 # SERVER METHODS
 
+jam_server.add_method("/commit-state") do |args|
+  assert(args.length == 1)
+  begin
+    client_id = args[0]
+    filename = _sj_config[:StateFile]
+    _state.save_state filename
+  rescue Exception => e
+    _send_error e
+  end
+end
+
 jam_server.add_method("/drop-state") do |args|
   assert(args.length == 2)
   begin

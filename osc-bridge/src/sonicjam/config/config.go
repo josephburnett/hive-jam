@@ -16,6 +16,7 @@ var Flags = struct {
 	SpBridgePortClient *int
 	SpIp *string
 	SpPort *int
+	SpUiPort *int
 	WsBufferByteSize *int
 	Resolution *string
 	StateFile *string
@@ -33,6 +34,7 @@ var Flags = struct {
 	flag.Int("sp_bridge_port_client", 4559, "port number for the Sonic Pi end of the OSC bridge to bind to for transmitting messages"),
 	flag.String("sp_ip", "127.0.0.1", "IP address for the Sonic Pi server"),
 	flag.Int("sp_port", 4557, "port number for the Sonic Pi server"),
+	flag.Int("sp_ui_port", 4558, "port number for the Sonic Pi UI"),
 	flag.Int("ws_buffer_byte_size", 10000, "the size in bytes of the UI websocket server message buffer"),
 	flag.String("resolution", "1/4", "beat resolution of the Sonic Jam server"),
 	flag.String("state_file", "", "path to file in which to persist Sonic Jam server state"),
