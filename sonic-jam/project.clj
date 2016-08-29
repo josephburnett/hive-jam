@@ -72,4 +72,5 @@
 
              ;; to configure a different figwheel logfile path
              ;; :server-logfile "tmp/logs/figwheel-logfile.log"
-             })
+             }
+  :profiles {:dev-gce {:figwheel {:server-ip "0.0.0.0"}}})
