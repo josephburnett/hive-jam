@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+set -e
+
+MIN_MAJOR=16
+MIN_MINOR=04
+
+DISTRO=$( lsb_release -i -s )
+MAJOR=$( lsb_release -r -s | awk -F '.' '{ print $1 }' )
+MINOR=$( lsb_release -r -s | awk -F '.' '{ print $2 }' )
+
+echo "${DISTRO?} ${MAJOR?}.${MINOR?} detected."
+
+fail_min() {
+    echo "$DISTRO $MIN_MAJOR.$MIN_MINOR or later required."
+    exit 1
+}
+
+if [ "$DISTRO" != "Ubuntu" ]; then
+    fail_min
+fi
+
+if [ "$MAJOR" -lt "$MIN_MAJOR" ]; then
+    fail_min
+fi
+
+if [ "$MAJOR" -eq "$MIN_MAJOR" ] && [ "$MINOR" -lt "$MIN_MINOR" ]; then
+    fail_min
+fi    
+
+sudo apt install \
+     default-jre \
+     golang-go \
+     sonic-pi \
+     icecast2 \
+     darkice \
+     jackd -qq

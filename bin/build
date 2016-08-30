@@ -16,13 +16,6 @@ go get github.com/tools/godep
 ( cd $GOPATH; godep restore )
 go install github.com/jteeuwen/go-bindata/...
 
-echo "Generating default JavaScript config file..."
-# Generating a default configuration is necessary for the Figwheel
-# server to provide a valid configuration.
-mkdir -p sonic-jam/resources/public/config
-go run $GOPATH/src/sonicjam/generate/generate.go \
-   --js_output_file $ROOT/sonic-jam/resources/public/config/config.js
-
 echo "Packaging UI and Sonic Pi server files as data..."
 mkdir -p osc-bridge/data
 go-bindata -o osc-bridge/src/sonicjam/data/data.go -pkg data \
