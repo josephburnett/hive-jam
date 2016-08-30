@@ -18,4 +18,4 @@ go run $GOPATH/src/sonicjam/generate/generate.go \
    --ui_external_ip ${EXTERNAL_IP}
 
 echo "Starting figwheel..."
-( cd sonic-jam; $ROOT/bin/vendor/lein with-profile dev-gce figwheel )
+( cd sonic-jam; $ROOT/bin/vendor/lein figwheel )
