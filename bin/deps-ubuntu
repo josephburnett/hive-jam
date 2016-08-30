@@ -26,12 +26,12 @@ fi
 
 if [ "$MAJOR" -eq "$MIN_MAJOR" ] && [ "$MINOR" -lt "$MIN_MINOR" ]; then
     fail_min
-fi    
+fi
 
-sudo apt install \
+sudo apt install -y \
      default-jre \
      golang-go \
      sonic-pi \
      icecast2 \
      darkice \
-     jackd -qq
+     jackd

@@ -28,5 +28,5 @@ go build -o $ROOT/build/sonic-jam \
     $GOPATH/src/sonicjam/server/server.go
 
 echo "Done."
-echo "Start Sonic Pi and then run ./build/sonic-jam"
-
+echo "Local mode: Start Sonic Pi and then run 'build/sonic-jam'."
+echo "Headless mode: Run 'sudo bin/with-gce-env launch'."
