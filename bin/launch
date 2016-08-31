@@ -88,7 +88,10 @@ cat > /etc/icecast2/icecast.xml <<EOF
 </icecast>
 EOF
 
-trap "tac /tmp/sonicjam.pid | xargs -L 1 kill" SIGINT SIGTERM
+STATE_FILE=$( mktemp )
+echo "Using state file ${STATE_FILE?}"
+
+trap "tac /tmp/sonicjam.pid | xargs -L 1 kill; rm ${STATE_FILE?}" SIGINT SIGTERM
 
 jackd -d dummy & echo $! > /tmp/sonicjam.pid
 sleep 1
@@ -105,4 +108,10 @@ sleep 5
 jack_connect SuperCollider:out_1 sonicjam:left
 jack_connect SuperCollider:out_2 sonicjam:right
 
-build/sonic-jam --ui_ip ${INTERNAL_IP?} --ui_external_ip ${EXTERNAL_IP}
+build/sonic-jam \
+    --ui_ip ${INTERNAL_IP?} \
+    --ui_external_ip ${EXTERNAL_IP} \
+    --verbose \
+    # --state_file ${STATE_FILE?}
+    --state_file /tmp/sj.json
+

@@ -50,7 +50,8 @@
                                        "1" "2" "4" "8" "16" "32"]
                           :errors []
                           :console []
-                          :beat-cursors []}))
+                          :beat-cursors []
+                          :hive {}}))
 
 (defn config [key]
   (get (js->clj js/SJ_CONFIG) key))
@@ -855,6 +856,14 @@
                (apply dom/ul nil
                       (map (partial dom/li nil) cursor))))))
 
+(defn hive-view [{:keys [cursor save-state-ch]}]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {:style #js {:float "right"}}
+               (dom/p #js {:onClick #(go (>! save-state-ch true))}
+                      "Save state")))))
+
 (defn console-view [cursor]
   (reify
     om/IRender
@@ -868,7 +877,8 @@
     om/IInitState
     (init-state [_]
       (let [set-state-ch (chan)
-            get-state-ch (chan)]
+            get-state-ch (chan)
+            save-state-ch (chan)]
         (go
           (let [addr (str "ws://" (config "UiExternalIp") ":" (config "UiBridgePort") "/oscbridge")
                 {:keys [ws-channel error]} (<! (ws-ch addr {:format :json}))]
@@ -887,6 +897,10 @@
                     request #js {:Address "/get-state" :Params #js [ns]}]
                 (go (>! ws-channel request)))
               (recur))
+            (go-loop []
+              (<! save-state-ch)
+              (let [request #js {:Address "/save-state"}]
+                (go (>! ws-channel request))))
             (go-loop []
               (let [{:keys [message error] :as msg} (<! ws-channel)
                     params (get message "Params")]
@@ -913,12 +927,14 @@
                   (recur))))))
         {:set-state-ch set-state-ch
          :get-state-ch get-state-ch
+         :save-state-ch save-state-ch
          :grid-expanded true}))
     om/IRenderState
     (render-state [_ state]
       (dom/div #js {:style #js {:fontFamily "monospace"
                                 :background (:background theme)}}
                (om/build error-view (:errors cursor))
+               (om/build hive-view {:cursor (:hive cursor) :save-state-ch (:save-state-ch state)})
                (om/build grid-view {:id "root" :beat-cursors (:beat-cursors cursor)} {:state state})
                (om/build console-view (:console cursor))))))
 

@@ -156,6 +156,35 @@ jam_server.add_method("/ping") do |args|
   jam_client.send("/pong", JSON.dump([client_id]))
 end
 
+jam_server.add_method("/save-state") do |args|
+  assert(args.length == 1)
+  begin
+    client_id = args[0]
+    filename = _sj_config[:StateFile]
+    if filename.nil? and filename.empty?
+      save_state filename
+      jam_client.send("/message", JSON.dump([client_id, "State saved."]))
+    end
+  rescue Exception => e
+    _send_error e
+  end
+end
+
+jam_server.add_method("/load-state") do |args|
+  assert(args.length == 1)
+  begin
+    client_id = args[0]
+    filename = _sj_config[:StateFile]
+    if not filename.nil? and not filename.empty?
+      load_state filename
+      jam_client.send("/message", JSON.dump([client_id, "State loaded."]))
+    end
+  rescue Exception => e
+    _send_error e
+  end
+end
+
+
 # USER STATE FUNCTIONS
 
 define :save_state do |filename|

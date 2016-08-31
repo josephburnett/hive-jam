@@ -212,6 +212,7 @@ func serveOSC() {
 	dispatcher["/errors"] = oscHandler
 	dispatcher["/cursors"] = oscHandler
 	dispatcher["/console"] = oscHandler
+	dispatcher["/message"] = oscHandler
 	dispatcher["/boot-complete"] = bootHandler
 	for {
 		err := oscServer.Serve(dispatcher)
