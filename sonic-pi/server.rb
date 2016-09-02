@@ -161,7 +161,7 @@ jam_server.add_method("/save-state") do |args|
   begin
     client_id = args[0]
     filename = _sj_config[:StateFile]
-    if filename.nil? and filename.empty?
+    if not filename.nil? and not filename.empty?
       save_state filename
       jam_client.send("/message", JSON.dump([client_id, "State saved."]))
     end
