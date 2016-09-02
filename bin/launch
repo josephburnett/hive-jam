@@ -112,6 +112,5 @@ build/sonic-jam \
     --ui_ip ${INTERNAL_IP?} \
     --ui_external_ip ${EXTERNAL_IP} \
     --verbose \
-    # --state_file ${STATE_FILE?}
-    --state_file /tmp/sj.json
+    --state_file ${STATE_FILE?}
 
