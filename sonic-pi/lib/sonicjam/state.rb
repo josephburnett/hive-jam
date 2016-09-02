@@ -85,6 +85,12 @@ module SonicJam
       }
     end
 
+    def keys()
+      @mutex.synchronize {
+        @state.keys
+      }
+    end
+    
     def _check(predicate, message)
       if not predicate
         raise InvalidState.new(message)

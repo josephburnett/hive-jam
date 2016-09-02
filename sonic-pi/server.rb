@@ -193,7 +193,9 @@ end
 
 define :load_state do |filename|
   _state.load_state filename
-  # TODO broadcast all state
+  _state.keys.each do |ns|
+    _send_state("*", ns)
+  end
 end
 
 define :get_state do |ns|

@@ -7,7 +7,8 @@
             [chord.client :refer [ws-ch]]
             [goog.dom :as gdom]
             [goog.events :as gevents])
-  (:import [goog.ui Menu MenuItem PopupMenu SubMenu Component FlatMenuButtonRenderer]
+  (:import [goog.ui Button Menu MenuItem PopupMenu SubMenu Component
+            FlatMenuButtonRenderer FlatButtonRenderer]
            [goog.positioning Corner]))
 
 (enable-console-print!)
@@ -856,13 +857,31 @@
                (apply dom/ul nil
                       (map (partial dom/li nil) cursor))))))
 
-(defn hive-view [{:keys [cursor save-state-ch]}]
+(defn button [{:keys [text click-chan]} owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:id (new-id)})
+    om/IRenderState
+    (render-state [_ state]
+      (dom/div #js {:id (:id state)}))
+    om/IDidMount
+    (did-mount [_]
+      (let [node (om/get-node owner)
+            b (Button. text (.getInstance FlatButtonRenderer))]
+        (.render b node)
+        (gevents/listen b Component.EventType.ACTION
+                        #(go (>! click-chan true)))))))
+
+(defn hive-view [{:keys [cursor save-state-ch load-state-ch]}]
   (reify
     om/IRender
     (render [_]
       (dom/div #js {:style #js {:float "right"}}
-               (dom/p #js {:onClick #(go (>! save-state-ch true))}
-                      "Save state")))))
+               (om/build button {:text "Save state"
+                                 :click-chan save-state-ch})
+               (om/build button {:text "Load state"
+                                 :click-chan load-state-ch})))))
 
 (defn console-view [cursor]
   (reify
@@ -878,7 +897,8 @@
     (init-state [_]
       (let [set-state-ch (chan)
             get-state-ch (chan)
-            save-state-ch (chan)]
+            save-state-ch (chan)
+            load-state-ch (chan)]
         (go
           (let [addr (str "ws://" (config "UiExternalIp") ":" (config "UiBridgePort") "/oscbridge")
                 {:keys [ws-channel error]} (<! (ws-ch addr {:format :json}))]
@@ -900,7 +920,13 @@
             (go-loop []
               (<! save-state-ch)
               (let [request #js {:Address "/save-state"}]
-                (go (>! ws-channel request))))
+                (go (>! ws-channel request)))
+              (recur))
+            (go-loop []
+              (<! load-state-ch)
+              (let [request #js {:Address "/load-state"}]
+                (go (>! ws-channel request)))
+              (recur))
             (go-loop []
               (let [{:keys [message error] :as msg} (<! ws-channel)
                     params (get message "Params")]
@@ -928,13 +954,16 @@
         {:set-state-ch set-state-ch
          :get-state-ch get-state-ch
          :save-state-ch save-state-ch
+         :load-state-ch load-state-ch
          :grid-expanded true}))
     om/IRenderState
     (render-state [_ state]
       (dom/div #js {:style #js {:fontFamily "monospace"
                                 :background (:background theme)}}
                (om/build error-view (:errors cursor))
-               (om/build hive-view {:cursor (:hive cursor) :save-state-ch (:save-state-ch state)})
+               (om/build hive-view {:cursor (:hive cursor)
+                                    :save-state-ch (:save-state-ch state)
+                                    :load-state-ch (:load-state-ch state)})
                (om/build grid-view {:id "root" :beat-cursors (:beat-cursors cursor)} {:state state})
                (om/build console-view (:console cursor))))))
 
