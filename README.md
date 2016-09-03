@@ -236,9 +236,10 @@ The typical development workflow is to build Hive Jam from head and launch it.  
 
 1. `$ bin/deps-raspberry-pi`
 2. `$ bin/build`
-3. `$ build/hive-jam`
-4. `$ bin/with-local-env figwheel`
-5. Navigate to http://localhost:3449
+3. `$ sonic-pi`
+4. `$ build/hive-jam`
+5. `$ bin/with-local-env figwheel`
+6. Navigate to http://localhost:3449
 
 ### Local OS X
 
@@ -247,9 +248,10 @@ The typical development workflow is to build Hive Jam from head and launch it.  
 3. Install java (type `java` and follow instructions)
 4. Install golang (https://golang.org/dl/)
 5. `$ bin/build`
-6. `$ build/hive-jam`
-7. `$ bin/with-local-env figwheel`
-8. Navigate to http://localhost:3449
+6. Start Sonic Pi
+7. `$ build/hive-jam`
+8. `$ bin/with-local-env figwheel`
+9. Navigate to http://localhost:3449
 
 ## Bugs
 
