@@ -213,7 +213,7 @@ The typical development workflow is to build Hive Jam from head and launch it.  
 4. `$ bin/build`
 5. `$ sudo bin/with-gce-env launch`
 6. `$ bin/with-gce-env figwheel`
-7. Navigate to http://<external_ip>:3449
+7. Navigate to http://$EXTERNAL_IP:3449
 
 ### Local Ubuntu 16.04
 
