@@ -58,7 +58,7 @@ end
 # STATE
 
 defonce :_state do
-  SonicJam::State.new
+  HiveJam::State.new
 end
 
 define :_send_state do |client_id, ns|
@@ -70,7 +70,7 @@ end
 # DISPATCH
 
 define :_dispatch do
-  SonicJam::Dispatch.new(_state, res)
+  HiveJam::Dispatch.new(_state, res)
 end
 
 define :apply_fx do |fx_chain, thunk|

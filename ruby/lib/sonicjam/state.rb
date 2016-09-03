@@ -1,7 +1,7 @@
 require "json"
 require "thread"
 
-module SonicJam
+module HiveJam
 
   class InvalidState < ArgumentError ; end
 

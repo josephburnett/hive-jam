@@ -1,6 +1,6 @@
 package common
 
-import "sonicjam/config"
+import "hivejam/config"
 
 import "log"
 import "net"

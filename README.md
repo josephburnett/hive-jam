@@ -6,15 +6,15 @@ Tracks can also represent sub-grids which contain their own tracks and parameter
 
 #### This is what it looks like
 
-![Sonic Jam](doc/sonic-jam.png)
+![Sonic Jam](doc/hive-jam.png)
 
 # Quick Start
 
 1. Start [Sonic Pi](http://sonic-pi.net/).
 2. Download and run Sonic Jam:
-   * [osx](https://github.com/josephburnett/sonic-jam/raw/v0.2/release/sonic-jam-osx)
-   * [linux](https://github.com/josephburnett/sonic-jam/raw/v0.2/release/sonic-jam-linux)
-   * [raspberry pi 2](https://github.com/josephburnett/sonic-jam/raw/v0.2/release/sonic-jam-raspberry-pi-2) (requires Firefox)
+   * [osx](https://github.com/josephburnett/hive-jam/raw/v0.2/release/hive-jam-osx)
+   * [linux](https://github.com/josephburnett/hive-jam/raw/v0.2/release/hive-jam-linux)
+   * [raspberry pi 2](https://github.com/josephburnett/hive-jam/raw/v0.2/release/hive-jam-raspberry-pi-2) (requires Firefox)
 3. Open [http://localhost:8080](http://localhost:8080)
 
 # How to Jam
@@ -101,7 +101,7 @@ Sonic Jam is a framework for controlling Sonic Pi.  It uses a single live-loop t
 
 ## Data model and state
 
-Server state is kept in the Sonic Pi variable `_state` which is a [`SonicJam::State`](https://github.com/josephburnett/sonic-jam/blob/master/sonic-pi/lib/sonicjam/state.rb) instance.  The granularity of state manipulation is a single grid through the `set_state` and `get_state` methods.
+Server state is kept in the Sonic Pi variable `_state` which is a [`HiveJam::State`](https://github.com/josephburnett/hive-jam/blob/master/sonic-pi/lib/hivejam/state.rb) instance.  The granularity of state manipulation is a single grid through the `set_state` and `get_state` methods.
 
 ```
 {
@@ -135,7 +135,7 @@ Server state is kept in the Sonic Pi variable `_state` which is a [`SonicJam::St
 }
 ```
 
-In the main live-loop a [`SonicJam::Dispatch`](https://github.com/josephburnett/sonic-jam/blob/master/sonic-pi/lib/sonicjam/dispatch.rb) instance traverses the state, generating a list of materialized dispatch structures.  Dispatch is responsible for determining which tracks and sub-grids are on/off, implementing sub-grid inheritance and running lambdas to generate scalar parameter values.
+In the main live-loop a [`HiveJam::Dispatch`](https://github.com/josephburnett/hive-jam/blob/master/sonic-pi/lib/hivejam/dispatch.rb) instance traverses the state, generating a list of materialized dispatch structures.  Dispatch is responsible for determining which tracks and sub-grids are on/off, implementing sub-grid inheritance and running lambdas to generate scalar parameter values.
 
 #### Beat 0
 
@@ -181,17 +181,17 @@ In the main live-loop a [`SonicJam::Dispatch`](https://github.com/josephburnett/
               +-------------------+
 ```
 
-The [Jam Server](https://github.com/josephburnett/sonic-jam/tree/master/sonic-pi) is bootstrapped into Sonic Pi through a series OSC messages to `/run-code` on port 4557.  It starts an OSC server on port 4560.
+The [Jam Server](https://github.com/josephburnett/hive-jam/tree/master/sonic-pi) is bootstrapped into Sonic Pi through a series OSC messages to `/run-code` on port 4557.  It starts an OSC server on port 4560.
 
-The [OSC Bridge](https://github.com/josephburnett/sonic-jam/tree/master/osc-bridge/src/sonicjam) starts an OSC server on port 4559 and a websocket server on 4550.  It multiplexes messages from multiple clients to the Jam Server.
+The [OSC Bridge](https://github.com/josephburnett/hive-jam/tree/master/osc-bridge/src/hivejam) starts an OSC server on port 4559 and a websocket server on 4550.  It multiplexes messages from multiple clients to the Jam Server.
 
-The [UI](https://github.com/josephburnett/sonic-jam/tree/master/sonic-jam) communicates with the OSC Bridge over a websocket connection.  It requests synth and sample lists, transmits and receives state changes, and receives a stream of cursor updates (current location of the beat).
+The [UI](https://github.com/josephburnett/hive-jam/tree/master/hive-jam) communicates with the OSC Bridge over a websocket connection.  It requests synth and sample lists, transmits and receives state changes, and receives a stream of cursor updates (current location of the beat).
 
 ## Building from head
 
 1. Install dependencies
 2. `$ ./bin/build`
-3. `$ ./build/sonic-jam`
+3. `$ ./build/hive-jam`
 
 #### Ubuntu 16.04 dependencies
 
@@ -214,7 +214,7 @@ $ ./bin/raspberry-pi-setup
 
 ### Bugs
 
-Encountering any problems?  Please report an issue: https://github.com/josephburnett/sonic-jam/issues
+Encountering any problems?  Please report an issue: https://github.com/josephburnett/hive-jam/issues
 
 If possible, please include:
 1. What you were doing

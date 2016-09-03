@@ -1,4 +1,4 @@
-module SonicJam
+module HiveJam
 
   class Dispatch
 
@@ -20,7 +20,7 @@ module SonicJam
         track = grid[:tracks][index]
         track_on = track[:on]
         beats = track[:beats]
-        on, boundary, beat_index = SonicJam::_on_the_beat?(bpc, @resolution, beats, tick)
+        on, boundary, beat_index = HiveJam::_on_the_beat?(bpc, @resolution, beats, tick)
 
         # Apply inheritance from parent track
         type = track.fetch(:type, "none")
@@ -64,7 +64,7 @@ module SonicJam
           end
           bind = _get_binding(index, beat_index)
           params = synth_params.materialize(bind)
-          sustain = SonicJam::_calculate_sustain(beats[beat_index][0], params, default=1, bpc=bpc)
+          sustain = HiveJam::_calculate_sustain(beats[beat_index][0], params, default=1, bpc=bpc)
           params[:sustain] = sustain
           dispatches.push({ synth: synth, params: params, fx: fx })
         when "sample"
@@ -74,7 +74,7 @@ module SonicJam
           end
           bind = _get_binding(index, beat_index)
           params = sample_params.materialize(bind)
-          sustain = SonicJam::_calculate_sustain(beats[beat_index][0], params, default=-1, bpc=bpc)
+          sustain = HiveJam::_calculate_sustain(beats[beat_index][0], params, default=-1, bpc=bpc)
           params[:sustain] = sustain
           dispatches.push({ sample: sample, params: params, fx: fx })
         else

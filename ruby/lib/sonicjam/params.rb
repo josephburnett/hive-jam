@@ -1,4 +1,4 @@
-module SonicJam
+module HiveJam
 
   class Params
 

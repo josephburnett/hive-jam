@@ -1,8 +1,8 @@
 package bridge
 
-import "sonicjam/bootstrap"
-import "sonicjam/common"
-import "sonicjam/config"
+import "hivejam/bootstrap"
+import "hivejam/common"
+import "hivejam/config"
 
 import "encoding/json"
 import "io"
@@ -156,7 +156,7 @@ func websocketHandler(ws *websocket.Conn) {
 }
 
 func oscHandler(oscMsg *osc.Message) error {
-	// https://github.com/josephburnett/sonic-jam/issues/28
+	// https://github.com/josephburnett/hive-jam/issues/28
 	// "Debug flag causes panic"
 	//
 	// if *config.Flags.Debug {

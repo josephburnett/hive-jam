@@ -1,4 +1,4 @@
-(ns sonic-jam.core
+(ns hive-jam.core
   (:require-macros [cljs.core.async.macros :refer [go-loop]]
                    [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]

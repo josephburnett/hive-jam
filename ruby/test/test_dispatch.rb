@@ -1,9 +1,9 @@
 require "minitest/autorun"
 
-require_relative "../lib/sonicjam/dispatch"
-require_relative "../lib/sonicjam/state"
+require_relative "../lib/hivejam/dispatch"
+require_relative "../lib/hivejam/state"
 
-module SonicJam
+module HiveJam
   class TestDispatch < Minitest::Unit::TestCase
 
     def setup
@@ -48,7 +48,7 @@ module SonicJam
     end
 
     def check_on_the_beat(bpc, res, beats, tick, expect_on, expect_bound, expect_index)
-      (on, bound, index) = SonicJam::_on_the_beat?(bpc, res, beats, tick)
+      (on, bound, index) = HiveJam::_on_the_beat?(bpc, res, beats, tick)
       parameters = ("bpc: #{bpc} res: #{res} beats: #{beats} tick: #{tick} " +
                     "expect on: #{expect_on} bound: #{expect_bound} index: #{expect_index}")
       assert_equal expect_on, on, parameters
@@ -228,7 +228,7 @@ module SonicJam
     end
 
     def check_calculate_sustain(expect, width=1, default=0, params={})
-      assert_equal Rational(expect), SonicJam._calculate_sustain(width, params, default)
+      assert_equal Rational(expect), HiveJam._calculate_sustain(width, params, default)
     end
 
     def test_track_off

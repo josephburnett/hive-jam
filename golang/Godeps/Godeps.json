@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/josephburnett/sonic-jam/osc-bridge",
+	"ImportPath": "github.com/josephburnett/hive-jam/osc-bridge",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v60",
 	"Packages": [

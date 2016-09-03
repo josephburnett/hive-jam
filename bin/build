@@ -9,7 +9,7 @@ PATH=$GOPATH/bin:$PATH
 cd $ROOT
 
 echo "Compiling UI..."
-( cd sonic-jam ; $ROOT/bin/vendor/lein cljsbuild once min )
+( cd hive-jam ; $ROOT/bin/vendor/lein cljsbuild once min )
 
 echo "Setting up Golang dependencies and go-bindata tool..."
 go get github.com/tools/godep
@@ -18,15 +18,15 @@ go install github.com/jteeuwen/go-bindata/...
 
 echo "Packaging UI and Sonic Pi server files as data..."
 mkdir -p osc-bridge/data
-go-bindata -o osc-bridge/src/sonicjam/data/data.go -pkg data \
+go-bindata -o osc-bridge/src/hivejam/data/data.go -pkg data \
 	   sonic-pi/... \
-	   sonic-jam/resources/public/...
+	   hive-jam/resources/public/...
 
 echo "Building the Sonic Jam binary..."
 mkdir -p build
-go build -o $ROOT/build/sonic-jam \
-    $GOPATH/src/sonicjam/server/server.go
+go build -o $ROOT/build/hive-jam \
+    $GOPATH/src/hivejam/server/server.go
 
 echo "Done."
-echo "Local mode: Start Sonic Pi and then run 'build/sonic-jam'."
+echo "Local mode: Start Sonic Pi and then run 'build/hive-jam'."
 echo "Headless mode: Run 'sudo bin/with-gce-env launch'."

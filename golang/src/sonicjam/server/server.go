@@ -1,8 +1,8 @@
 package main
 
-import "sonicjam/bootstrap"
-import "sonicjam/bridge"
-import "sonicjam/ui"
+import "hivejam/bootstrap"
+import "hivejam/bridge"
+import "hivejam/ui"
 
 import "flag"
 import "log"

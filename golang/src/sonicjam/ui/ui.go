@@ -1,7 +1,7 @@
 package ui
 
-import "sonicjam/config"
-import "sonicjam/data"
+import "hivejam/config"
+import "hivejam/data"
 
 import "log"
 import "net/http"
@@ -21,7 +21,7 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func jsHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := data.Asset("sonic-jam/resources/public/js/compiled/sonic_jam.js")
+	data, err := data.Asset("hive-jam/resources/public/js/compiled/hive_jam.js")
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -33,7 +33,7 @@ func jsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	resource, err := data.Asset("sonic-jam/resources/public/index.html")
+	resource, err := data.Asset("hive-jam/resources/public/index.html")
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -44,7 +44,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 func cssHandler(w http.ResponseWriter, r *http.Request) {
 	resourceId := r.URL.Path[len("/css/"):]
-	resource, err := data.Asset("sonic-jam/resources/public/css/"+resourceId)
+	resource, err := data.Asset("hive-jam/resources/public/css/"+resourceId)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -56,7 +56,7 @@ func cssHandler(w http.ResponseWriter, r *http.Request) {
 func Serve(done chan bool) {
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/config/config.js", configHandler)
-	http.HandleFunc("/js/compiled/sonic_jam.js", jsHandler)
+	http.HandleFunc("/js/compiled/hive_jam.js", jsHandler)
 	http.HandleFunc("/css/", cssHandler)
 	endpoint := *config.Flags.UiIp+":"+strconv.Itoa(*config.Flags.UiPort)
 	externalEndpoint := *config.Flags.UiExternalIp+":"+strconv.Itoa(*config.Flags.UiPort)

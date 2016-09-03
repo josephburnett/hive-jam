@@ -1,9 +1,9 @@
 require "minitest/autorun"
 require "tempfile"
 
-require_relative "../lib/sonicjam/state"
+require_relative "../lib/hivejam/state"
 
-module SonicJam
+module HiveJam
   class TestState < Minitest::Unit::TestCase
 
     def setup

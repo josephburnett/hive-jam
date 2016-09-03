@@ -6,12 +6,12 @@ ROOT=`git rev-parse --show-toplevel`
 
 cd $ROOT
 
-( cd sonic-jam ; $ROOT/bin/vendor/lein clean )
+( cd hive-jam ; $ROOT/bin/vendor/lein clean )
 
-if [ -f build/sonic-jam ]; then
-    rm build/sonic-jam
+if [ -f build/hive-jam ]; then
+    rm build/hive-jam
 fi
 
-if [ -f osc-bridge/src/sonicjam/data/data.go ]; then
-    rm osc-bridge/src/sonicjam/data/data.go
+if [ -f osc-bridge/src/hivejam/data/data.go ]; then
+    rm osc-bridge/src/hivejam/data/data.go
 fi

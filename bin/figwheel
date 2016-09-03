@@ -8,11 +8,11 @@ export GOPATH=$ROOT/osc-bridge/
 echo "Generating Figwheel JavaScript config file..."
 # Generating a default configuration is necessary for the Figwheel
 # server to provide a valid configuration.
-mkdir -p sonic-jam/resources/public/config
-go run $GOPATH/src/sonicjam/generate/generate.go \
-   --js_output_file $ROOT/sonic-jam/resources/public/config/config.js \
+mkdir -p hive-jam/resources/public/config
+go run $GOPATH/src/hivejam/generate/generate.go \
+   --js_output_file $ROOT/hive-jam/resources/public/config/config.js \
    --ui_ip ${INTERNAL_IP?} \
    --ui_external_ip ${EXTERNAL_IP?}
 
 echo "Starting Figwheel at ${EXTERNAL_IP?}:3449..."
-( cd sonic-jam; $ROOT/bin/vendor/lein figwheel )
+( cd hive-jam; $ROOT/bin/vendor/lein figwheel )

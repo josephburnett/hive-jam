@@ -19,7 +19,7 @@ device        = jack
 sampleRate    = 48000
 bitsPerSample = 16
 channel       = 2
-jackClientName = sonicjam
+jackClientName = hivejam
 
 [icecast2-0]
 bitrateMode   = cbr
@@ -28,7 +28,7 @@ bitrate       = 128
 server        = ${INTERNAL_IP?}
 port          = 8000
 password      = ${ADMIN_PASSWORD?}
-mountPoint    = sonicjam
+mountPoint    = hivejam
 name          = Sonic Jam
 description   = A loop-oriented, multi-player framework for making music with Sonic Pi.
 url           = http://${INTERNAL_IP?}
@@ -91,24 +91,24 @@ EOF
 STATE_FILE=$( mktemp )
 echo "Using state file ${STATE_FILE?}"
 
-trap "tac /tmp/sonicjam.pid | xargs -L 1 kill; rm ${STATE_FILE?}" SIGINT SIGTERM
+trap "tac /tmp/hivejam.pid | xargs -L 1 kill; rm ${STATE_FILE?}" SIGINT SIGTERM
 
-jackd -d dummy & echo $! > /tmp/sonicjam.pid
+jackd -d dummy & echo $! > /tmp/hivejam.pid
 sleep 1
 
 /etc/init.d/icecast2 restart
 sleep 1
 
-darkice -c ~/darkice.cfg & echo $! >> /tmp/sonicjam.pid
+darkice -c ~/darkice.cfg & echo $! >> /tmp/hivejam.pid
 sleep 1
 
-ruby /usr/lib/sonic-pi/server/bin/sonic-pi-server.rb & echo $! >> /tmp/sonicjam.pid
+ruby /usr/lib/sonic-pi/server/bin/sonic-pi-server.rb & echo $! >> /tmp/hivejam.pid
 sleep 5
 
-jack_connect SuperCollider:out_1 sonicjam:left
-jack_connect SuperCollider:out_2 sonicjam:right
+jack_connect SuperCollider:out_1 hivejam:left
+jack_connect SuperCollider:out_2 hivejam:right
 
-build/sonic-jam \
+build/hive-jam \
     --ui_ip ${INTERNAL_IP?} \
     --ui_external_ip ${EXTERNAL_IP} \
     --verbose \

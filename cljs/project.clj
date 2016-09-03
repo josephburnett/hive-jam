@@ -1,4 +1,4 @@
-(defproject sonic-jam "0.1.0-SNAPSHOT"
+(defproject hive-jam "0.1.0-SNAPSHOT"
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -25,17 +25,17 @@
               [{:id "dev"
                 :source-paths ["src"]
                 :figwheel {:websocket-host :js-client-host
-                           :on-jsload "sonic-jam.core/on-js-reload"}
+                           :on-jsload "hive-jam.core/on-js-reload"}
 
-                :compiler {:main sonic-jam.core
+                :compiler {:main hive-jam.core
                            :asset-path "js/compiled/out"
-                           :output-to "resources/public/js/compiled/sonic_jam.js"
+                           :output-to "resources/public/js/compiled/hive_jam.js"
                            :output-dir "resources/public/js/compiled/out"
                            :source-map-timestamp true}}
                {:id "min"
                 :source-paths ["src"]
-                :compiler {:output-to "resources/public/js/compiled/sonic_jam.js"
-                           :main sonic-jam.core
+                :compiler {:output-to "resources/public/js/compiled/hive_jam.js"
+                           :main hive-jam.core
                            :optimizations :advanced
                            :pretty-print false}}]}
 

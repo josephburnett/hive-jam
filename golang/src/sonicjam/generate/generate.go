@@ -1,6 +1,6 @@
 package main
 
-import "sonicjam/config"
+import "hivejam/config"
 
 import "flag"
 import "io/ioutil"

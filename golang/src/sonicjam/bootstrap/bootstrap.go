@@ -1,8 +1,8 @@
 package bootstrap
 
-import "sonicjam/common"
-import "sonicjam/config"
-import "sonicjam/data"
+import "hivejam/common"
+import "hivejam/config"
+import "hivejam/data"
 
 import "log"
 import "os"
@@ -19,7 +19,7 @@ func send(address, message string) error {
 	if err != nil {
 		return err
 	}
-	oscMessage.WriteString("sonicjam/bootstrap")
+	oscMessage.WriteString("hivejam/bootstrap")
 	if message != "" {
 		oscMessage.WriteString(message)
 	}
@@ -51,9 +51,9 @@ func fail(err, msg string) {
 }
 
 var files = [...]string{
-	"sonic-pi/lib/sonicjam/state.rb",
-	"sonic-pi/lib/sonicjam/params.rb",
-	"sonic-pi/lib/sonicjam/dispatch.rb",
+	"sonic-pi/lib/hivejam/state.rb",
+	"sonic-pi/lib/hivejam/params.rb",
+	"sonic-pi/lib/hivejam/dispatch.rb",
 	"sonic-pi/server.rb",
 }
 

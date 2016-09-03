@@ -1,8 +1,8 @@
 require "minitest/autorun"
 
-require_relative "../lib/sonicjam/params"
+require_relative "../lib/hivejam/params"
 
-module SonicJam
+module HiveJam
   class TestParams < Minitest::Unit::TestCase
 
     def setup
