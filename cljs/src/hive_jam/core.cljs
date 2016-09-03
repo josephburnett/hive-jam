@@ -55,7 +55,7 @@
                           :hive {}}))
 
 (defn config [key]
-  (get (js->clj js/SJ_CONFIG) key))
+  (get (js->clj js/HJ_CONFIG) key))
 
 (defn grids []
   (om/ref-cursor (:grids (om/root-cursor app-state))))

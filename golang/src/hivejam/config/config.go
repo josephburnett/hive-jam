@@ -102,14 +102,14 @@ func renderFlag(f flagValue) string {
 }
 
 const jsConfig = `
-SJ_CONFIG = {
+HJ_CONFIG = {
   {{range $key, $value := .}}
   {{$key}}: {{$value.Js}},
   {{end}}
 }
 `
 const rubyConfig = `
-define :_sj_config do
+define :_hj_config do
   {
     {{range $key, $value := .}}
     {{$key}}: {{$value.Ruby}},

@@ -1,21 +1,21 @@
 # SERVER
 
 defonce :jam_server do
-  SonicPi::OSC::UDPServer.new(_sj_config[:SpBridgePortClient], use_decoder_cache: true)
+  SonicPi::OSC::UDPServer.new(_hj_config[:SpBridgePortClient], use_decoder_cache: true)
 end
 
 defonce :jam_client do
-  SonicPi::OSC::UDPClient.new(_sj_config[:SpBridgePortIp], _sj_config[:SpBridgePortServer], use_encoder_cache: true)
+  SonicPi::OSC::UDPClient.new(_hj_config[:SpBridgePortIp], _hj_config[:SpBridgePortServer], use_encoder_cache: true)
 end
 
 # TIME
 
-define :res do Rational(_sj_config[:Resolution]) end
+define :res do Rational(_hj_config[:Resolution]) end
 
 define :verbosity do
-  if _sj_config[:Debug]
+  if _hj_config[:Debug]
     return 2
-  elsif _sj_config[:Verbose]
+  elsif _hj_config[:Verbose]
     return 1
   else
     return 0
@@ -160,7 +160,7 @@ jam_server.add_method("/save-state") do |args|
   assert(args.length == 1)
   begin
     client_id = args[0]
-    filename = _sj_config[:StateFile]
+    filename = _hj_config[:StateFile]
     if not filename.nil? and not filename.empty?
       save_state filename
       jam_client.send("/message", JSON.dump([client_id, "State saved."]))
@@ -174,7 +174,7 @@ jam_server.add_method("/load-state") do |args|
   assert(args.length == 1)
   begin
     client_id = args[0]
-    filename = _sj_config[:StateFile]
+    filename = _hj_config[:StateFile]
     if not filename.nil? and not filename.empty?
       load_state filename
       jam_client.send("/message", JSON.dump([client_id, "State loaded."]))
