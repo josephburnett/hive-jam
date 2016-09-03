@@ -219,10 +219,19 @@ The typical development workflow is to build Hive Jam from head and launch it.  
 
 1. `$ bin/deps-ubuntu`
 2. `$ bin/build`
-3. `$ build/hive-jam` (or `sudo bin/with-local-env launch` to setup streaming audio)
+3. `$ sonic-pi`
+4. `$ build/hive-jam`
+5. `$ bin/with-local-env figwheel`
+6. Navigate to http://localhost:3449
+
+### Local Ubuntu 16.04 (headless)
+
+1. `$ bin/deps-ubuntu`
+2. `$ bin/build`
+3. `$ sudo bin/with-local-env launch`
 4. `$ bin/with-local-env figwheel`
 5. Navigate to http://localhost:3449
-
+ 
 ### Local Raspberry Pi
 
 1. `$ bin/deps-raspberry-pi`
