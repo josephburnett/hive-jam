@@ -168,55 +168,86 @@ In the main live-loop a [`HiveJam::Dispatch`](https://github.com/josephburnett/h
 ```
 
 +----+
-| UI |
-+----+
-   ^
-   |
-   V
-+--------+    +-------------------+
-| OSC    |    | +--------+        |
-| Bridge |<---->| Jam    |  Sonic |
-+--------+    | | Server |  Pi    |
-              | +--------+        |
-              +-------------------+
+| UI |<---------------------------------------------------------+
++----+                                                          |
+   ^                                                            |
+   |                                                            |
+   V                                                            |
++--------+    +---------------------+                           |
+| Hive   |    | +----------+        |    +---------------+      |
+| Server |<---->| Dispatch |  Sonic |--->| Supercollider |      |
++--------+    | | Server   |  Pi    |    | Synthesizer   |      |
+              | +----------+        |    +---------------+      |
+              +---------------------+            |              |
+                                                 V              |
+                                             +------+           |
+                                             | Jack |           |
+                                             +------+           |
+                                                 |              |
+                                                 V              |
+                                            +---------+         |
+                                            | Darkice |         |
+                                            +---------+         |
+                                                 |              |
+                                                 V              |
+                                            +---------+         |
+                                            | Icecast |---------+
+                                            +---------+
 ```
 
-The [Jam Server](https://github.com/josephburnett/hive-jam/tree/master/sonic-pi) is bootstrapped into Sonic Pi through a series OSC messages to `/run-code` on port 4557.  It starts an OSC server on port 4560.
+The [Dispatch Server](https://github.com/josephburnett/hive-jam/tree/master/ruby) (`ruby/server.rb`) is bootstrapped into Sonic Pi through a series OSC messages to `/run-code` on port 4557.  It starts an OSC server on port 4560.
 
-The [OSC Bridge](https://github.com/josephburnett/hive-jam/tree/master/golang/src/hivejam) starts an OSC server on port 4559 and a websocket server on 4550.  It multiplexes messages from multiple clients to the Jam Server.
+The [Hive Server](https://github.com/josephburnett/hive-jam/tree/master/golang/src/hivejam) (`golang/server/server.go`) starts an OSC server on port 4559 and a websocket server on 4550.  It multiplexes messages from multiple clients to the Dispach Server.
 
-The [UI](https://github.com/josephburnett/hive-jam/tree/master/hive-jam) communicates with the OSC Bridge over a websocket connection.  It requests synth and sample lists, transmits and receives state changes, and receives a stream of cursor updates (current location of the beat).
+The [UI](https://github.com/josephburnett/hive-jam/tree/master/cljs) (`cljs/src/core.cljs`) communicates with the Hive Server over a websocket connection.  It requests synth and sample lists, transmits and receives state changes, and receives a stream of cursor updates (current location of the beat).
 
-## Building from head
+## Development
 
-1. Install dependencies
-2. `$ ./bin/build`
-3. `$ ./build/hive-jam`
+The typical development workflow is to build Hive Jam from head and launch it.  Then start Figwheel for interactive, live UI coding.  Any change to files in `cljs` will take effect immediately--even without reloading the browser.  Any changes to `golang` or `ruby` require a rebuild (`bin/build`).
 
-#### Ubuntu 16.04 dependencies
+### Remote (Google Compute Engine)
 
-```
-$ ./bin/ubuntu-16.04-setup
-```
+1. Launch an Ubuntu 16.04 instance
+2. Open ports 3449, 4550, 8000 and 8080 to TCP connections (Networking)
+3. `$ bin/deps-ubuntu` (configure Icecast2 with random password--it will be overwritten)
+4. `$ bin/build`
+5. `$ sudo bin/with-gce-env launch`
+6. `$ bin/with-gce-env figwheel`
+7. Navigate to http://<external_ip>:3449
 
-#### Raspberry Pi 2 dependencies
+### Local Ubuntu 16.04
 
-```
-$ ./bin/raspberry-pi-setup
-```
+1. `$ bin/deps-ubuntu`
+2. `$ bin/build`
+3. `$ build/hive-jam` (or `sudo bin/with-local-env launch` to setup streaming audio)
+4. `$ bin/with-local-env figwheel`
+5. Navigate to http://localhost:3449
 
-#### OS X dependencies
+### Local Raspberry Pi
+
+1. `$ bin/deps-raspberry-pi`
+2. `$ bin/build`
+3. `$ build/hive-jam`
+4. `$ bin/with-local-env figwheel`
+5. Navigate to http://localhost:3449
+
+### Local OS X
 
 1. Install Sonic Pi (http://sonic-pi.net)
 2. Install git (type `git` and follow instructions)
 3. Install java (type `java` and follow instructions)
 4. Install golang (https://golang.org/dl/)
+5. `$ bin/build`
+6. `$ build/hive-jam`
+7. `$ bin/with-local-env figwheel`
+8. Navigate to http://localhost:3449
 
-### Bugs
+## Bugs
 
 Encountering any problems?  Please report an issue: https://github.com/josephburnett/hive-jam/issues
 
 If possible, please include:
+
 1. What you were doing
 2. Any error messages
 3. Operating system
