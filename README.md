@@ -167,11 +167,11 @@ In the main live-loop a [`HiveJam::Dispatch`](https://github.com/josephburnett/h
 
 ```
 
-+----+
++----+                    (audio)
 | UI |<---------------------------------------------------------+
 +----+                                                          |
    ^                                                            |
-   |                                                            |
+   |  (state)                                                   |
    V                                                            |
 +--------+    +---------------------+                           |
 | Hive   |    | +----------+        |    +---------------+      |
@@ -197,9 +197,9 @@ In the main live-loop a [`HiveJam::Dispatch`](https://github.com/josephburnett/h
 
 The [Dispatch Server](https://github.com/josephburnett/hive-jam/tree/master/ruby) (`ruby/server.rb`) is bootstrapped into Sonic Pi through a series OSC messages to `/run-code` on port 4557.  It starts an OSC server on port 4560.
 
-The [Hive Server](https://github.com/josephburnett/hive-jam/tree/master/golang/src/hivejam) (`golang/server/server.go`) starts an OSC server on port 4559 and a websocket server on 4550.  It multiplexes messages from multiple clients to the Dispach Server.
+The [Hive Server](https://github.com/josephburnett/hive-jam/tree/master/golang/src/hivejam) (`golang/server/server.go`) starts an OSC server on port 4559 and a websocket server on 4550.  It multiplexes messages from multiple clients to the Dispatch Server.
 
-The [UI](https://github.com/josephburnett/hive-jam/tree/master/cljs) (`cljs/src/core.cljs`) communicates with the Hive Server over a websocket connection.  It requests synth and sample lists, transmits and receives state changes, and receives a stream of cursor updates (current location of the beat).
+The [UI](https://github.com/josephburnett/hive-jam/tree/master/cljs) (`cljs/src/core.cljs`) communicates with the Hive Server over a websocket connection.  It requests synth and sample lists, transmits and receives state changes, and receives a stream of cursor updates (current location of the beat).  Supercollider outputs its audio to Jack.  Darkice feeds it into Icecast which streams the audio back to the UI.
 
 ## Development
 
