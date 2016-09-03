@@ -1,17 +1,17 @@
-# Sonic Jam
+# Hive Jam
 
-Sonic Jam is a loop-oriented, multi-player framework for making music with [Sonic Pi](http://sonic-pi.net/).  Players turn on and off grid cells representing synths or samples.  A cursor sweeps with the beat across the grid, playing any cells that are on.  Rows (tracks) can be parameterized to change the sound of a synth or sample.
+Hive Jam is a loop-oriented, multi-player framework for making music with [Sonic Pi](http://sonic-pi.net/).  Players turn on and off grid cells representing synths or samples.  A cursor sweeps with the beat across the grid, playing any cells that are on.  Rows (tracks) can be parameterized to change the sound of a synth or sample.
 
 Tracks can also represent sub-grids which contain their own tracks and parameters.  A sub-grid will be activated when the parent track is on.  Sub-grids have contain their own sub-grids and so forth.
 
 #### This is what it looks like
 
-![Sonic Jam](doc/hive-jam.png)
+![Hive Jam](doc/hive-jam.png)
 
 # Quick Start
 
 1. Start [Sonic Pi](http://sonic-pi.net/).
-2. Download and run Sonic Jam:
+2. Download and run Hive Jam:
    * [osx](https://github.com/josephburnett/hive-jam/raw/v0.2/release/hive-jam-osx)
    * [linux](https://github.com/josephburnett/hive-jam/raw/v0.2/release/hive-jam-linux)
    * [raspberry pi 2](https://github.com/josephburnett/hive-jam/raw/v0.2/release/hive-jam-raspberry-pi-2) (requires Firefox)
@@ -83,7 +83,7 @@ When building a melody it is useful to have the tracks of a grid represent the n
 
 ## Multiplayer jamming
 
-Sonic Jam is built from the ground-up to support multiple players.  For example, two players can jam on the same instance by visiting the same URL in their browser.  Changes to one will immediately take effect in the other.
+Hive Jam is built from the ground-up to support multiple players.  For example, two players can jam on the same instance by visiting the same URL in their browser.  Changes to one will immediately take effect in the other.
 
 Sub-grids can be used to give each player their own space to work in.  The players can take turns (call-and-response) or play together.
 
@@ -97,7 +97,7 @@ Sub-grids can be used to give each player their own space to work in.  The playe
 
 # Architecture
 
-Sonic Jam is a framework for controlling Sonic Pi.  It uses a single live-loop to sweep through a data structure, dispatching parameterized calls to the Sonic Pi functions `synth` and `sample` on the beat.
+Hive Jam is a framework for controlling Sonic Pi.  It uses a single live-loop to sweep through a data structure, dispatching parameterized calls to the Sonic Pi functions `synth` and `sample` on the beat.
 
 ## Data model and state
 
@@ -221,4 +221,4 @@ If possible, please include:
 2. Any error messages
 3. Operating system
 4. Sonic Pi version
-5. Sonic Jam version or commit
+5. Hive Jam version or commit

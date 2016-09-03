@@ -22,7 +22,7 @@ go-bindata -o golang/src/hivejam/data/data.go -pkg data \
     ruby/... \
     cljs/resources/public/...
 
-echo "Building the Sonic Jam binary..."
+echo "Building the Hive Jam binary..."
 mkdir -p build
 go build -o $ROOT/build/hive-jam \
     $GOPATH/src/hivejam/server/server.go

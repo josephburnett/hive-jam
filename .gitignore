@@ -35,7 +35,7 @@ build/
 .rvmrc
 
 *~
-/golang/src/sonicjam/data
+/golang/src/hivejam/data
 *.DS_Store
 
 golang/bin/

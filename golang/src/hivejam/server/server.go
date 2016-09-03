@@ -21,7 +21,7 @@ func main() {
 	go ui.Serve(done)
 	defer ui.Shutdown()
 
-	log.Print("Sonic Jam is up and running!")
+	log.Print("Hive Jam is up and running!")
 	
 	<- done
 }

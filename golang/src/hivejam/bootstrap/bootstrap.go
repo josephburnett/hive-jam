@@ -88,7 +88,7 @@ func Boot() {
 	select {
 	case <- BootComplete:
 	case <- timeout:
-		fail("", "Timeout while waiting for Sonic Jam to bootstrap. Check Sonic Pi UI for errors.")
+		fail("", "Timeout while waiting for Hive Jam to bootstrap. Check Sonic Pi UI for errors.")
 	}
 	log.Print("Bootstrapping complete.")
 }
