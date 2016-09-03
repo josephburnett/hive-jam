@@ -183,7 +183,7 @@ In the main live-loop a [`HiveJam::Dispatch`](https://github.com/josephburnett/h
 
 The [Jam Server](https://github.com/josephburnett/hive-jam/tree/master/sonic-pi) is bootstrapped into Sonic Pi through a series OSC messages to `/run-code` on port 4557.  It starts an OSC server on port 4560.
 
-The [OSC Bridge](https://github.com/josephburnett/hive-jam/tree/master/osc-bridge/src/hivejam) starts an OSC server on port 4559 and a websocket server on 4550.  It multiplexes messages from multiple clients to the Jam Server.
+The [OSC Bridge](https://github.com/josephburnett/hive-jam/tree/master/golang/src/hivejam) starts an OSC server on port 4559 and a websocket server on 4550.  It multiplexes messages from multiple clients to the Jam Server.
 
 The [UI](https://github.com/josephburnett/hive-jam/tree/master/hive-jam) communicates with the OSC Bridge over a websocket connection.  It requests synth and sample lists, transmits and receives state changes, and receives a stream of cursor updates (current location of the beat).
 

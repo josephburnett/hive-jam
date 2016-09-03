@@ -51,10 +51,10 @@ func fail(err, msg string) {
 }
 
 var files = [...]string{
-	"sonic-pi/lib/hivejam/state.rb",
-	"sonic-pi/lib/hivejam/params.rb",
-	"sonic-pi/lib/hivejam/dispatch.rb",
-	"sonic-pi/server.rb",
+	"ruby/lib/hivejam/state.rb",
+	"ruby/lib/hivejam/params.rb",
+	"ruby/lib/hivejam/dispatch.rb",
+	"ruby/server.rb",
 }
 
 func Boot() {

@@ -3,7 +3,7 @@
 set -e
 
 ROOT=`git rev-parse --show-toplevel`
-export GOPATH=$ROOT/osc-bridge/
+export GOPATH=$ROOT/golang/
 
 echo "Generating Figwheel JavaScript config file..."
 # Generating a default configuration is necessary for the Figwheel

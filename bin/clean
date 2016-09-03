@@ -12,6 +12,6 @@ if [ -f build/hive-jam ]; then
     rm build/hive-jam
 fi
 
-if [ -f osc-bridge/src/hivejam/data/data.go ]; then
-    rm osc-bridge/src/hivejam/data/data.go
+if [ -f golang/src/hivejam/data/data.go ]; then
+    rm golang/src/hivejam/data/data.go
 fi

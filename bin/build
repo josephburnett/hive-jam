@@ -3,7 +3,7 @@
 set -e
 
 ROOT=`git rev-parse --show-toplevel`
-export GOPATH=$ROOT/osc-bridge/
+export GOPATH=$ROOT/golang/
 PATH=$GOPATH/bin:$PATH
 
 cd $ROOT
@@ -17,8 +17,8 @@ go get github.com/tools/godep
 go install github.com/jteeuwen/go-bindata/...
 
 echo "Packaging UI and Sonic Pi server files as data..."
-mkdir -p osc-bridge/data
-go-bindata -o osc-bridge/src/hivejam/data/data.go -pkg data \
+mkdir -p golang/data
+go-bindata -o golang/src/hivejam/data/data.go -pkg data \
 	   sonic-pi/... \
 	   hive-jam/resources/public/...
 
