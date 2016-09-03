@@ -11,29 +11,29 @@ ADMIN_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
 cat > ~/darkice.cfg <<EOF
 [general]
-duration      = 0
-bufferSecs    = 1 # This doesn't seem to be effective !?
+duration       = 0
+bufferSecs     = 1 # This doesn't seem to be effective !?
 
 [input]
-device        = jack
-sampleRate    = 48000
-bitsPerSample = 16
-channel       = 2
+device         = jack
+sampleRate     = 48000
+bitsPerSample  = 16
+channel        = 2
 jackClientName = hivejam
 
 [icecast2-0]
-bitrateMode   = cbr
-format        = mp3
-bitrate       = 128
-server        = ${INTERNAL_IP?}
-port          = 8000
-password      = ${ADMIN_PASSWORD?}
-mountPoint    = hivejam
-name          = Sonic Jam
-description   = A loop-oriented, multi-player framework for making music with Sonic Pi.
-url           = http://${INTERNAL_IP?}
-genre         = edm
-public        = no
+bitrateMode    = cbr
+format         = mp3
+bitrate        = 128
+server         = ${INTERNAL_IP?}
+port           = 8000
+password       = ${ADMIN_PASSWORD?}
+mountPoint     = hivejam
+name           = Sonic Jam
+description    = A loop-oriented, multi-player framework for making music with Sonic Pi.
+url            = http://${INTERNAL_IP?}
+genre          = edm
+public         = no
 EOF
 
 cat > /etc/icecast2/icecast.xml <<EOF

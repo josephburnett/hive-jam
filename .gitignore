@@ -35,12 +35,12 @@ build/
 .rvmrc
 
 *~
-/osc-bridge/src/sonicjam/data
+/golang/src/sonicjam/data
 *.DS_Store
 
-osc-bridge/bin/
-osc-bridge/pkg/
-osc-bridge/src/github.com/
-osc-bridge/src/golang.org/
-sonic-jam/resources/public/config/
-sonic-jam/resources/public/js/
+golang/bin/
+golang/pkg/
+golang/src/github.com/
+golang/src/golang.org/
+cljs/resources/public/config/
+cljs/resources/public/js/

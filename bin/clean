@@ -6,7 +6,7 @@ ROOT=`git rev-parse --show-toplevel`
 
 cd $ROOT
 
-( cd hive-jam ; $ROOT/bin/vendor/lein clean )
+( cd cljs ; $ROOT/bin/vendor/lein clean )
 
 if [ -f build/hive-jam ]; then
     rm build/hive-jam

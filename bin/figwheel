@@ -8,11 +8,11 @@ export GOPATH=$ROOT/golang/
 echo "Generating Figwheel JavaScript config file..."
 # Generating a default configuration is necessary for the Figwheel
 # server to provide a valid configuration.
-mkdir -p hive-jam/resources/public/config
+mkdir -p cljs/resources/public/config
 go run $GOPATH/src/hivejam/generate/generate.go \
-   --js_output_file $ROOT/hive-jam/resources/public/config/config.js \
+   --js_output_file $ROOT/cljs/resources/public/config/config.js \
    --ui_ip ${INTERNAL_IP?} \
    --ui_external_ip ${EXTERNAL_IP?}
 
 echo "Starting Figwheel at ${EXTERNAL_IP?}:3449..."
-( cd hive-jam; $ROOT/bin/vendor/lein figwheel )
+( cd cljs; $ROOT/bin/vendor/lein figwheel )

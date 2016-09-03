@@ -9,7 +9,7 @@ PATH=$GOPATH/bin:$PATH
 cd $ROOT
 
 echo "Compiling UI..."
-( cd hive-jam ; $ROOT/bin/vendor/lein cljsbuild once min )
+( cd cljs ; $ROOT/bin/vendor/lein cljsbuild once min )
 
 echo "Setting up Golang dependencies and go-bindata tool..."
 go get github.com/tools/godep
@@ -19,8 +19,8 @@ go install github.com/jteeuwen/go-bindata/...
 echo "Packaging UI and Sonic Pi server files as data..."
 mkdir -p golang/data
 go-bindata -o golang/src/hivejam/data/data.go -pkg data \
-	   sonic-pi/... \
-	   hive-jam/resources/public/...
+    ruby/... \
+    cljs/resources/public/...
 
 echo "Building the Sonic Jam binary..."
 mkdir -p build
