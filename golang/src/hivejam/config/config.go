@@ -11,6 +11,7 @@ var Flags = struct {
 	UiExternalIp *string
 	UiPort *int
 	UiBridgePort *int
+	UiAudioPort *int
 	SpBridgeIp *string
 	SpBridgePortServer *int
 	SpBridgePortClient *int
@@ -28,6 +29,7 @@ var Flags = struct {
 	flag.String("ui_external_ip", "127.0.0.1", "IP address for the UI client to connect the websocket to"),
 	flag.Int("ui_port", 8080, "port number for the UI server to bind to"),
 	flag.Int("ui_bridge_port", 4550, "port number for the UI end of the OSC bridge to bind to"),
+	flag.Int("ui_audio_port", 8000, "port number for the streaming audio server"),
 	flag.String("sp_bridge_ip", "127.0.0.1", "IP address for the Sonic Pi end of the OSC bridge to bind to"),
 	flag.Int("sp_bridge_port_server", 4560, "port number for the Sonic Pi end of the OSC bridge to bind to for receiving messages"),
 	flag.Int("sp_bridge_port_client", 4559, "port number for the Sonic Pi end of the OSC bridge to bind to for transmitting messages"),

@@ -883,6 +883,43 @@
                (om/build button {:text "Load state"
                                  :click-chan load-state-ch})))))
 
+(defn audio-view [_ owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      (let [play-ch (chan)
+            stop-ch (chan)]
+        (go-loop []
+          (<! play-ch)
+          (.play (. js/document (getElementById "audio")))
+          (om/update-state! owner #(merge % {:state :play}))
+          (recur))
+        (go-loop []
+          (<! stop-ch)
+          (.pause (. js/document (getElementById "audio")))
+          (om/update-state! owner #(merge % {:state :stop}))
+          (recur))
+        {:state :play
+         :play-ch play-ch
+         :stop-ch stop-ch}))
+    om/IRenderState
+    (render-state [_ state]
+      (dom/div #js {:style #js {:float "right"}}
+               (dom/audio #js {:id "audio"
+                               :autoplay true}
+                          (dom/source #js {:src (str "http://" js/window.location.hostname
+                                                     ":" (config "UiAudioPort") "/hivejam")
+                                           :type "audio/mpeg"}))
+               (if (= :play (:state state))
+                 (om/build button {:text "stop"
+                                   :click-chan (:stop-ch state)})
+                 (om/build button {:text "play"
+                                   :click-chan (:play-ch state)}))))
+    om/IDidMount
+    (did-mount [_]
+      (let [play-ch (:play-ch (om/get-state owner))]
+        (go (>! play-ch true))))))
+
 (defn console-view [cursor]
   (reify
     om/IRender
@@ -964,6 +1001,7 @@
                (om/build hive-view {:cursor (:hive cursor)
                                     :save-state-ch (:save-state-ch state)
                                     :load-state-ch (:load-state-ch state)})
+               (om/build audio-view {})
                (om/build grid-view {:id "root" :beat-cursors (:beat-cursors cursor)} {:state state})
                (om/build console-view (:console cursor))))))
 
