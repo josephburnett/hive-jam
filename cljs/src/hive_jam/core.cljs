@@ -52,6 +52,7 @@
                           :errors []
                           :console []
                           :beat-cursors []
+                          :audio {:play true}
                           :hive {}}))
 
 (defn config [key]
@@ -858,20 +859,30 @@
                       (map (partial dom/li nil) cursor))))))
 
 (defn button [{:keys [text click-chan]} owner]
+  (let [render (fn [] (let [node (om/get-node owner)
+                            b (Button. text (.getInstance FlatButtonRenderer))]
+                        (om/update-state! owner #(merge % {:button b}))
+                        (.render b node)
+                        (gevents/listen b Component.EventType.ACTION
+                                        #(go (>! click-chan true)))))]
   (reify
     om/IInitState
-    (init-state [_]
-      {:id (new-id)})
+    (init-state [_] {})
     om/IRenderState
-    (render-state [_ state]
-      (dom/div #js {:id (:id state)}))
+    (render-state [_ state] (dom/div nil nil))
     om/IDidMount
     (did-mount [_]
-      (let [node (om/get-node owner)
-            b (Button. text (.getInstance FlatButtonRenderer))]
-        (.render b node)
-        (gevents/listen b Component.EventType.ACTION
-                        #(go (>! click-chan true)))))))
+      (render))
+    om/IWillUpdate
+    (will-update [_ next _]
+      (let [b (:button (om/get-state owner))
+            prev (om/get-props owner)]
+        (when-not (= next prev)
+          (.dispose b))))
+    om/IDidUpdate
+    (did-update [_ prev _]
+      (when-not (= text (:text prev))
+        (render))))))
 
 (defn hive-view [{:keys [cursor save-state-ch load-state-ch]}]
   (reify
@@ -883,7 +894,7 @@
                (om/build button {:text "Load state"
                                  :click-chan load-state-ch})))))
 
-(defn audio-view [_ owner]
+(defn audio-view [cursor owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -892,15 +903,14 @@
         (go-loop []
           (<! play-ch)
           (.play (. js/document (getElementById "audio")))
-          (om/update-state! owner #(merge % {:state :play}))
+          (om/transact! cursor #(merge % {:play true}))
           (recur))
         (go-loop []
           (<! stop-ch)
           (.pause (. js/document (getElementById "audio")))
-          (om/update-state! owner #(merge % {:state :stop}))
+          (om/transact! cursor #(merge % {:play false}))
           (recur))
-        {:state :play
-         :play-ch play-ch
+        {:play-ch play-ch
          :stop-ch stop-ch}))
     om/IRenderState
     (render-state [_ state]
@@ -910,10 +920,10 @@
                           (dom/source #js {:src (str "http://" js/window.location.hostname
                                                      ":" (config "UiAudioPort") "/hivejam")
                                            :type "audio/mpeg"}))
-               (if (= :play (:state state))
-                 (om/build button {:text "stop"
+               (if (:play cursor)
+                 (om/build button {:text "Stop"
                                    :click-chan (:stop-ch state)})
-                 (om/build button {:text "play"
+                 (om/build button {:text "Play"
                                    :click-chan (:play-ch state)}))))
     om/IDidMount
     (did-mount [_]
@@ -1001,7 +1011,7 @@
                (om/build hive-view {:cursor (:hive cursor)
                                     :save-state-ch (:save-state-ch state)
                                     :load-state-ch (:load-state-ch state)})
-               (om/build audio-view {})
+               (om/build audio-view (:audio cursor))
                (om/build grid-view {:id "root" :beat-cursors (:beat-cursors cursor)} {:state state})
                (om/build console-view (:console cursor))))))
 
