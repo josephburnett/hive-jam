@@ -8,14 +8,15 @@ if [ "$(whoami)" != "root" ]; then
 fi
 
 ROOT=`git rev-parse --show-toplevel`
-INSTALL_DIR=/usr/share/hivejam/
-SYSTEMD_DIR=/etc/systemd/system/
+INSTALL_DIR=/usr/share/hivejam
+SYSTEMD_DIR=/etc/systemd/system
 
 install() {
-  cp ${ROOT?}/$1 ${INSTALL_DIR?}
+  cp ${ROOT?}/$1 ${INSTALL_DIR?}/$1
 }
 
-mkdir -p /usr/share/hivejam
+mkdir -p /usr/share/hivejam/build
+mkdir -p /usr/share/hivejam/bin/systemd
 
 install build/hive-jam
 install bin/launch

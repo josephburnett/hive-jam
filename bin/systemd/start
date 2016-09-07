@@ -5,4 +5,6 @@ set -e
 export EXTERNAL_IP=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip" -H "Metadata-Flavor: Google")
 export INTERNAL_IP=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip" -H "Metadata-Flavor: Google")
 
-$( cd /usr/share/hivejam ; sudo bin/launch & echo $! > /tmp/hivejam.pid )
+cd /usr/share/hivejam
+# Sonic Pi expects HOME to be set.
+HOME=/usr/share/hivejam bin/launch & echo $! > /tmp/hivejam.pid
