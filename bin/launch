@@ -7,7 +7,7 @@ if [ "$(whoami)" != "root" ]; then
     exit 1
 fi
 
-ADMIN_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+ADMIN_PASSWORD=$(dd if=/dev/urandom bs=256 count=1 2> /dev/null | tr -dc 'a-zA-Z0-9' | head -c 32)
 
 cat > ~/darkice.cfg <<EOF
 [general]
