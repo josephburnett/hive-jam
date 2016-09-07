@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -e
+
+if [ "$(whoami)" != "root" ]; then
+    echo "Please run as root (sudo)."
+    exit 1
+fi
+
+ROOT=`git rev-parse --show-toplevel`
+INSTALL_DIR=/usr/share/hivejam/
+SYSTEMD_DIR=/etc/systemd/system/
+
+install() {
+  cp ${ROOT?}/$1 ${INSTALL_DIR?}
+}
+
+mkdir -p /usr/share/hivejam
+
+install build/hive-jam
+install bin/launch
+install bin/systemd/start
+
+cp ${ROOT?}/bin/systemd/hivejam.service ${SYSTEMD_DIR?}
+systemctl enable hivejam

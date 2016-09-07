@@ -91,18 +91,18 @@ EOF
 STATE_FILE=$( mktemp )
 echo "Using state file ${STATE_FILE?}"
 
-trap "tac /tmp/hivejam.pid | xargs -L 1 kill; rm ${STATE_FILE?}" SIGINT SIGTERM
+trap "tac /tmp/hivejamdeps.pid | xargs -L 1 kill; rm ${STATE_FILE?}" SIGINT SIGTERM
 
-jackd -d dummy & echo $! > /tmp/hivejam.pid
+jackd -d dummy & echo $! > /tmp/hivejamdeps.pid
 sleep 1
 
 /etc/init.d/icecast2 restart
 sleep 1
 
-darkice -c ~/darkice.cfg & echo $! >> /tmp/hivejam.pid
+darkice -c ~/darkice.cfg & echo $! >> /tmp/hivejamdeps.pid
 sleep 1
 
-ruby /usr/lib/sonic-pi/server/bin/sonic-pi-server.rb & echo $! >> /tmp/hivejam.pid
+ruby /usr/lib/sonic-pi/server/bin/sonic-pi-server.rb & echo $! >> /tmp/hivejamdeps.pid
 sleep 5
 
 jack_connect SuperCollider:out_1 hivejam:left

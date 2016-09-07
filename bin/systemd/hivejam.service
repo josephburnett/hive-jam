@@ -1,0 +1,13 @@
+[Unit]
+Description=Hive Jam startup script
+After=local-fs.target network-online.target network.target
+Wants=local-fs.target network-online.target network.target
+
+[Service]
+ExecStart=/usr/share/hivejam/bin/systemd/start
+KillMode=process
+Type=oneshot
+PIDFile=/tmp/hivejam.pid
+
+[Install]
+WantedBy=multi-user.target
