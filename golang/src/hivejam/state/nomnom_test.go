@@ -1,11 +1,12 @@
 package state
 
 import (
+	"reflect"
 	"testing"
 )
 
 func TestNomNom(t *testing.T) {
-	g := Grid{
+	original := Grid{
 		Name: "root",
 		Id:   "root",
 		Bpc:  "1/4",
@@ -37,8 +38,16 @@ func TestNomNom(t *testing.T) {
 			},
 		},
 	}
-	n, err := NomNom(g)
+	nomValue, err := NomNom(original)
 	if err != nil {
-		t.Error(err, g, n)
+		t.Error(err, original, nomValue)
+	}
+	copy := Grid{}
+	err = DeNom(nomValue, copy)
+	if err != nil {
+		t.Error(err, original, nomValue, copy)
+	}
+	if !reflect.DeepEqual(original, copy) {
+		t.Error("Original does not equal copy\n", original, nomValue, copy)
 	}
 }

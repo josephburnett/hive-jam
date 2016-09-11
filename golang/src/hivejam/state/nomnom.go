@@ -51,7 +51,6 @@ func NomNom(a interface{}) (types.Value, error) {
 		nomsFields := make(types.StructData, v.NumField())
 		for i := 0; i < v.NumField(); i++ {
 			nomsKey := types.EscapeStructField(t.Field(i).Name)
-			fmt.Printf("Field: %v\n", t.Field(i))
 			if v.Field(i).CanInterface() {
 				nomsValue, err := NomNom(v.Field(i).Interface())
 				if err != nil {
@@ -109,7 +108,7 @@ func DeNom(v types.Value, a interface{}) error {
 			return typeMatchError(v, a)
 		}
 		outterErr := error(nil)
-		nomsMap.Iter(func (k, v types.Value) (stop bool) {
+		nomsMap.Iter(func(k, v types.Value) (stop bool) {
 			keyType := reflect.TypeOf(vr.Elem()).Key()
 			keyValue := reflect.New(keyType)
 			err := DeNom(k, keyValue)
@@ -128,12 +127,26 @@ func DeNom(v types.Value, a interface{}) error {
 			return true
 		})
 		return outterErr
-	// case reflect.Struct:
-	// 	nomsStruct, ok := v.(types.Struct)
-	// 	if !ok {
-	// 		return typeMatchError(v, a)
-	// 	}
-		
+	case reflect.Struct:
+		nomsStruct, ok := v.(types.Struct)
+		if !ok {
+			return typeMatchError(v, a)
+		}
+		for i := 0; i < reflect.TypeOf(vr.Elem()).NumField(); i++ {
+			if reflect.ValueOf(vr.Elem()).Field(i).CanInterface() {
+				name := types.EscapeStructField(t.Field(i).Name)
+				elementType := reflect.TypeOf(vr.Elem()).Elem()
+				elementValue := reflect.New(elementType)
+				nomsValue := nomsStruct.Get(name)
+				err := DeNom(nomsValue, elementValue)
+				if err != nil {
+					return err
+				}
+				value := vr.Elem().Field(i)
+				value.Set(elementValue)
+			}
+		}
+		return nil
 	}
 	return errors.New(fmt.Sprintf("Unsupported kind: %v", k))
 }
