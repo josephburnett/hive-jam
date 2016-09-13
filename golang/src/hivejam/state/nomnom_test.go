@@ -1,6 +1,7 @@
 package state
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -42,12 +43,13 @@ func TestNomNom(t *testing.T) {
 	if err != nil {
 		t.Error(err, original, nomValue)
 	}
+	fmt.Printf("nomValue: %v\n", nomValue)
 	copy := Grid{}
-	err = DeNom(nomValue, copy)
+	err = DeNom(nomValue, &copy)
 	if err != nil {
 		t.Error(err, original, nomValue, copy)
 	}
 	if !reflect.DeepEqual(original, copy) {
-		t.Error("Original does not equal copy\n", original, nomValue, copy)
+		t.Errorf("Original does not equal copy\n%v\n%v\n%v\n", original, nomValue, copy)
 	}
 }
