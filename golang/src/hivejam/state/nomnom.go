@@ -12,12 +12,17 @@ func NomNom(a interface{}) (types.Value, error) {
 	t := reflect.TypeOf(a)
 	v := reflect.ValueOf(a)
 	k := t.Kind()
+	if k == reflect.Ptr {
+		v = v.Elem()
+		k = v.Kind()
+		t = v.Type()
+	}
+	fmt.Printf("NomNom %v (%v)\n", k, t)
 	switch k {
 	case reflect.Bool:
 		return types.Bool(v.Bool()), nil
-	// TODO: encode integers are strings because Noms Number type is float64
-	// case reflect.Int:
-	// 	return types.Number(v.Int()), nil
+	case reflect.Int32:
+		return types.Number(v.Int()), nil
 	case reflect.Float64:
 		return types.Number(v.Float()), nil
 	case reflect.String:
@@ -25,7 +30,7 @@ func NomNom(a interface{}) (types.Value, error) {
 	case reflect.Slice:
 		nomsValues := make([]types.Value, v.Len())
 		for i := 0; i < v.Len(); i++ {
-			nomsValue, err := NomNom(v.Index(i))
+			nomsValue, err := NomNom(v.Index(i).Interface())
 			if err != nil {
 				return nil, err
 			}
@@ -36,11 +41,11 @@ func NomNom(a interface{}) (types.Value, error) {
 		nomsKeyValues := make([]types.Value, 0, v.Len()*2)
 		ks := v.MapKeys()
 		for _, key := range ks {
-			nomsKey, err := NomNom(key)
+			nomsKey, err := NomNom(key.Interface())
 			if err != nil {
 				return nil, err
 			}
-			nomsValue, err := NomNom(v.MapIndex(key))
+			nomsValue, err := NomNom(v.MapIndex(key).Interface())
 			if err != nil {
 				return nil, err
 			}
@@ -51,6 +56,7 @@ func NomNom(a interface{}) (types.Value, error) {
 		nomsFields := make(types.StructData, v.NumField())
 		for i := 0; i < v.NumField(); i++ {
 			nomsKey := types.EscapeStructField(t.Field(i).Name)
+			fmt.Printf("Saving with nomsKey: %v\n", nomsKey)
 			if v.Field(i).CanInterface() {
 				nomsValue, err := NomNom(v.Field(i).Interface())
 				if err != nil {
@@ -62,20 +68,24 @@ func NomNom(a interface{}) (types.Value, error) {
 		name := types.EscapeStructField(t.PkgPath() + "." + t.Name())
 		return types.NewStruct(name, nomsFields), nil
 	}
-	return nil, errors.New(fmt.Sprintf("Unsupported kind: %v", k))
+	return nil, errors.New(fmt.Sprintf("Unsupported kind (1): %v", k))
 }
 
 func DeNom(v types.Value, a interface{}) error {
 	valueOf := reflect.ValueOf(a)
 	typeOf := valueOf.Type()
 	kindOf := valueOf.Kind()
+	// if !valueOf.CanSet() {
+	// 	panic(fmt.Sprintf("valueOf is not settable (1): %v (type: %v)", valueOf, typeOf))
+	// }
 	if kindOf == reflect.Ptr {
 		valueOf = valueOf.Elem()
 		typeOf = valueOf.Type()
 		kindOf = valueOf.Kind()
 	}
+	fmt.Printf("Denom %v (%v)\n", kindOf, typeOf)
 	if !valueOf.CanSet() {
-		panic(fmt.Sprintf("valueOf is not settable: %v (type: %v)", valueOf, typeOf))
+		panic(fmt.Sprintf("valueOf is not settable (2): %v (type: %v)", valueOf, typeOf))
 	}
 	switch kindOf {
 	case reflect.Bool:
@@ -84,6 +94,13 @@ func DeNom(v types.Value, a interface{}) error {
 			return typeMatchError(v, a)
 		}
 		valueOf.SetBool(bool(nomsBool))
+		return nil
+	case reflect.Int32:
+		nomsNumber, ok := v.(types.Number)
+		if !ok {
+			return typeMatchError(v, a)
+		}
+		valueOf.SetInt(int64(nomsNumber))
 		return nil
 	case reflect.Float64:
 		nomsNumber, ok := v.(types.Number)
@@ -104,17 +121,27 @@ func DeNom(v types.Value, a interface{}) error {
 		if !ok {
 			return typeMatchError(v, a)
 		}
-		for _, nomsValue := range nomsList.ChildValues() {
+		for i, nomsValue := range nomsList.ChildValues() {
 			elementType := typeOf.Elem()
 			elementValue := reflect.New(elementType)
+			// if elementValue.Kind() == reflect.Ptr {
+			// 	elementValue = elementValue.Elem()
+			// }
+			fmt.Printf("elementValue.Kind(): %v\n", elementValue.Kind())
+			// if !elementValue.CanSet() {
+			// 	panic("About to recurse on an unsettable value")
+			// } else {
+			// 	fmt.Printf("Recursing on a settable value\n")
+			// }
 			err := DeNom(nomsValue, elementValue.Interface())
 			if err != nil {
 				return err
 			}
-			if elementValue.Kind() == reflect.Ptr {
-				elementValue = elementValue.Elem()
+			if !valueOf.CanSet() {
+				panic("I won't be able to set a value on this slice")
 			}
-			valueOf.Set(reflect.Append(valueOf, elementValue))
+			fmt.Printf("Setting slice element %v\n", i)
+			valueOf.Set(reflect.Append(valueOf, elementValue.Elem()))
 		}
 		return nil
 	case reflect.Map:
@@ -123,27 +150,40 @@ func DeNom(v types.Value, a interface{}) error {
 			return typeMatchError(v, a)
 		}
 		var outterErr error = nil
+		mapValue := reflect.MakeMap(typeOf)
 		nomsMap.Iter(func(k, v types.Value) (stop bool) {
+			fmt.Printf("My callback just got k: %v and v: %v\n", k.Type(), v.Type())
 			keyType := typeOf.Key()
 			keyValue := reflect.New(keyType)
+			// if !keyValue.CanSet() {
+			// 	panic("keyValue is not settable")
+			// }
+			fmt.Printf("Made a new %v (%v) as a key\n", keyValue.Kind(), keyValue.Type())
+			fmt.Printf("Recursing on map key\n")
 			err := DeNom(k, keyValue.Interface())
 			if err != nil {
 				outterErr = err
-				return false
+				return true
 			}
 			valueType := typeOf.Elem()
 			valueValue := reflect.New(valueType)
-			if valueValue.Kind() == reflect.Ptr {
-				valueValue = valueValue.Elem()
-			}
+			fmt.Printf("valueValue before: %v\n", valueValue.Elem().Interface())
+			// if !valueValue.CanSet() {
+			// 	panic("valueValue is not settable")
+			// }
+			fmt.Printf("Made a new %v (%v) as a value\n", valueValue.Kind(), valueValue.Type())
+			fmt.Printf("Recursing on map value\n")
 			err = DeNom(v, valueValue.Interface())
 			if err != nil {
 				outterErr = err
-				return false
+				return true
 			}
-			valueOf.SetMapIndex(keyValue, valueValue)
-			return true
+			fmt.Printf("valueValue after: %v\n", valueValue.Elem().Interface())
+			mapValue.SetMapIndex(keyValue.Elem(), valueValue.Elem())
+			fmt.Printf("Successfully set something in a map!\n")
+			return false
 		})
+		valueOf.Set(mapValue)
 		return outterErr
 	case reflect.Struct:
 		nomsStruct, ok := v.(types.Struct)
@@ -151,12 +191,15 @@ func DeNom(v types.Value, a interface{}) error {
 			return typeMatchError(v, a)
 		}
 		for i := 0; i < typeOf.NumField(); i++ {
+			fmt.Printf("Field: %v\n", typeOf.Field(i).Name)
 			if valueOf.Field(i).IsValid() {
+				fmt.Printf("Field is valid\n")
 				name := types.EscapeStructField(typeOf.Field(i).Name)
 				elementType := typeOf.Field(i).Type
 				elementValue := reflect.New(elementType)
 				nomsValue, ok := nomsStruct.MaybeGet(name)
-				if ok { 
+				if ok {
+					fmt.Printf("Setting struct field %v\n", name)
 					err := DeNom(nomsValue, elementValue.Interface())
 					if err != nil {
 						return err
@@ -166,12 +209,16 @@ func DeNom(v types.Value, a interface{}) error {
 						elementValue = elementValue.Elem()
 					}
 					value.Set(elementValue)
+				} else {
+					fmt.Printf("Did not find in struct .. say what?\n")
 				}
+			} else {
+				fmt.Printf("Field is not valid\n")
 			}
 		}
 		return nil
 	}
-	return errors.New(fmt.Sprintf("Unsupported kind: %v", kindOf))
+	return errors.New(fmt.Sprintf("Unsupported kind (2): %v", kindOf))
 }
 
 func typeMatchError(v, a interface{}) error {
