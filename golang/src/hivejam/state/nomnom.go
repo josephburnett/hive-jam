@@ -9,27 +9,25 @@ import (
 )
 
 func NomNom(a interface{}) (noms.Value, error) {
-	t := reflect.TypeOf(a)
-	v := reflect.ValueOf(a)
-	k := t.Kind()
-	if k == reflect.Ptr {
-		v = v.Elem()
-		k = v.Kind()
-		t = v.Type()
+	valueOf, typeOf, kindOf := reflectOn(a)
+	if kindOf == reflect.Ptr {
+		valueOf = valueOf.Elem()
+		typeOf = valueOf.Type()
+		kindOf = valueOf.Kind()
 	}
-	switch k {
+	switch kindOf {
 	case reflect.Bool:
-		return noms.Bool(v.Bool()), nil
+		return noms.Bool(valueOf.Bool()), nil
 	case reflect.Int32:
-		return noms.Number(v.Int()), nil
+		return noms.Number(valueOf.Int()), nil
 	case reflect.Float64:
-		return noms.Number(v.Float()), nil
+		return noms.Number(valueOf.Float()), nil
 	case reflect.String:
-		return noms.String(v.String()), nil
+		return noms.String(valueOf.String()), nil
 	case reflect.Slice:
-		nomsValues := make([]noms.Value, v.Len())
-		for i := 0; i < v.Len(); i++ {
-			nomsValue, err := NomNom(v.Index(i).Interface())
+		nomsValues := make([]noms.Value, valueOf.Len())
+		for i := 0; i < valueOf.Len(); i++ {
+			nomsValue, err := NomNom(valueOf.Index(i).Interface())
 			if err != nil {
 				return nil, err
 			}
@@ -37,14 +35,13 @@ func NomNom(a interface{}) (noms.Value, error) {
 		}
 		return noms.NewList(nomsValues...), nil
 	case reflect.Map:
-		nomsKeyValues := make([]noms.Value, 0, v.Len()*2)
-		ks := v.MapKeys()
-		for _, key := range ks {
+		nomsKeyValues := make([]noms.Value, 0, valueOf.Len()*2)
+		for _, key := range valueOf.MapKeys() {
 			nomsKey, err := NomNom(key.Interface())
 			if err != nil {
 				return nil, err
 			}
-			nomsValue, err := NomNom(v.MapIndex(key).Interface())
+			nomsValue, err := NomNom(valueOf.MapIndex(key).Interface())
 			if err != nil {
 				return nil, err
 			}
@@ -52,27 +49,25 @@ func NomNom(a interface{}) (noms.Value, error) {
 		}
 		return noms.NewMap(nomsKeyValues...), nil
 	case reflect.Struct:
-		nomsFields := make(noms.StructData, v.NumField())
-		for i := 0; i < v.NumField(); i++ {
-			nomsKey := noms.EscapeStructField(t.Field(i).Name)
-			if v.Field(i).CanInterface() {
-				nomsValue, err := NomNom(v.Field(i).Interface())
+		nomsFields := make(noms.StructData, valueOf.NumField())
+		for i := 0; i < valueOf.NumField(); i++ {
+			if valueOf.Field(i).IsValid() {
+				nomsKey := noms.EscapeStructField(typeOf.Field(i).Name)
+				nomsValue, err := NomNom(valueOf.Field(i).Interface())
 				if err != nil {
 					return nil, err
 				}
 				nomsFields[nomsKey] = nomsValue
 			}
 		}
-		name := noms.EscapeStructField(t.PkgPath() + "." + t.Name())
+		name := noms.EscapeStructField(typeOf.PkgPath() + "." + typeOf.Name())
 		return noms.NewStruct(name, nomsFields), nil
 	}
-	return nil, errors.New(fmt.Sprintf("Unsupported kind (1): %v", k))
+	return nil, errors.New(fmt.Sprintf("Unsupported kind: %v", kindOf))
 }
 
 func DeNom(v noms.Value, a interface{}) error {
-	valueOf := reflect.ValueOf(a)
-	typeOf := valueOf.Type()
-	kindOf := valueOf.Kind()
+	valueOf, typeOf, kindOf := reflectOn(a)
 	if kindOf == reflect.Ptr {
 		valueOf = valueOf.Elem()
 		typeOf = valueOf.Type()
@@ -147,10 +142,13 @@ func DeNom(v noms.Value, a interface{}) error {
 			mapValue.SetMapIndex(keyValue.Elem(), valueValue.Elem())
 			return false
 		})
+		if outterErr != nil {
+			return outterErr
+		}
 		if mapValue.Len() > 0 {
 			valueOf.Set(mapValue)
 		}
-		return outterErr
+		return nil
 	case reflect.Struct:
 		nomsStruct, ok := v.(noms.Struct)
 		if !ok {
@@ -167,17 +165,20 @@ func DeNom(v noms.Value, a interface{}) error {
 					if err != nil {
 						return err
 					}
-					value := valueOf.Field(i)
-					if elementValue.Kind() == reflect.Ptr {
-						elementValue = elementValue.Elem()
-					}
-					value.Set(elementValue)
+					valueOf.Field(i).Set(elementValue.Elem())
 				}
 			}
 		}
 		return nil
 	}
-	return errors.New(fmt.Sprintf("Unsupported kind (2): %v", kindOf))
+	return errors.New(fmt.Sprintf("Unsupported kind: %v", kindOf))
+}
+
+func reflectOn(a interface{}) (reflect.Value, reflect.Type, reflect.Kind) {
+	valueOf := reflect.ValueOf(a)
+	typeOf := valueOf.Type()
+	kindOf := valueOf.Kind()
+	return valueOf, typeOf, kindOf
 }
 
 func typeMatchError(v, a interface{}) error {
