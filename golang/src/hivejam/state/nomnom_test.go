@@ -3,6 +3,8 @@ package state
 import (
 	"reflect"
 	"testing"
+
+	noms "github.com/attic-labs/noms/go/marshal"
 )
 
 func TestNomNom(t *testing.T) {
@@ -35,16 +37,17 @@ func TestNomNom(t *testing.T) {
 					"amp":   "1.5",
 					"pitch": "12",
 				},
+				SampleParams: map[string]string{},
 			},
 		},
 	}
-	nomValue, err := NomNom(original)
+	nomValue, err := noms.Marshal(original)
 	if err != nil {
 		t.Error(err, original, nomValue)
 		return
 	}
 	copy := Grid{}
-	err = DeNom(nomValue, &copy)
+	err = noms.Unmarshal(nomValue, &copy)
 	if err != nil {
 		t.Error(err, original, nomValue, copy)
 		return
