@@ -24,6 +24,7 @@ var Flags = struct {
 	Debug *bool
 	MaxTrackCount *int
 	BootstrapTimeoutSeconds *int
+	NomsDataset *string
 }{
 	flag.String("ui_ip", "127.0.0.1", "IP address for the UI server to bind to"),
 	flag.String("ui_external_ip", "127.0.0.1", "IP address for the UI client to connect the websocket to"),
@@ -42,6 +43,7 @@ var Flags = struct {
 	flag.Bool("debug", false, "debug level output logging (overrides --verbose)"),
 	flag.Int("max_flag_count", 6, "maximum number of tracks allowed per grid"),
 	flag.Int("bootstrap_timeout_millis", 1000, "timeout in milliseconds for bootstrapping files into Sonic Pi"),
+	flag.String("noms_dataset", "http://localhost:8001::hivejam", "URL to the Noms state dataset"),
 }
 
 type flagType int

@@ -99,6 +99,10 @@ func sendToServer() {
 			common.LogError("Dropping message. No address.")
 			continue
 		}
+		// Here I should check msg.Address and if it is /save-state or
+		// /load-state, fire off off a bunch of state requests to the
+		// server and commit the results with state.NomsCommit (or the
+		// reverse for /load-state ... state.NomsReset.
 		oscMessage, err := osc.NewMessage(msg.Address)
 		if err != nil {
 			common.LogError("Error create new OSC message to server.")
