@@ -20,10 +20,12 @@ func OnTheBeat(bpc, resolution *big.Rat, beats []Beat, tick int64) (boundary, on
 	tpc := quo(bpc, resolution)
 	boundary = mod(big.NewInt(tick), ceil(tpc)).Cmp(big.NewInt(0)) == 0
 	i := floor(quo(big.NewRat(tick, 1), tpc))
-	index = mod(i, big.NewInt(int64(len(beats)))).Int64()
+	index = i.Int64() % int64(len(beats))
 	on = beats[index][0] > 0
 	return boundary, on, index
 }
+
+var zero *big.Rat = big.NewRat(0, 1)
 
 func quo(a, b *big.Rat) (c *big.Rat) {
 	c = big.NewRat(0, 1)
@@ -54,10 +56,18 @@ func ip(a *big.Rat) (b *big.Int) {
 }
 
 func floor(a *big.Rat) (b *big.Int) {
+	if a.Cmp(zero) == 0 {
+		return big.NewInt(0)
+	}
 	b = ip(sub(a, big.NewRat(1, 2)))
 	return
 }
 func ceil(a *big.Rat) (b *big.Int) {
+	if a.IsInt() {
+		b = big.NewInt(0)
+		b.Quo(a.Num(), a.Denom())
+		return
+	}
 	b = ip(add(a, big.NewRat(1, 2)))
 	return
 }
