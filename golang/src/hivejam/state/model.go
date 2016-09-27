@@ -1,9 +1,13 @@
 package state
 
+import (
+	"math/big"
+)
+
 type Grid struct {
 	Name   string  `json:"name"`
 	Id     string  `json:"id"`
-	Bpc    string  `json:"bpc"`
+	Bpc    big.Rat `json:"bpc"`
 	Tracks []Track `json:"tracks"`
 }
 
