@@ -1011,7 +1011,8 @@
                (om/build hive-view {:cursor (:hive cursor)
                                     :save-state-ch (:save-state-ch state)
                                     :load-state-ch (:load-state-ch state)})
-               (om/build audio-view (:audio cursor))
+               (when (config "EnableUiAudio")
+                 (om/build audio-view (:audio cursor)))
                (om/build grid-view {:id "root" :beat-cursors (:beat-cursors cursor)} {:state state})
                (om/build console-view (:console cursor))))))
 

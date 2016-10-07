@@ -112,5 +112,6 @@ build/hive-jam \
     --ui_ip ${INTERNAL_IP?} \
     --ui_external_ip ${EXTERNAL_IP} \
     --verbose \
-    --state_file ${STATE_FILE?}
+    --state_file ${STATE_FILE?} \
+    --enable_ui_audio true
 
