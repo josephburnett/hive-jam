@@ -2,21 +2,29 @@
 
 set -e
 
+if [ "$(whoami)" != "root" ]; then
+    echo "Please run as root (sudo)."
+    exit 1
+fi
+
+MIN_DISTRO=Ubuntu
 MIN_MAJOR=16
 MIN_MINOR=04
 
-DISTRO=$( lsb_release -i -s )
-MAJOR=$( lsb_release -r -s | awk -F '.' '{ print $1 }' )
-MINOR=$( lsb_release -r -s | awk -F '.' '{ print $2 }' )
+if [ -z ${DISTRO+x} ] || [ -z ${MINOR+x} ] || [ -z ${MAJOR+x} ]; then
+    DISTRO=$( lsb_release -i -s )
+    MAJOR=$( lsb_release -r -s | awk -F '.' '{ print $1 }' )
+    MINOR=$( lsb_release -r -s | awk -F '.' '{ print $2 }' )
+fi
 
 echo "${DISTRO?} ${MAJOR?}.${MINOR?} detected."
 
 fail_min() {
-    echo "$DISTRO $MIN_MAJOR.$MIN_MINOR or later required."
+    echo "$MIN_DISTRO $MIN_MAJOR.$MIN_MINOR or later required."
     exit 1
 }
 
-if [ "$DISTRO" != "Ubuntu" ]; then
+if [ "$DISTRO" != "$MIN_DISTRO" ]; then
     fail_min
 fi
 
@@ -28,7 +36,7 @@ if [ "$MAJOR" -eq "$MIN_MAJOR" ] && [ "$MINOR" -lt "$MIN_MINOR" ]; then
     fail_min
 fi
 
-sudo apt install -y \
+apt-get install -y \
      default-jre \
      golang-go \
      sonic-pi \

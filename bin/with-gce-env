@@ -2,8 +2,11 @@
 
 set -e
 
-ROOT=`git rev-parse --show-toplevel`
-export PATH=$ROOT/bin:$PATH
+if [ -z ${HJ_ROOT+x}]; then
+    export HJ_ROOT=`git rev-parse --show-toplevel`
+fi
+ 
+export PATH=$HJ_ROOT/bin:$PATH
 
 export EXTERNAL_IP=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip" -H "Metadata-Flavor: Google")
 export INTERNAL_IP=$(curl -s "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip" -H "Metadata-Flavor: Google")

@@ -2,14 +2,17 @@
 
 set -e
 
-ROOT=`git rev-parse --show-toplevel`
-export GOPATH=$ROOT/golang/
+if [ -z ${HJ_ROOT+x}]; then
+    export HJ_ROOT=`git rev-parse --show-toplevel`
+fi
+
+export GOPATH=$HJ_ROOT/golang/
 PATH=$GOPATH/bin:$PATH
 
-cd $ROOT
+cd $HJ_ROOT
 
 echo "Compiling UI..."
-( cd cljs ; $ROOT/bin/vendor/lein cljsbuild once min )
+( cd cljs ; $HJ_ROOT/bin/vendor/lein cljsbuild once min )
 
 echo "Setting up Golang dependencies and go-bindata tool..."
 go get github.com/tools/godep
@@ -24,7 +27,7 @@ go-bindata -o golang/src/hivejam/data/data.go -pkg data \
 
 echo "Building the Hive Jam binary..."
 mkdir -p build
-go build -o $ROOT/build/hive-jam \
+go build -o $HJ_ROOT/build/hive-jam \
     $GOPATH/src/hivejam/server/server.go
 
 echo "Done."
