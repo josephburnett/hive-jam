@@ -11,11 +11,9 @@ MIN_DISTRO=Ubuntu
 MIN_MAJOR=16
 MIN_MINOR=04
 
-if [ -z ${DISTRO+x} ] || [ -z ${MINOR+x} ] || [ -z ${MAJOR+x} ]; then
-    DISTRO=$( lsb_release -i -s )
-    MAJOR=$( lsb_release -r -s | awk -F '.' '{ print $1 }' )
-    MINOR=$( lsb_release -r -s | awk -F '.' '{ print $2 }' )
-fi
+DISTRO=$( lsb_release -i -s )
+MAJOR=$( lsb_release -r -s | awk -F '.' '{ print $1 }' )
+MINOR=$( lsb_release -r -s | awk -F '.' '{ print $2 }' )
 
 echo "${DISTRO?} ${MAJOR?}.${MINOR?} detected."
 
