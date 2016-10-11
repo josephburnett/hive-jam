@@ -7,6 +7,8 @@ if [ "$(whoami)" != "root" ]; then
     exit 1
 fi
 
+apt-get install -y -q lsb-release
+
 MIN_DISTRO=Ubuntu
 MIN_MAJOR=16
 MIN_MINOR=04
@@ -34,10 +36,14 @@ if [ "$MAJOR" -eq "$MIN_MAJOR" ] && [ "$MINOR" -lt "$MIN_MINOR" ]; then
     fail_min
 fi
 
-apt-get install -y \
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get install -y -q \
      default-jre \
      golang-go \
      sonic-pi \
      icecast2 \
      darkice \
-     jackd
+     jackd \
+     wget \
+     git

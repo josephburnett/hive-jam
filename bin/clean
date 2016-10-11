@@ -2,7 +2,7 @@
 
 set -e
 
-if [ -z ${HJ_ROOT+x}]; then
+if [ -z ${HJ_ROOT+x} ]; then
     export HJ_ROOT=`git rev-parse --show-toplevel`
 fi
 
