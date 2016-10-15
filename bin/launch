@@ -7,8 +7,13 @@ if [ "$(whoami)" != "root" ]; then
     exit 1
 fi
 
+if [ -z ${HJ_ROOT+x} ]; then
+    export HJ_ROOT=`git rev-parse --show-toplevel`
+fi
+
 ADMIN_PASSWORD=$(dd if=/dev/urandom bs=256 count=1 2> /dev/null | tr -dc 'a-zA-Z0-9' | head -c 32)
 
+# Configure Darkice
 cat > ~/darkice.cfg <<EOF
 [general]
 duration       = 0
@@ -36,6 +41,10 @@ genre          = edm
 public         = no
 EOF
 
+# Enable Icecast2
+sed -i -- 's/ENABLE=false/ENABLE=true/g' /etc/default/icecast2
+
+# Configure Icecast2
 cat > /etc/icecast2/icecast.xml <<EOF
 <icecast>
     <location>Earth</location>
@@ -108,7 +117,7 @@ sleep 5
 jack_connect SuperCollider:out_1 hivejam:left
 jack_connect SuperCollider:out_2 hivejam:right
 
-build/hive-jam \
+$HJ_ROOT/build/hive-jam \
     --ui_ip ${INTERNAL_IP?} \
     --ui_external_ip ${EXTERNAL_IP} \
     --verbose \

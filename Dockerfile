@@ -19,11 +19,11 @@ RUN echo "deb http://archive.ubuntu.com/ubuntu xenial-updates multiverse" \
 
 RUN apt-get update
 
-ADD . /hive-jam/
 ENV HJ_ROOT=/hive-jam
+ADD . $HJ_ROOT
 
-RUN /hive-jam/bin/deps-ubuntu
-RUN /hive-jam/bin/clean
-RUN /hive-jam/bin/build
+RUN /bin/bash $HJ_ROOT/bin/deps-ubuntu
+RUN /bin/bash $HJ_ROOT/bin/clean
+RUN /bin/bash $HJ_ROOT/bin/build
 
-CMD /hive-jam/bin/with-gce-env launch
+CMD /bin/bash $HJ_ROOT/bin/with-gce-env launch
