@@ -10,12 +10,19 @@ Tracks can also represent sub-grids which contain their own tracks and parameter
 
 # Quick Start
 
-1. Start [Sonic Pi](http://sonic-pi.net/).
-2. Download and run Hive Jam:
-   * [osx](https://github.com/josephburnett/hive-jam/raw/v0.2/release/hive-jam-osx)
-   * [linux](https://github.com/josephburnett/hive-jam/raw/v0.2/release/hive-jam-linux)
-   * [raspberry pi 2](https://github.com/josephburnett/hive-jam/raw/v0.2/release/hive-jam-raspberry-pi-2) (requires Firefox)
+### Locally
+1. Install and run [Sonic Pi](http://sonic-pi.net/).
+2. Download and run the [latest Hive Jam](https://github.com/josephburnett/hive-jam/releases/tag/latest) binary.
 3. Open [http://localhost:8080](http://localhost:8080)
+
+### In the cloud
+From a [Google Cloud Engine](https://cloud.google.com/compute/docs/images) Ubuntu 16.04 instance:
+
+1. Install docker: `sudo apt-get install -y docker.io`
+2. Pull the latest Hive Jam release: `git clone https://github.com/josephburnett/hive-jam.git -b latest`
+3. Build Hive Jam: `sudo docker build -t hive-jam hive-jam/`
+4. Run Hive Jam: `sudo docker run --rm -p 8080:8080 -p 8000:8000 -p 4550:4550 hive-jam`
+5. Open UI webserver at `<external_ip>:8080`
 
 # How to Jam
 
