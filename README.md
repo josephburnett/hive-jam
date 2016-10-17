@@ -16,13 +16,11 @@ Tracks can also represent sub-grids which contain their own tracks and parameter
 3. Open [http://localhost:8080](http://localhost:8080)
 
 ### In the cloud
-From a [Google Cloud Engine](https://cloud.google.com/compute/docs/images) Ubuntu 16.04 instance:
+From a [Google Cloud Engine](https://cloud.google.com/compute/docs/images) instance:
 
 1. Install docker: `sudo apt-get install -y docker.io`
-2. Pull the latest Hive Jam release: `git clone https://github.com/josephburnett/hive-jam.git -b latest`
-3. Build Hive Jam: `sudo docker build -t hive-jam hive-jam/`
-4. Run Hive Jam: `sudo docker run --rm -p 8080:8080 -p 8000:8000 -p 4550:4550 hive-jam`
-5. Open UI webserver at `<external_ip>:8080`
+2. Run Hive Jam: `sudo docker run -d -p 8080:8080 -p 8000:8000 -p 4550:4550 josephburnett/hive-jam`
+3. Open the UI webserver at `EXTERNAL_IP:8080`
 
 # How to Jam
 
