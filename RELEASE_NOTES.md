@@ -1,5 +1,15 @@
 # Release Notes
 
+## v0.3
+- Streaming audio to support running Hive Jam in the cloud (GCP)
+- Save/load state
+- Dockerfile build
+- Renamed project from Sonic Jam to Hive Jam
+
+Full list of issues: [Milestone v0.3](https://github.com/josephburnett/hive-jam/milestone/2?closed=1)
+
+Tested with Sonic Pi v2.10
+
 ## v0.2
 - More robust bootstrapping
 - Better dropdowns using Closure UI components

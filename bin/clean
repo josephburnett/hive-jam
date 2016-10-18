@@ -2,11 +2,13 @@
 
 set -e
 
-ROOT=`git rev-parse --show-toplevel`
+if [ -z ${HJ_ROOT+x} ]; then
+    export HJ_ROOT=`git rev-parse --show-toplevel`
+fi
 
-cd $ROOT
+cd $HJ_ROOT
 
-( cd cljs ; $ROOT/bin/vendor/lein clean )
+( cd cljs ; $HJ_ROOT/bin/vendor/lein clean )
 
 if [ -f build/hive-jam ]; then
     rm build/hive-jam

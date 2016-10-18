@@ -7,29 +7,31 @@ import "strconv"
 import "text/template"
 
 var Flags = struct {
-	UiIp *string
-	UiExternalIp *string
-	UiPort *int
-	UiBridgePort *int
-	UiAudioPort *int
-	SpBridgeIp *string
-	SpBridgePortServer *int
-	SpBridgePortClient *int
-	SpIp *string
-	SpPort *int
-	WsBufferByteSize *int
-	Resolution *string
-	StateFile *string
-	Verbose *bool
-	Debug *bool
-	MaxTrackCount *int
+	UiIp                    *string
+	UiExternalIp            *string
+	UiPort                  *int
+	UiBridgePort            *int
+	UiAudioPort             *int
+	EnableUiAudio           *bool
+	SpBridgeIp              *string
+	SpBridgePortServer      *int
+	SpBridgePortClient      *int
+	SpIp                    *string
+	SpPort                  *int
+	WsBufferByteSize        *int
+	Resolution              *string
+	StateFile               *string
+	Verbose                 *bool
+	Debug                   *bool
+	MaxTrackCount           *int
 	BootstrapTimeoutSeconds *int
 }{
 	flag.String("ui_ip", "127.0.0.1", "IP address for the UI server to bind to"),
 	flag.String("ui_external_ip", "127.0.0.1", "IP address for the UI client to connect the websocket to"),
-	flag.Int("ui_port", 80, "port number for the UI server to bind to"),
+	flag.Int("ui_port", 8080, "port number for the UI server to bind to"),
 	flag.Int("ui_bridge_port", 4550, "port number for the UI end of the OSC bridge to bind to"),
 	flag.Int("ui_audio_port", 8000, "port number for the streaming audio server"),
+	flag.Bool("enable_ui_audio", false, "enable streaming audio in the UI"),
 	flag.String("sp_bridge_ip", "127.0.0.1", "IP address for the Sonic Pi end of the OSC bridge to bind to"),
 	flag.Int("sp_bridge_port_server", 4560, "port number for the Sonic Pi end of the OSC bridge to bind to for receiving messages"),
 	flag.Int("sp_bridge_port_client", 4559, "port number for the Sonic Pi end of the OSC bridge to bind to for transmitting messages"),
@@ -45,17 +47,18 @@ var Flags = struct {
 }
 
 type flagType int
+
 const (
 	stringFlag flagType = iota
-	intFlag flagType = iota
-	boolFlag flagType = iota
+	intFlag    flagType = iota
+	boolFlag   flagType = iota
 )
 
 type flagValue struct {
-	Type flagType
+	Type   flagType
 	String string
-	Int int
-	Bool bool
+	Int    int
+	Bool   bool
 }
 
 func (f flagValue) Js() string {
@@ -75,11 +78,11 @@ func flagMap() map[string]flagValue {
 		value := v.Field(i).Elem()
 		switch value.Kind() {
 		case reflect.String:
-			values[key] = flagValue{ Type: stringFlag, String: value.String() }
+			values[key] = flagValue{Type: stringFlag, String: value.String()}
 		case reflect.Int:
-			values[key] = flagValue{ Type: intFlag, Int: int(value.Int()) }
+			values[key] = flagValue{Type: intFlag, Int: int(value.Int())}
 		case reflect.Bool:
-			values[key] = flagValue{ Type: boolFlag, Bool: value.Bool() }
+			values[key] = flagValue{Type: boolFlag, Bool: value.Bool()}
 		default:
 			panic("Unsupported flag type: " + value.Elem().String())
 		}
