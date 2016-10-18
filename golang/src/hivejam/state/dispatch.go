@@ -13,16 +13,16 @@ type Dispatch struct {
 }
 
 type Cursor struct {
-	BeatIndex  int      `json:"beat-index"`
+	BeatIndex  int64    `json:"beat-index"`
 	SubCursors []Cursor `json:"sub-cursors"`
 }
 
-func (g *Grid) Dispatch(state map[string]Grid, tick int, resolution string, parent *Track) ([]Dispatch, []Cursor) {
-	dispatches := make([]Dispatch)
-	cursors := make([]Cursor)
+func (g *Grid) Dispatch(state map[string]Grid, tick int64, resolution *big.Rat, parent *Track) ([]Dispatch, []Cursor) {
+	dispatches := make([]Dispatch, 0)
+	cursors := make([]Cursor, 0)
 	for _, track := range g.Tracks {
 		on := track.On
-		boundary, within, index := OnTheBeat(g.Bpc, g.Resolution, track.Beats, tick)
+		boundary, within, index := OnTheBeat(&g.Bpc, resolution, track.Beats, tick)
 		// Inherit track type from parent track
 		trackType := track.Type
 		if trackType == "none" && parent.GridType != "" {
@@ -34,20 +34,24 @@ func (g *Grid) Dispatch(state map[string]Grid, tick int, resolution string, pare
 		switch trackType {
 		case "grid":
 			if !on || !within || track.GridId == "" {
-				append(cursors, Cursor{BeatIndex: index})
+				cursors = append(cursors, Cursor{BeatIndex: index})
 				continue
 			}
 			subGrid := state[track.GridId]
-			subGridDispatches, subGridCursors := subGrid.Dispatch(state, tick, resolution, track)
-			append(dispatches, subGridDispatches...)
-			append(cursors, subGridCursors...)
+			subGridDispatches, subGridCursors := subGrid.Dispatch(state, tick, resolution, &track)
+			dispatches = append(dispatches, subGridDispatches...)
+			cursors = append(cursors, subGridCursors...)
 		case "synth":
-			// do nothing yet
+			if boundary {
+				// do nothing yet
+			}
 		case "sample":
-			// do nothing yet
+			if boundary {
+				// do nothing yet
+			}
 		}
 	}
-
+	return dispatches, cursors
 }
 
 func OnTheBeat(bpc, resolution *big.Rat, beats []Beat, tick int64) (boundary, on bool, index int64) {

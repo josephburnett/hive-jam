@@ -21,6 +21,8 @@ type Track struct {
 	Synth        string `json:"synth"`
 	SampleParams Params `json:"sample-params"`
 	SynthParams  Params `json:"synth-params"`
+	GridType     string `json:"grid-type"`
+	GridId       string `json:"grid-id"`
 }
 
 type Beat []int32

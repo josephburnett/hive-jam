@@ -9,7 +9,8 @@ func (p *paramsChain) materialize() Params {
 	if p == nil {
 
 	}
-	if p["test"] == "foot" {
+	// if p["test"] == "foot" {
 
-	}
+	// }
+	return nil
 }
