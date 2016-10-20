@@ -39,3 +39,59 @@ func TestInheritScalar(t *testing.T) {
 		t.Errorf("Expected %v but got %v.", expect, params)
 	}
 }
+
+func TestInheritanceBreak(t *testing.T) {
+	chain := &paramsChain{
+		Params: &Params{
+			"a": "!foo",
+		},
+		Parent: &paramsChain{
+			Params: &Params{
+				"a": "bar",
+			},
+		},
+	}
+	expect := &Params{
+		"a": "foo",
+	}
+	params := chain.Materialize()
+	if !reflect.DeepEqual(params, expect) {
+		t.Errorf("Expected %v but got %v.", expect, params)
+	}
+}
+
+func TestChildAgnostic(t *testing.T) {
+	chain := &paramsChain{
+		Params: &Params{
+			"a": "1",
+		},
+		Parent: &paramsChain{
+			Params: &Params{},
+		},
+	}
+	expect := &Params{
+		"a": "1",
+	}
+	params := chain.Materialize()
+	if !reflect.DeepEqual(params, expect) {
+		t.Errorf("Expected %v but got %v.", expect, params)
+	}
+}
+
+func TestChildPassthrough(t *testing.T) {
+	chain := &paramsChain{
+		Params: &Params{},
+		Parent: &paramsChain{
+			Params: &Params{
+				"a": "1",
+			},
+		},
+	}
+	expect := &Params{
+		"a": "1",
+	}
+	params := chain.Materialize()
+	if !reflect.DeepEqual(params, expect) {
+		t.Errorf("Expected %v but got %v.", expect, params)
+	}
+}
