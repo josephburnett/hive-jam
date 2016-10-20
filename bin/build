@@ -16,7 +16,7 @@ echo "Compiling UI..."
 
 echo "Setting up Golang dependencies and go-bindata tool..."
 go get github.com/tools/godep
-( cd $GOPATH; godep restore )
+( cd $GOPATH/src/hivejam; godep restore )
 go install github.com/jteeuwen/go-bindata/...
 
 echo "Packaging UI and Sonic Pi server files as data..."
