@@ -1,7 +1,7 @@
 {
-	"ImportPath": "github.com/josephburnett/hive-jam/golang",
+	"ImportPath": "hivejam",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v60",
+	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
 	],
@@ -17,7 +17,7 @@
 		},
 		{
 			"ImportPath": "golang.org/x/net/websocket",
-			"Rev": "b797637b7aeeed133049c7281bfa31dcc9ca42d6"
+			"Rev": "3bafa3320efdf0c95d056586aa9abdd05ad72ee1"
 		}
 	]
 }
