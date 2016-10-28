@@ -14,10 +14,7 @@ func TestSimpleParams(t *testing.T) {
 			"b": "2",
 		},
 	}
-	params := chain.Materialize(emptyContext)
-	if !reflect.DeepEqual(params, chain.Params) {
-		t.Errorf("Expected %v but got %v.", chain.Params, params)
-	}
+	checkChain(t, chain, chain.Params)
 }
 
 func TestInheritScalar(t *testing.T) {
@@ -36,10 +33,7 @@ func TestInheritScalar(t *testing.T) {
 		"a": "2",
 		"b": "1",
 	}
-	params := chain.Materialize(emptyContext)
-	if !reflect.DeepEqual(params, expect) {
-		t.Errorf("Expected %v but got %v.", expect, params)
-	}
+	checkChain(t, chain, expect)
 }
 
 func TestInheritanceBreak(t *testing.T) {
@@ -56,10 +50,7 @@ func TestInheritanceBreak(t *testing.T) {
 	expect := &Params{
 		"a": "foo",
 	}
-	params := chain.Materialize(emptyContext)
-	if !reflect.DeepEqual(params, expect) {
-		t.Errorf("Expected %v but got %v.", expect, params)
-	}
+	checkChain(t, chain, expect)
 }
 
 func TestChildAgnostic(t *testing.T) {
@@ -74,10 +65,7 @@ func TestChildAgnostic(t *testing.T) {
 	expect := &Params{
 		"a": "1",
 	}
-	params := chain.Materialize(emptyContext)
-	if !reflect.DeepEqual(params, expect) {
-		t.Errorf("Expected %v but got %v.", expect, params)
-	}
+	checkChain(t, chain, expect)
 }
 
 func TestChildPassthrough(t *testing.T) {
@@ -92,13 +80,10 @@ func TestChildPassthrough(t *testing.T) {
 	expect := &Params{
 		"a": "1",
 	}
-	params := chain.Materialize(emptyContext)
-	if !reflect.DeepEqual(params, expect) {
-		t.Errorf("Expected %v but got %v.", expect, params)
-	}
+	checkChain(t, chain, expect)
 }
 
-func TestLambda(t *testing.T) {
+func TestLambdaLiteral(t *testing.T) {
 	chain := &paramsChain{
 		Params: &Params{
 			"a": "\\ 1 ",
@@ -107,8 +92,32 @@ func TestLambda(t *testing.T) {
 	expect := &Params{
 		"a": "1",
 	}
-	params := chain.Materialize(emptyContext)
+	checkChain(t, chain, expect)
+}
+
+func TestLambdaInheritance(t *testing.T) {
+	chain := &paramsChain{
+		Params: &Params{
+			"a": "2",
+		},
+		Parent: &paramsChain{
+			Params: &Params{
+				"a": "\\ (* 2 val)",
+			},
+		},
+	}
+	expect := &Params{
+		"a": "4",
+	}
+	checkChain(t, chain, expect)
+}
+
+func checkChain(t *testing.T, chain *paramsChain, expect *Params) {
+	params, err := chain.Materialize(emptyContext)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 	if !reflect.DeepEqual(params, expect) {
-		t.Errorf("Expected %v but go %v.", expect, params)
+		t.Errorf("Materialize %v is %v. Want %v.", chain, params, expect)
 	}
 }

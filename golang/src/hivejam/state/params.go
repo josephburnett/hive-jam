@@ -10,6 +10,7 @@ type context struct {
 	Beat *big.Rat
 	Row  int64
 	Col  int64
+	Val  string
 }
 
 func (c *context) Bind(env *zygo.Glisp) {
@@ -23,22 +24,23 @@ func (c *context) Bind(env *zygo.Glisp) {
 	if c.Col != 0 {
 		env.AddGlobal("col", &zygo.SexpInt{Val: c.Col})
 	}
+	env.AddGlobal("val", &zygo.SexpStr{S: c.Val})
 }
 
 type lambda string
 
-func (l lambda) Eval(env *zygo.Glisp) string {
+func (l lambda) Eval(env *zygo.Glisp) (string, error) {
 	err := env.LoadString(string(l))
 	if err != nil {
 		env.Clear()
-		return ""
+		return "", err
 	}
 	expr, err := env.Run()
 	if err != nil {
 		env.Clear()
-		return ""
+		return "", err
 	}
-	return expr.SexpString(nil)
+	return expr.SexpString(nil), nil
 }
 
 type paramsChain struct {
@@ -46,11 +48,10 @@ type paramsChain struct {
 	Parent *paramsChain
 }
 
-func (p *paramsChain) Materialize(c *context) *Params {
+func (p *paramsChain) Materialize(c *context) (*Params, error) {
 	finalizedKeys := make(map[string]bool)
 	params := make(map[string]string)
 	env := zygo.NewGlispSandbox()
-	c.Bind(env)
 	for p != nil {
 		for key, value := range map[string]string(*(p.Params)) {
 			if finalizedKeys[key] {
@@ -60,8 +61,18 @@ func (p *paramsChain) Materialize(c *context) *Params {
 				params[key] = value[1:]
 				finalizedKeys[key] = true
 			} else {
+				if childValue, ok := params[key]; ok {
+					c.Val = childValue
+				} else {
+					c.Val = ""
+				}
 				if value != "" && value[0] == '\\' {
-					value = lambda(value[1:]).Eval(env)
+					c.Bind(env)
+					newValue, err := lambda(value[1:]).Eval(env)
+					if err != nil {
+						return nil, err
+					}
+					value = newValue
 				}
 				params[key] = value
 			}
@@ -69,5 +80,5 @@ func (p *paramsChain) Materialize(c *context) *Params {
 		p = p.Parent
 	}
 	materialParams := Params(params)
-	return &materialParams
+	return &materialParams, nil
 }
